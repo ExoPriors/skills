@@ -123,7 +123,7 @@ Private keys can list vectors via `GET /v1/scry/vectors` and delete via `DELETE 
 
 | Constraint | Public key | Private key |
 |-----------|------------|-------------|
-| Max rows with vectors in output | 50 | 500 |
+| Max rows with vectors in output | 200 | 500 |
 | Handle naming | `p_<8hex>_<name>` (write-once) | Any valid identifier (overwritable) |
 | List/delete vectors | No | Yes |
 | Embed token budget | 100K per IP | 1.5M per key |

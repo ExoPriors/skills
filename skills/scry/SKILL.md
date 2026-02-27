@@ -136,7 +136,7 @@ WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 LIMIT 50
 ```
 
-Default `kinds` if omitted: `['post','paper','document','webpage','twitter_thread']`.
+Default `kinds` if omitted: `['post','paper','document','webpage','twitter_thread','grant']`.
 Pass `kinds=>ARRAY['comment']` or `kinds=>ARRAY['tweet']` explicitly for those types.
 Pass `mode=>'mv_lesswrong_posts'` to scope to LessWrong posts.
 

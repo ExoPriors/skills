@@ -7,7 +7,7 @@ points.
 All templates assume `EXOPRIORS_API_KEY` and `EXOPRIORS_API_BASE` are set.
 All SQL is executed via `POST /v1/scry/query` with `Content-Type: text/plain`.
 Always check `GET /v1/scry/schema` before writing queries.
-Always filter dangerous sources: `(metadata->>'content_risk') IS DISTINCT FROM 'dangerous'`.
+Always filter dangerous sources: `content_risk IS DISTINCT FROM 'dangerous'`.
 
 ---
 
@@ -52,7 +52,7 @@ SELECT e.id, e.uri, e.title, e.original_author, e.source,
        e.original_timestamp, e.score
 FROM c
 JOIN scry.entities e ON e.id = c.id
-WHERE (e.metadata->>'content_risk') IS DISTINCT FROM 'dangerous'
+WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY e.original_timestamp DESC NULLS LAST
 LIMIT 200;
 ```
@@ -89,7 +89,7 @@ SELECT e.id, e.uri, e.title, e.original_author, e.source,
 FROM c
 JOIN scry.entities e ON e.id = c.id
 JOIN scry.embeddings emb ON emb.entity_id = c.id AND emb.chunk_index = 0
-WHERE (e.metadata->>'content_risk') IS DISTINCT FROM 'dangerous'
+WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY distance
 LIMIT 50;
 ```
@@ -103,7 +103,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "sql": "SELECT id, payload FROM scry.entities WHERE id = ANY(ARRAY[<top 50 IDs from 1D>]::uuid[]) AND (metadata->>'\''content_risk'\'') IS DISTINCT FROM '\''dangerous'\'' LIMIT 50",
+    "sql": "SELECT id, payload FROM scry.entities WHERE id = ANY(ARRAY[<top 50 IDs from 1D>]::uuid[]) AND content_risk IS DISTINCT FROM '\''dangerous'\'' LIMIT 50",
     "attributes": [
       {"id": "clarity", "weight": 1.0},
       {"id": "technical_depth", "weight": 0.8},
@@ -205,7 +205,7 @@ SELECT DISTINCT source, original_author,
        MAX(original_timestamp) AS most_recent
 FROM scry.entities
 WHERE original_author ILIKE '%Person Name%'
-  AND (metadata->>'content_risk') IS DISTINCT FROM 'dangerous'
+  AND content_risk IS DISTINCT FROM 'dangerous'
 GROUP BY source, original_author
 ORDER BY doc_count DESC
 LIMIT 20;
@@ -225,7 +225,7 @@ SELECT id, uri, title, source, kind, original_timestamp, score
 FROM scry.entities
 WHERE original_author = 'exact_author_name'
   AND source = 'lesswrong'
-  AND (metadata->>'content_risk') IS DISTINCT FROM 'dangerous'
+  AND content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY original_timestamp DESC NULLS LAST
 LIMIT 100;
 ```
@@ -241,7 +241,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "sql": "SELECT id, payload FROM scry.entities WHERE original_author = '\''exact_author'\'' AND source = '\''lesswrong'\'' AND (metadata->>'\''content_risk'\'') IS DISTINCT FROM '\''dangerous'\'' ORDER BY original_timestamp DESC NULLS LAST LIMIT 50",
+    "sql": "SELECT id, payload FROM scry.entities WHERE original_author = '\''exact_author'\'' AND source = '\''lesswrong'\'' AND content_risk IS DISTINCT FROM '\''dangerous'\'' ORDER BY original_timestamp DESC NULLS LAST LIMIT 50",
     "attributes": [
       {"id": "insight", "weight": 1.5},
       {"id": "clarity", "weight": 1.0},
@@ -405,7 +405,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "sql": "SELECT id, payload FROM scry.entities WHERE id = ANY(ARRAY[<recent top 50 IDs>]::uuid[]) AND (metadata->>'\''content_risk'\'') IS DISTINCT FROM '\''dangerous'\'' LIMIT 50",
+    "sql": "SELECT id, payload FROM scry.entities WHERE id = ANY(ARRAY[<recent top 50 IDs>]::uuid[]) AND content_risk IS DISTINCT FROM '\''dangerous'\'' LIMIT 50",
     "attributes": [
       {"id": "insight", "weight": 1.5},
       {"id": "technical_depth", "weight": 1.0}
@@ -460,7 +460,7 @@ The user provides 3-10 seed items (URLs, titles, or entity IDs). Look them up:
 SELECT id, uri, title, original_author, source, original_timestamp
 FROM scry.entities
 WHERE uri IN ('https://...', 'https://...')
-  AND (metadata->>'content_risk') IS DISTINCT FROM 'dangerous'
+  AND content_risk IS DISTINCT FROM 'dangerous'
 LIMIT 20;
 ```
 
@@ -528,7 +528,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "sql": "SELECT id, payload FROM scry.entities WHERE id = ANY(ARRAY[<seed + expansion IDs>]::uuid[]) AND (metadata->>'\''content_risk'\'') IS DISTINCT FROM '\''dangerous'\'' LIMIT 100",
+    "sql": "SELECT id, payload FROM scry.entities WHERE id = ANY(ARRAY[<seed + expansion IDs>]::uuid[]) AND content_risk IS DISTINCT FROM '\''dangerous'\'' LIMIT 100",
     "attributes": [
       {"id": "clarity", "weight": 1.2},
       {"id": "insight", "weight": 1.0}

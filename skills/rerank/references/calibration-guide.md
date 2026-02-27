@@ -25,7 +25,7 @@ Good test sets have:
 
 ```json
 {
-  "sql": "SELECT id, payload FROM scry.entities WHERE kind='post' AND source='lesswrong' AND (metadata->>'content_risk') IS DISTINCT FROM 'dangerous' ORDER BY random() LIMIT 30",
+  "sql": "SELECT id, payload FROM scry.entities WHERE kind='post' AND source='lesswrong' AND content_risk IS DISTINCT FROM 'dangerous' ORDER BY random() LIMIT 30",
   "attributes": [{"id":"clarity","prompt":"clarity","weight":1.0}],
   "topk": {"k": 30},
   "model_tier": "fast",

@@ -185,7 +185,7 @@ SELECT
   e.score
 FROM c
 JOIN scry.entities e ON e.id = c.id
-WHERE (e.metadata->>'content_risk') IS DISTINCT FROM 'dangerous'
+WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY e.original_timestamp DESC NULLS LAST
 LIMIT 10;
 ```
@@ -369,7 +369,7 @@ X-Scry-Client-Tag: tutorial
 
 ```json
 {
-  "sql": "SELECT id, payload FROM scry.entities WHERE id = ANY(ARRAY['uuid1','uuid2','uuid3']::uuid[]) AND (metadata->>'content_risk') IS DISTINCT FROM 'dangerous' LIMIT 25",
+  "sql": "SELECT id, payload FROM scry.entities WHERE id = ANY(ARRAY['uuid1','uuid2','uuid3']::uuid[]) AND content_risk IS DISTINCT FROM 'dangerous' LIMIT 25",
   "attributes": [
     {
       "id": "clarity",
