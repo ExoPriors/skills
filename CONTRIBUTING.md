@@ -42,12 +42,35 @@ MIN_QUERY_TIMEOUT_SECS = 20
 DAILY_BANDWIDTH_LIMIT_BYTES_PUBLIC = 200 MiB
 ```
 
-## Sync Workflow
+## Sync from exopriors-core
+
+The `skills/` directory in **exopriors-core** is the source of truth. This repo is a publish target. All edits should be made in exopriors-core; direct edits here will be overwritten on next sync.
+
+**Sync script** (in exopriors-core):
+```bash
+# Preview what would change
+./tools/sync-skills.sh
+
+# Sync, commit, and push to this repo
+./tools/sync-skills.sh --push
+```
+
+**Drift detector** (in exopriors-core):
+```bash
+./tools/skills-drift-check.sh
+```
+
+Checks that constants, model tiers, SQL functions, and materialized views in the source code match what the skills claim. Also runs automatically as part of `./tools/docs_crud_audit.sh`.
+
+### Manual sync workflow
+
+If you need to sync manually without the script:
 
 1. Make changes in the exopriors-core repo (`skills/` directory)
 2. Verify against source code — especially constants and function signatures
-3. Copy to exopriors-skills repo
-4. Commit and push both repos
+3. Run `./tools/skills-drift-check.sh` to catch drift
+4. Copy `skills/` to this repo
+5. Commit and push both repos
 
 ## Skill Structure
 
