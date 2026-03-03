@@ -91,6 +91,21 @@ FROM scry.search_reddit_posts(
 ORDER BY score DESC NULLS LAST
 ```
 
+### Semantic search over embedded Reddit subset
+```sql
+-- $1 is a halfvec embedding from your client-side embed call
+SELECT id, distance, subreddit, title, upvotes, original_timestamp
+FROM scry.search_reddit_posts_semantic(
+  query_embedding => $1,
+  subreddits => ARRAY['MachineLearning','LocalLLaMA'],
+  limit_n => 50,
+  min_upvotes => 20
+)
+ORDER BY distance ASC
+```
+
+Use this when lexical keyword search misses conceptually similar posts.
+
 ### Search comments
 ```sql
 SELECT id, uri, subreddit, original_author, original_timestamp

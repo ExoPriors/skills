@@ -107,6 +107,29 @@ Reddit-specific view with native Reddit fields.
 | metadata | JSONB | Moderation flags, flair, etc. |
 | created_at | TIMESTAMPTZ | Ingest time |
 
+### scry.reddit_embeddings
+
+Semantic vectors for the embedding-covered Reddit subset (partial corpus coverage by design).
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | TEXT | Reddit full ID (`t1_`/`t3_`) |
+| source_window | TEXT | Source shard table used for retrieval |
+| kind | entity_kind | `post` or `comment` |
+| subreddit | TEXT | Subreddit name |
+| original_timestamp | TIMESTAMPTZ | Source timestamp |
+| upvotes | INT | Source score |
+| payload_chars | INT | Text length used for prioritization |
+| priority_score | DOUBLE PRECISION | Queue priority used for coverage rollout |
+| chunk_index | INT | 0 = document-level |
+| chunk_start | INT | Byte offset start |
+| chunk_end | INT | Byte offset end |
+| token_count | INT | Tokens in chunk |
+| chunking_strategy | chunking_strategy | Strategy label |
+| embedding_voyage4 | halfvec(2048) | Voyage 4 space embedding |
+| model_name | TEXT | Usually `voyage-4-nano` for local runs |
+| created_at | TIMESTAMPTZ | Write time |
+
 ### scry.entity_edges
 
 Relationship edges between entities (currently OffshoreLeaks).
@@ -365,6 +388,7 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
 | `scry.search_ids(query, mode, kinds, limit_n)` | IDs-only lexical search (cheaper) | 2000 |
 | `scry.search_reddit_posts(query, subreddits, limit_n, window_key)` | Reddit post search | 50 per window |
 | `scry.search_reddit_comments(query, subreddits, limit_n, window_key)` | Reddit comment search | 50 per window |
+| `scry.search_reddit_posts_semantic(query_embedding, subreddits, limit_n, min_upvotes, min_timestamp)` | Reddit semantic search over embedding-covered subset | 200 |
 | `scry.search_exhaustive(query_text, mode, kinds, limit_n, offset_n)` | Higher-cap paginated search | 1000 |
 | `scry.hybrid_search(query, query_vector, kinds, limit_n)` | Lexical + semantic rerank | 100 |
 | `scry.author_topics(author_pattern, topics)` | Per-author topic hit counts | -- |

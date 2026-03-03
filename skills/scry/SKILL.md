@@ -22,6 +22,8 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
+**Skill generation**: `20260303`
+
 ## A) When to use / not use
 
 **Use this skill when:**
@@ -40,36 +42,40 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 
 ## B) Golden Rules
 
-1. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
+1. **Context handshake first.** At session start, call
+   `GET /v1/scry/context?skill_generation=20260303`.
+   If `should_update_skill=true`, tell the user to run `npx skills update`.
+
+2. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
    Never guess column names or types. The schema endpoint returns live
    column metadata and row-count estimates for every view.
 
-2. **Clarify ambiguous intent before heavy queries.** If the request is vague
+3. **Clarify ambiguous intent before heavy queries.** If the request is vague
    ("search Reddit for X", "find things about Y"), ask one short clarification
    question about the goal/output format before running expensive SQL.
 
-3. **Start with a cheap probe.** Before any query likely to run >5s, run
+4. **Start with a cheap probe.** Before any query likely to run >5s, run
    `/v1/scry/estimate` and/or a tight exploratory query (`LIMIT 20` plus scoped
    source/window filters), then scale only after confirming relevance.
 
-4. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
+5. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
    exact terms and named entities. For conceptual intent ("themes", "things like",
    "similar to"), route to scry-vectors first, then optionally hybridize.
 
-5. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
+6. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
 
-6. **Prefer materialized views.** `scry.entities` has 229M+ rows. Scanning it
+7. **Prefer materialized views.** `scry.entities` has 229M+ rows. Scanning it
    without filters is slow. Use `scry.mv_lesswrong_posts`, `scry.mv_arxiv_papers`,
    `scry.mv_hackernews_posts`, etc. for targeted access. They are pre-filtered
    and often have embeddings pre-joined.
 
-7. **Filter dangerous content.** Always include
+8. **Filter dangerous content.** Always include
    `WHERE content_risk IS DISTINCT FROM 'dangerous'` unless the user explicitly
    asks for unfiltered results. Dangerous content contains adversarial
    prompt-injection payloads.
 
-8. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
+9. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
    with raw SQL in the body. Not JSON-wrapped SQL.
 
 For full tier limits, timeout policies, and degradation strategies, see [Shared Guardrails](../references/guardrails.md).
@@ -79,11 +85,15 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
-Step 1: Get schema
+Step 1: Get dynamic context + update advisory
+GET https://api.exopriors.com/v1/scry/context?skill_generation=20260303
+Authorization: Bearer $EXOPRIORS_KEY
+
+Step 2: Get schema
 GET https://api.exopriors.com/v1/scry/schema
 Authorization: Bearer $EXOPRIORS_KEY
 
-Step 2: Run query
+Step 3: Run query
 POST https://api.exopriors.com/v1/scry/query
 Authorization: Bearer $EXOPRIORS_KEY
 Content-Type: text/plain
@@ -145,6 +155,16 @@ User wants to search the ExoPriors corpus?
 
 ## E) Recipes
 
+### E0. Context handshake + skill update advisory
+
+```bash
+curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260303" \
+  -H "Authorization: Bearer $EXOPRIORS_KEY"
+```
+
+If response includes `"should_update_skill": true`, ask the user to run:
+`npx skills update`.
+
 ### E1. Lexical search (BM25)
 
 ```sql
@@ -178,6 +198,9 @@ ORDER BY score DESC
 
 Window keys: `recent`, `2022_2023`, `2020_2021`, `2018_2019`, `2014_2017`,
 `2010_2013`, `2005_2009`. Also: `scry.search_reddit_comments(...)`.
+
+For semantic Reddit retrieval over the embedding-covered subset:
+`scry.search_reddit_posts_semantic(query_embedding=>..., subreddits=>..., limit_n=>...)`.
 
 ### E3. Source-filtered materialized view query
 
