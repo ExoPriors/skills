@@ -3,13 +3,17 @@ name: scry
 description: >
   Query the ExoPriors Scry API -- SQL-over-HTTPS search across 229M+ entities
   spanning forums, papers, social media, government records, and prediction markets.
+  Includes cross-platform author identity resolution (actors, people, aliases),
+  OpenAlex academic graph navigation (authors, citations, institutions, concepts),
+  shareable artifacts, and structured agent judgements.
   Use when the task involves: Scry API, ExoPriors, /v1/scry/query, scry.search,
   scry.entities, materialized views, corpus search, epistemic infrastructure,
   229M entities, lexical search, BM25, structured agent judgements, scry shares,
-  cross-corpus analysis. NOT for: semantic/vector search composition or embedding
-  algebra (use vector-composition), LLM-based reranking (use rerank), cross-platform
-  people graph traversal (use people-graph), OpenAlex academic helpers (use openalex),
-  or the user's own local Postgres / non-ExoPriors data sources.
+  cross-corpus analysis, who is this person, cross-platform identity, OpenAlex,
+  citation graph, coauthor graph, academic papers, author lookup.
+  NOT for: semantic/vector search composition or embedding algebra (use
+  scry-vectors), LLM-based reranking (use scry-rerank), or the user's own
+  local Postgres / non-ExoPriors data sources.
 ---
 
 # Scry Skill
@@ -24,15 +28,14 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 - Searching, filtering, or aggregating content across the ExoPriors corpus
 - Running lexical (BM25) or hybrid searches
 - Exploring author networks, cross-platform identities, or publication patterns
+- Navigating the OpenAlex academic graph (authors, citations, institutions, concepts)
 - Creating shareable artifacts from query results
 - Emitting structured agent judgements about entities or external references
 
 **Do NOT use this skill when:**
 - The user wants semantic/vector search composition or embedding algebra
-  (use the vector-composition skill)
-- The user wants LLM-based reranking (use the rerank skill)
-- The user wants cross-platform people graph traversal (use the people-graph skill)
-- The user wants OpenAlex academic helpers (use the openalex skill)
+  (use the scry-vectors skill)
+- The user wants LLM-based reranking (use the scry-rerank skill)
 - The user is querying their own local database
 
 ## B) Golden Rules
@@ -41,20 +44,32 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    Never guess column names or types. The schema endpoint returns live
    column metadata and row-count estimates for every view.
 
-2. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
+2. **Clarify ambiguous intent before heavy queries.** If the request is vague
+   ("search Reddit for X", "find things about Y"), ask one short clarification
+   question about the goal/output format before running expensive SQL.
+
+3. **Start with a cheap probe.** Before any query likely to run >5s, run
+   `/v1/scry/estimate` and/or a tight exploratory query (`LIMIT 20` plus scoped
+   source/window filters), then scale only after confirming relevance.
+
+4. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
+   exact terms and named entities. For conceptual intent ("themes", "things like",
+   "similar to"), route to scry-vectors first, then optionally hybridize.
+
+5. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
 
-3. **Prefer materialized views.** `scry.entities` has 229M+ rows. Scanning it
+6. **Prefer materialized views.** `scry.entities` has 229M+ rows. Scanning it
    without filters is slow. Use `scry.mv_lesswrong_posts`, `scry.mv_arxiv_papers`,
    `scry.mv_hackernews_posts`, etc. for targeted access. They are pre-filtered
    and often have embeddings pre-joined.
 
-4. **Filter dangerous content.** Always include
+7. **Filter dangerous content.** Always include
    `WHERE content_risk IS DISTINCT FROM 'dangerous'` unless the user explicitly
    asks for unfiltered results. Dangerous content contains adversarial
    prompt-injection payloads.
 
-5. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
+8. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
    with raw SQL in the body. Not JSON-wrapped SQL.
 
 For full tier limits, timeout policies, and degradation strategies, see [Shared Guardrails](../references/guardrails.md).
@@ -102,19 +117,26 @@ Response shape:
 ```
 User wants to search the ExoPriors corpus?
   |
+  +-- Ambiguous / conceptual ask? --> Clarify intent first, then use
+  |     scry-vectors for semantic search (optionally hybridize with lexical)
+  |
   +-- By keywords/phrases? --> scry.search() (BM25 lexical)
   |     +-- Specific forum?  --> pass mode='mv_lesswrong_posts' or kinds filter
-  |     +-- Reddit?          --> scry.search_reddit_posts() / search_reddit_comments()
+  |     +-- Reddit?          --> START with scry.search_reddit_posts() /
+  |                              scry.search_reddit_comments()
   |     +-- Large result?    --> scry.search_ids() (IDs only, up to 2000)
   |
   +-- By structured filters (source, date, author)? --> Direct SQL on MVs
   |
-  +-- By semantic similarity? --> (vector-composition skill, not this one)
+  +-- By semantic similarity? --> (scry-vectors skill, not this one)
   |
   +-- Hybrid (keywords + semantic rerank)? --> scry.hybrid_search() or
   |     lexical CTE + JOIN scry.embeddings
   |
   +-- Author/people lookup? --> scry.actors, scry.people, scry.person_aliases
+  |
+  +-- Academic graph (OpenAlex)? --> scry.openalex_find_authors(),
+  |     scry.openalex_find_works(), etc. (see schema-guide.md)
   |
   +-- Need to share results? --> POST /v1/scry/shares
   |
@@ -137,7 +159,8 @@ LIMIT 50
 ```
 
 Default `kinds` if omitted: `['post','paper','document','webpage','twitter_thread','grant']`.
-Pass `kinds=>ARRAY['comment']` or `kinds=>ARRAY['tweet']` explicitly for those types.
+`scry.search()` broadens once to `kinds=>ARRAY['comment']` if that default returns 0 rows.
+Pass explicit `kinds` for strict scope (for example comment-only or tweet-only).
 Pass `mode=>'mv_lesswrong_posts'` to scope to LessWrong posts.
 
 ### E2. Reddit-specific search
@@ -206,7 +229,7 @@ ORDER BY distance
 LIMIT 50
 ```
 
-Requires a stored embedding handle (`@p_deadbeef_topic`). See vector-composition
+Requires a stored embedding handle (`@p_deadbeef_topic`). See scry-vectors
 skill for creating handles.
 
 ### E7. Cost estimation before execution
@@ -239,7 +262,7 @@ curl -s -X POST https://api.exopriors.com/v1/scry/shares \
   }'
 ```
 
-Kinds: `query`, `rerank`, `insight`, `chat`.
+Kinds: `query`, `rerank`, `insight`, `chat`, `markdown`.
 Progressive update: create stub immediately, then `PATCH /v1/scry/shares/{slug}`.
 Rendered at: `https://exopriors.com/scry/share/{slug}`.
 
@@ -316,6 +339,12 @@ See `references/error-reference.md` for the full catalogue. Key patterns:
 | 429 | `rate_limited` | Too many requests | Respect `Retry-After` header |
 | 503 | `service_unavailable` | Scry pool down or overloaded | Wait and retry |
 
+**Auth + timeout diagnostics for CLI users:**
+1. If curl shows HTTP `000`, that is client-side timeout/network abort, not a server HTTP status. Check `--max-time` and retry with `/v1/scry/estimate` first.
+2. If you see `401` with `"Invalid authorization format"`, check for whitespace/newlines in the key:
+   `KEY_CLEAN="$(printf '%s' \"$EXOPRIORS_KEY\" | tr -d '\\r\\n')"`
+   then use `Authorization: Bearer $KEY_CLEAN`.
+
 **Quota fallback strategy:**
 1. If 429: wait `Retry-After` seconds, retry once.
 2. If 402: tell the user their token budget is exhausted.
@@ -346,21 +375,13 @@ When this skill completes a query task, return a consistent structure:
 **Produces:** JSON with `columns`, `rows`, `row_count`, `duration_ms`, `truncated`
 **Feeds into:**
 - `rerank`: ensure SQL returns `id` and `payload` columns for candidate sets
-- `vector-composition`: save entity IDs for embedding lookup and semantic reranking
-- `research-workflow`: any query result can start a research pipeline
-- `people-graph`: entity results with `author_actor_id` feed into identity resolution
-- `openalex`: entity IDs or DOIs can seed academic graph traversal
+- `scry-vectors`: save entity IDs for embedding lookup and semantic reranking
 **Receives from:** none (entry point for SQL-based corpus access)
 
 ## Related Skills
 
-- [vector-composition](../vector-composition/SKILL.md) -- embed concepts as @handles, search by cosine distance, debias with vector algebra
-- [rerank](../rerank/SKILL.md) -- LLM-powered multi-attribute reranking of candidate sets via pairwise comparison
-- [people-graph](../people-graph/SKILL.md) -- cross-platform author identity resolution (actors, people, aliases)
-- [openalex](../openalex/SKILL.md) -- navigate the OpenAlex academic graph (authors, citations, institutions, concepts)
-- [research-workflow](../research-workflow/SKILL.md) -- end-to-end research pipeline orchestrator chaining all skills
-- [tutorial](../tutorial/SKILL.md) -- interactive guided onboarding for first-time Scry users
-- [scry-people-finder](../scry-people-finder/SKILL.md) -- people-finding workflow using vectors + rerank
+- [scry-vectors](../scry-vectors/SKILL.md) -- embed concepts as @handles, search by cosine distance, debias with vector algebra
+- [scry-rerank](../scry-rerank/SKILL.md) -- LLM-powered multi-attribute reranking of candidate sets via pairwise comparison
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-name: vector-composition
+name: scry-vectors
 description: >
   Compose semantic vectors in Scry -- embed concepts as @handles, search by cosine
   distance, debias with vector algebra, and diagnose signal loss. Use when the task
@@ -303,7 +303,7 @@ ORDER BY best_distance ASC, matched_docs DESC
 LIMIT 30;
 ```
 
-For richer identity data (cross-platform, profile URLs), join through `scry.actors` and `scry.people`. See the `scry-people-finder` skill.
+For richer identity data (cross-platform, profile URLs), join through `scry.actors` and `scry.people`. See the scry skill's query-patterns reference.
 
 ## Composition Cheatsheet
 
@@ -374,24 +374,17 @@ Cosine distance (`<=>`) is already scale-invariant. You do not need to normalize
 
 **Produces:** Ranked entity list by semantic distance, stored @handle vectors
 **Feeds into:**
-- `rerank`: top semantic candidates for LLM quality ranking
-- `research-workflow`: semantic candidates for pipeline step 2 (embed) and step 3 (hybrid rank)
-- `scry-people-finder`: @handles for people-finding semantic search
+- `scry-rerank`: top semantic candidates for LLM quality ranking
 - `scry`: @handles referenced in SQL expressions (`embedding_voyage4 <=> @handle`)
 **Receives from:**
 - `scry`: entity IDs for hybrid search (lexical candidates re-ranked by embedding distance)
-- `research-workflow`: concept descriptions to embed as @handles
 
 ## Related Skills
 
 - [scry](../scry/SKILL.md) -- SQL-over-HTTPS corpus search; provides lexical candidates for hybrid search
-- [rerank](../rerank/SKILL.md) -- LLM-powered quality ranking of semantic candidates
-- [research-workflow](../research-workflow/SKILL.md) -- end-to-end pipeline orchestrator that chains embedding with search and rerank
+- [scry-rerank](../scry-rerank/SKILL.md) -- LLM-powered quality ranking of semantic candidates
 
 ## References
 
 - `references/embedding-models.md` -- model details, costs, when to use each
 - `references/algebra-patterns.md` -- advanced composition patterns and failure modes
-- `docs/scry_vector_debiasing_theory.md` -- mathematical foundations (projection geometry, signal loss cascade, R^2 interpretation)
-- `docs/scry_vibe_algebra_quality_report.md` -- empirical A/B evaluation of debiasing on real queries
-- `docs/scry.md` -- full Scry reference (endpoints, constraints, lexical search)

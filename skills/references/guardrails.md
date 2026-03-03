@@ -14,6 +14,8 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 | Rule | Detail |
 |------|--------|
 | Schema first | Call `GET /v1/scry/schema` before constructing any SQL |
+| Clarify vague asks | If user intent is ambiguous, ask one short clarification question before expensive queries |
+| Probe before scale | Run `/v1/scry/estimate` and a small `LIMIT` probe before broad scans |
 | LIMIT required | Every query must include a `LIMIT` clause (max governed by tier) |
 | Content-Type | `text/plain` for `/v1/scry/query`; `application/json` for all other endpoints |
 | No subquery existence | Use `EXISTS (SELECT 1 ... LIMIT 1)` or JOINs, never `id IN (SELECT ...)` |

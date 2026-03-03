@@ -40,6 +40,7 @@ The `Retry-After` header (seconds) is present on 429 responses.
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
 | `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Check key format (`exopriors_*` or `exopriors_public_*`) |
+| `unauthorized` | "Invalid authorization format" | Authorization header malformed (extra quotes, whitespace, or newline in env var) | Strip CR/LF from key, ensure exact `Authorization: Bearer <key>` |
 | `unauthorized` | "API key expired" | Key past 30-day expiry | Regenerate via `/api/scry/regenerate-key` or get new pass |
 
 ### 402 Payment Required
@@ -173,6 +174,10 @@ non-Scry work and 10 cores for burst headroom.
 5. Use `scry.search_ids()` instead of `scry.search()` for cheaper candidate fetch
 6. Run `/v1/scry/estimate` to check plan cost before retrying
 
+If curl prints HTTP `000`, that is usually a client timeout before the server
+responded (for example `--max-time` shorter than server timeout). Increase
+client timeout and/or estimate first.
+
 ### Rate Limit Fallback
 
 1. Read `Retry-After` header and wait that many seconds
@@ -208,6 +213,7 @@ entities in LLM-visible contexts.
 |---------|-------|-----|
 | JSON-wrapping the SQL body | Parse error | Use `Content-Type: text/plain` with raw SQL |
 | Missing LIMIT | "Query must include a LIMIT clause" | Add LIMIT |
+| API key from `.env` fails intermittently | 401 "Invalid authorization format" | Clean key with `KEY_CLEAN=\"$(printf '%s' \"$EXOPRIORS_KEY\" | tr -d '\\r\\n')\"` |
 | Using `kind = 'post'` without cast | Type mismatch | Use `kind = 'post'` (enum literal) or `kind::text = 'post'` |
 | Querying `pg_catalog` with public key | Forbidden | Use `GET /v1/scry/schema` |
 | Assuming all entities have embeddings | Empty results | Add `WHERE embedding_voyage4 IS NOT NULL` |

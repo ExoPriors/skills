@@ -60,6 +60,25 @@ ORDER BY original_timestamp DESC
 
 ## 2. Reddit Patterns
 
+### Fast subreddit discovery from lexical hits
+```sql
+WITH hits AS (
+  SELECT subreddit
+  FROM scry.search_reddit_posts(
+    'twink OR twinks',
+    limit_n=>500,
+    window_key=>'2022_2023'
+  )
+)
+SELECT subreddit, COUNT(*) AS hits
+FROM hits
+GROUP BY subreddit
+ORDER BY hits DESC
+LIMIT 30
+```
+
+Use this before expensive full-window `GROUP BY subreddit` scans.
+
 ### Search posts in specific subreddits
 ```sql
 SELECT id, uri, subreddit, title, original_author, original_timestamp, score
@@ -92,6 +111,15 @@ WHERE subreddit = 'MachineLearning'
   AND upvotes > 100
 ORDER BY original_timestamp DESC
 LIMIT 50
+```
+
+### Safe iterative loop for expensive searches
+```text
+1) Clarify target intent (exact keyword vs conceptual theme).
+2) Run /v1/scry/estimate for candidate SQL.
+3) Run a narrow probe (single window, LIMIT 20-50).
+4) Confirm relevance with the user.
+5) Expand windows/subreddits/limit only after confirmation.
 ```
 
 ---
@@ -161,23 +189,68 @@ LIMIT 50
 
 ### Cross-platform identity lookup
 ```sql
-SELECT p.display_name, a.source::text, a.author_name, a.author_key,
-       ap.entity_count
-FROM scry.mv_author_profiles ap
-JOIN scry.person_aliases a ON a.source = ap.source AND a.author_norm = ap.author_norm
-JOIN scry.people p ON p.id = a.person_id
-ORDER BY ap.entity_count DESC
+SELECT p.display_name, pa.source::text, pa.author_name, pa.handle,
+       pa.profile_url, pa.confidence
+FROM scry.people p
+JOIN scry.person_aliases pa ON pa.person_id = p.id
+WHERE p.display_name ILIKE '%eliezer%'
+ORDER BY pa.confidence DESC, pa.source
 LIMIT 50
+```
+
+### All content by a person across platforms
+```sql
+SELECT e.title, e.uri, e.source::text, e.kind::text,
+       e.original_timestamp, e.upvotes, a.handle
+FROM scry.entities e
+JOIN scry.actors a ON a.id = e.author_actor_id
+JOIN scry.person_aliases pa ON pa.actor_id = a.id
+WHERE pa.person_id = 'PERSON_UUID_HERE'
+  AND e.content_risk IS DISTINCT FROM 'dangerous'
+ORDER BY e.original_timestamp DESC
+LIMIT 200
+```
+
+### Check if two accounts are the same person
+```sql
+SELECT pa1.person_id, p.display_name,
+       pa1.source AS source_1, pa1.handle AS handle_1,
+       pa2.source AS source_2, pa2.handle AS handle_2
+FROM scry.person_aliases pa1
+JOIN scry.person_aliases pa2 ON pa2.person_id = pa1.person_id
+JOIN scry.people p ON p.id = pa1.person_id
+WHERE pa1.source = 'twitter' AND pa1.handle ILIKE 'ESYudkowsky'
+  AND pa2.source = 'lesswrong'
+LIMIT 10
 ```
 
 ### GitHub maintainer discovery
 ```sql
-SELECT github_login, max_repo_stars, unique_repo_count,
-       repo_issue_comment_count
+SELECT github_login, display_name, max_repo_stars,
+       unique_repo_count, repo_issue_comment_count
 FROM scry.github_people
 WHERE unique_repo_count >= 2
 ORDER BY max_repo_stars DESC, unique_repo_count DESC
 LIMIT 100
+```
+
+### Bridge GitHub identity to writing identity
+```sql
+WITH github_actor AS (
+  SELECT actor_id FROM scry.github_people WHERE github_login = 'gwern' LIMIT 1
+),
+linked_person AS (
+  SELECT pa.person_id FROM scry.person_aliases pa
+  JOIN github_actor ga ON ga.actor_id = pa.actor_id LIMIT 1
+)
+SELECT pa.source::text, pa.author_name, pa.handle, pa.profile_url,
+       ap.entity_count, ap.post_count
+FROM linked_person lp
+JOIN scry.person_aliases pa ON pa.person_id = lp.person_id
+LEFT JOIN scry.mv_author_profiles ap
+  ON ap.source = pa.source AND ap.author_norm = pa.author_norm
+ORDER BY ap.entity_count DESC NULLS LAST
+LIMIT 20
 ```
 
 ---
@@ -385,20 +458,59 @@ LIMIT 30
 SELECT * FROM scry.openalex_find_authors('hinton', 20)
 ```
 
-### Find works by title
+### Find works by title or DOI
 ```sql
 SELECT work_id, title, publication_year, cited_by_count, uri
 FROM scry.openalex_find_works('attention is all you need', 2017, 10)
 ```
 
-### Author profile with coauthors
 ```sql
-SELECT * FROM scry.openalex_author_profile('A5000005023')
+SELECT work_id, title, uri
+FROM scry.openalex_find_works('10.1038/nature14539', NULL, 5)
 ```
 
-### Coauthor network
+Metadata-only (no payload, lower latency):
 ```sql
-SELECT * FROM scry.openalex_author_coauthors('A5000005023', 2018, 25)
+SELECT * FROM scry.openalex_find_works_fast('deep reinforcement learning', 2020, 50)
+```
+
+### Author deep-dive workflow
+```sql
+SELECT * FROM scry.openalex_author_profile('A5000005023');
+SELECT work_id, title, publication_year, cited_by_count
+FROM scry.openalex_author_works('A5000005023', 2020, 30);
+SELECT * FROM scry.openalex_author_coauthors('A5000005023', 2020, 20);
+SELECT * FROM scry.openalex_author_citation_neighbors('A5000005023', 2018, 25);
+```
+
+### Institution researchers
+```sql
+SELECT * FROM scry.openalex_institution_authors('I13416579', 2022, 30)
+```
+
+### Concept cluster authors
+```sql
+SELECT * FROM scry.openalex_concept_authors('C199360897', 2020, 30)
+```
+
+### Direct SQL: works citing a paper
+```sql
+SELECT w.work_id, w.title, w.publication_year, w.cited_by_count
+FROM scry.openalex_work_references r
+JOIN scry.openalex_works w ON w.work_id = r.work_id
+WHERE r.referenced_work_id = 'W2741809807'
+ORDER BY w.cited_by_count DESC NULLS LAST
+LIMIT 50
+```
+
+### Semantic search over promoted papers
+```sql
+SELECT entity_id, title, original_author, openalex_id, doi,
+       embedding_voyage4 <=> @target AS distance
+FROM scry.mv_openalex_papers
+WHERE embedding_voyage4 IS NOT NULL
+ORDER BY distance
+LIMIT 50
 ```
 
 ---
@@ -458,6 +570,22 @@ curl -s -X POST https://api.exopriors.com/v1/scry/shares \
       "2023": 1420,
       "2024": 2983,
       "methodology": "COUNT WHERE primary_category LIKE cs.AI AND payload ILIKE alignment"
+    }
+  }'
+```
+
+### Create a markdown transcript share
+```bash
+curl -s -X POST https://api.exopriors.com/v1/scry/shares \
+  -H "Authorization: Bearer $EXOPRIORS_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "kind": "markdown",
+    "title": "Agent transcript: speculative decoding",
+    "summary": "Conversation summary with citations.",
+    "payload": {
+      "markdown": "# Agent transcript\n\n## User\nHow does speculative decoding work?\n\n## Assistant\n...",
+      "format": "markdown"
     }
   }'
 ```

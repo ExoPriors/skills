@@ -127,15 +127,33 @@ Relationship edges between entities (currently OffshoreLeaks).
 
 ## People / Identity Views
 
+Three layers of author resolution, bottom to top:
+
+1. **`scry.actors`** -- one row per platform account (`source` + `external_id` is unique). Content links here via `author_actor_id`.
+2. **`scry.person_aliases`** -- Bayesian-scored edges linking actors to canonical people records. Only surfaces links with probability >= 0.9. Join key to `mv_author_profiles`: `ON ap.source = pa.source AND ap.author_norm = pa.author_norm`.
+3. **`scry.people`** -- one row per real-world person (only those with >= 1 high-confidence actor link).
+
 | View | Description |
 |------|-------------|
 | `scry.actors` | Per-source account records |
 | `scry.people` | Cross-platform merged identities (high confidence) |
-| `scry.person_aliases` | Links people to source-specific author keys |
-| `scry.mv_author_profiles` | Author stats aggregated per source |
+| `scry.person_aliases` | Links people to source-specific author keys (columns: `person_id`, `actor_id`, `source`, `author_name`, `author_norm`, `author_key`, `handle`, `display_name`, `profile_url`, `external_id`, `link_method`, `confidence`) |
+| `scry.mv_author_profiles` | Author stats aggregated per source (threshold: >= 3 entities) |
 | `scry.mv_author_stats` | Author post counts and score aggregates |
-| `scry.github_people` | GitHub-specific maintainer aggregates |
+| `scry.github_people` | GitHub-specific maintainer aggregates (stars, repos, comments) |
 | `scry.github_person_repos` | GitHub person-to-repo mapping |
+
+**Identity confidence interpretation:**
+
+| Probability | Meaning |
+|-------------|---------|
+| >= 0.98 | Manual verification or self-declared link |
+| 0.90 - 0.98 | Strong automated evidence (handle match + profile link) |
+| < 0.90 | Below Scry threshold -- not surfaced in views |
+
+Common names produce false merges. When `display_name` is generic (e.g., "John Smith"), verify with secondary evidence (same bio, cross-linked profiles, overlapping topics).
+
+**Helper function:** `normalize_author_name(text)` -- lowercases, trims, collapses whitespace. Used by `mv_author_profiles` and `person_aliases` for stable joins.
 
 ---
 
@@ -167,6 +185,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 | `scry.mv_datasecretslox_posts` | Data Secrets Lox posts | Yes |
 | `scry.mv_marginalrevolution_posts` | Marginal Revolution posts | Yes |
 | `scry.mv_ethereum_posts` | Ethereum ecosystem posts | Yes |
+| `scry.mv_crypto_posts` | Crypto-focused posts | Yes |
 
 ### Cross-Source Aggregates
 
@@ -221,6 +240,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 | `scry.mv_posts_doc_embeddings` | Post entity_ids with doc-level embeddings |
 | `scry.mv_substantive_doc_embeddings` | Higher-quality doc embeddings (filtered) |
 | `scry.mv_twitter_doc_embeddings` | Twitter thread doc embeddings |
+| `scry.mv_embedding_atlas_lw_posts` | LessWrong posts prepared for embedding-atlas analysis |
 
 ### Reddit Windowed Views
 
@@ -246,16 +266,32 @@ Comment equivalents follow the same naming: `scry.mv_reddit_comments_*`.
 
 ### OpenAlex Views
 
+230M+ scholarly works mirrored from the OpenAlex graph. Five node types connected by junction tables:
+Authors --[authorships]--> Works --[references]--> Works, with Institutions and Concepts linked via junction tables.
+
 | View | Description |
 |------|-------------|
-| `scry.openalex_works` | OpenAlex work records |
-| `scry.openalex_authors` | OpenAlex author records |
-| `scry.openalex_institutions` | Institutions |
-| `scry.openalex_concepts` | Concepts/topics |
-| `scry.openalex_work_authorships` | Work-to-author links |
-| `scry.openalex_work_institutions` | Work-to-institution links |
-| `scry.openalex_work_references` | Citation references |
-| `scry.openalex_work_concepts` | Work-to-concept links |
+| `scry.openalex_works` | All works with payload, entity linkage |
+| `scry.openalex_authors` | Author records with ORCID |
+| `scry.openalex_institutions` | Institutions with country, type, ROR |
+| `scry.openalex_concepts` | Concept taxonomy with hierarchy level |
+| `scry.openalex_work_authorships` | Work-author links with position, affiliation |
+| `scry.openalex_work_institutions` | Work-institution links |
+| `scry.openalex_work_references` | Citation edges (work cites work) |
+| `scry.openalex_work_concepts` | Work-concept tags with relevance scores |
+
+**OpenAlex ID formats:**
+
+| Entity | Prefix | Example | Lookup |
+|--------|--------|---------|--------|
+| Author | `A` | `A5000005023` | `https://openalex.org/A5000005023` |
+| Work | `W` | `W2741809807` | `https://openalex.org/W2741809807` |
+| Institution | `I` | `I13416579` | `https://openalex.org/I13416579` |
+| Concept | `C` | `C199360897` | `https://openalex.org/C199360897` |
+
+**Well-known institution IDs:** MIT `I13416579`, Harvard `I136199984`, Stanford `I27837315`, Oxford `I205783295`, Google `I40120149`.
+
+**Well-known concept IDs:** Machine Learning `C199360897`, AI `C41008148`, Deep Learning `C154945302`, Computer Science `C119857082`, Biology `C86803240`, Mathematics `C33923547`.
 
 ### Patent Views
 
@@ -325,13 +361,18 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
 
 | Function | Description | Max limit |
 |----------|-------------|-----------|
-| `scry.search(query, kinds, limit_n)` | BM25 lexical search with result details | 100 |
+| `scry.search(query_text, mode, kinds, limit_n)` | BM25 lexical search with result details | 100 |
 | `scry.search_ids(query, mode, kinds, limit_n)` | IDs-only lexical search (cheaper) | 2000 |
 | `scry.search_reddit_posts(query, subreddits, limit_n, window_key)` | Reddit post search | 50 per window |
 | `scry.search_reddit_comments(query, subreddits, limit_n, window_key)` | Reddit comment search | 50 per window |
-| `scry.search_exhaustive(query, kinds, limit_n, offset_n)` | Higher-cap paginated search | 500 |
+| `scry.search_exhaustive(query_text, mode, kinds, limit_n, offset_n)` | Higher-cap paginated search | 1000 |
 | `scry.hybrid_search(query, query_vector, kinds, limit_n)` | Lexical + semantic rerank | 100 |
 | `scry.author_topics(author_pattern, topics)` | Per-author topic hit counts | -- |
+| `scry.preview_text(input, max_chars)` | Safe payload prefix helper | -- |
+| `scry.preview_text_safe(input, max_chars)` | Exception-safe payload prefix helper | -- |
+
+Default kinds for omitted `kinds`: `post`, `paper`, `document`, `webpage`, `twitter_thread`, `grant`.
+`scry.search()` broadens once to `comment` if that default returns 0 rows.
 
 ### OpenAlex Helper Functions
 
@@ -340,6 +381,7 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
 | `scry.openalex_find_authors(query, limit)` | Fuzzy author search |
 | `scry.openalex_find_works(query, min_year, limit)` | Work title/DOI search |
 | `scry.openalex_find_works_fast(query, min_year, limit)` | Metadata-only work search |
+| `scry.openalex_author_works(author_id, min_year, limit)` | Works authored by a specific OpenAlex author |
 | `scry.openalex_author_profile(author_id)` | Single author profile |
 | `scry.openalex_institution_authors(inst_id, min_year, limit)` | Authors at institution |
 | `scry.openalex_concept_authors(concept_id, min_year, limit)` | Authors by concept |

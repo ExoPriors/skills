@@ -1,14 +1,13 @@
 ---
-name: rerank
+name: scry-rerank
 description: >
   LLM-powered multi-attribute reranking of candidate sets via pairwise comparison.
   Supports canonical attributes (clarity, technical_depth, insight), custom prompts,
   model tier selection, and TopK configuration. Use when the task involves: rerank,
   rank by clarity, rank by insight, rank by depth, best items, quality tier, LLM
   judge, pairwise comparison, multi-attribute rank, rerank from sql or list. NOT for:
-  simple SQL sorting (ORDER BY date/upvotes/score -- use scry), semantic search or
-  embedding algebra (use vector-composition), or people identity resolution (use
-  people-graph).
+  simple SQL sorting (ORDER BY date/upvotes/score -- use scry), or semantic search
+  and embedding algebra (use scry-vectors).
 ---
 
 # Rerank
@@ -445,17 +444,14 @@ For explicit persistence control, use the `persist` field:
 **Feeds into:**
 - `scry` shares: rerank results feed `POST /v1/scry/shares` with `kind: "rerank"`
 - `scry` judgements: record findings via `POST /v1/scry/judgements`
-- `research-workflow`: reranked top-k results for pipeline step 4
 **Receives from:**
 - `scry`: SQL candidate sets (must include `id` + `payload` columns)
-- `vector-composition`: semantically ranked candidates as input to quality reranking
-- `research-workflow`: candidate sets from pipeline step 2
+- `scry-vectors`: semantically ranked candidates as input to quality reranking
 
 ## Related Skills
 
 - [scry](../scry/SKILL.md) -- SQL-over-HTTPS corpus search; generates candidate sets for reranking
-- [vector-composition](../vector-composition/SKILL.md) -- semantic pre-filtering before LLM reranking
-- [research-workflow](../research-workflow/SKILL.md) -- end-to-end pipeline orchestrator that chains rerank with search and share
+- [scry-vectors](../scry-vectors/SKILL.md) -- semantic pre-filtering before LLM reranking
 
 ## Reference files
 
