@@ -30,14 +30,18 @@ Cost scales with `comparisons x model_tier`. A typical 100-entity, 2-attribute r
 
 ## Setup
 
-1. Get a private API key at `https://exopriors.com/scry` (rerank requires private keys).
-2. Set `EXOPRIORS_API_KEY` to your key.
+1. Get a private API key at `https://scry.io` (rerank requires private keys).
+2. Set `SCRY_API_KEY` to your key (`scry_*` format; not `scry_public_*`).
 3. Optional: set `EXOPRIORS_API_BASE` (defaults to `https://api.exopriors.com`).
+
+Canonical key naming:
+- Env var: `SCRY_API_KEY`
+- Required key format for rerank: `scry_*` (private)
 
 Smoke test:
 ```bash
 curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "sql": "SELECT id, payload FROM scry.entities WHERE kind='\''post'\'' AND source='\''lesswrong'\'' ORDER BY created_at DESC LIMIT 10",
@@ -63,7 +67,7 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 ### POST /v1/scry/rerank
 
 Base URL: `https://api.exopriors.com`
-Auth: `Authorization: Bearer $EXOPRIORS_API_KEY`
+Auth: `Authorization: Bearer $SCRY_API_KEY`
 
 Two input modes: SQL or cached list.
 
@@ -224,7 +228,7 @@ Find the clearest recent LessWrong posts:
 
 ```bash
 curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "sql": "SELECT id, payload FROM scry.entities WHERE kind='\''post'\'' AND source='\''lesswrong'\'' AND original_timestamp > now() - interval '\''30 days'\'' AND content_risk IS DISTINCT FROM '\''dangerous'\'' ORDER BY score DESC NULLS LAST LIMIT 50",
@@ -254,7 +258,7 @@ cat > /tmp/rerank_req.json <<'JSON'
 JSON
 
 curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d @/tmp/rerank_req.json
 ```
@@ -393,19 +397,19 @@ For large jobs, use the raw `/v1/rerank/multi` endpoint with `"async": true`:
 ```bash
 # Submit
 curl -s https://api.exopriors.com/v1/rerank/multi \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -H "Idempotency-Key: my-unique-key" \
   -d '{"entities":[...],"attributes":[...],"topk":{"k":10},"async":true}'
 
 # Poll
 curl -s https://api.exopriors.com/v1/rerank/operations/OPERATION_ID \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "If-None-Match: ETAG_FROM_LAST_POLL"
 
 # Cancel
 curl -s -X DELETE https://api.exopriors.com/v1/rerank/operations/OPERATION_ID \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY"
+  -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
 Async mode uses lease-based execution with heartbeat. Cancelled operations charge only for work completed.

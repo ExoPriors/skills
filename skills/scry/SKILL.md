@@ -82,29 +82,34 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 
 ### B.1 API Key Setup (Canonical)
 
-Recommended default for less-technical users: store `EXOPRIORS_API_KEY` once in your shell profile so all agent chats can reuse it.
+Recommended default for less-technical users: store `SCRY_API_KEY` once in your shell profile so all agent chats can reuse it.
+Canonical key naming for this skill:
+- Env var: `SCRY_API_KEY`
+- Private key format: `scry_*`
+- Public key format: `scry_public_*`
+- Do not use `EXOPRIORS_API_KEY` here.
 
 ```bash
 # zsh
-echo 'export EXOPRIORS_API_KEY="exopriors_..."' >> ~/.zshrc
+echo 'export SCRY_API_KEY="scry_..."' >> ~/.zshrc
 source ~/.zshrc
 ```
 
 ```bash
 # bash
-echo 'export EXOPRIORS_API_KEY="exopriors_..."' >> ~/.bashrc
+echo 'export SCRY_API_KEY="scry_..."' >> ~/.bashrc
 source ~/.bashrc
 ```
 
 Project-local alternative (if you prefer per-project secrets):
 ```bash
-echo 'EXOPRIORS_API_KEY=exopriors_...' >> .env
+echo 'SCRY_API_KEY=scry_...' >> .env
 set -a && source .env && set +a
 ```
 
 Verify:
 ```bash
-echo "$EXOPRIORS_API_KEY"
+echo "$SCRY_API_KEY"
 ```
 
 If using packaged skills, keep them current:
@@ -120,15 +125,15 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 ```
 Step 1: Get dynamic context + update advisory
 GET https://api.exopriors.com/v1/scry/context?skill_generation=20260304
-Authorization: Bearer $EXOPRIORS_API_KEY
+Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
 GET https://api.exopriors.com/v1/scry/schema
-Authorization: Bearer $EXOPRIORS_API_KEY
+Authorization: Bearer $SCRY_API_KEY
 
 Step 3: Run query
 POST https://api.exopriors.com/v1/scry/query
-Authorization: Bearer $EXOPRIORS_API_KEY
+Authorization: Bearer $SCRY_API_KEY
 Content-Type: text/plain
 
 WITH hits AS (
@@ -192,7 +197,7 @@ User wants to search the ExoPriors corpus?
 
 ```bash
 curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260304" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY"
+  -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
 If response includes `"should_update_skill": true`, ask the user to run:
@@ -292,7 +297,7 @@ skill for creating handles.
 
 ```bash
 curl -s -X POST https://api.exopriors.com/v1/scry/estimate \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"sql": "SELECT id, title FROM scry.mv_arxiv_papers LIMIT 1000"}'
 ```
@@ -305,7 +310,7 @@ Returns EXPLAIN (FORMAT JSON) output. Use this for expensive queries before comm
 # 1. Run query and capture results
 # 2. POST share
 curl -s -X POST https://api.exopriors.com/v1/scry/shares \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "kind": "query",
@@ -320,13 +325,13 @@ curl -s -X POST https://api.exopriors.com/v1/scry/shares \
 
 Kinds: `query`, `rerank`, `insight`, `chat`, `markdown`.
 Progressive update: create stub immediately, then `PATCH /v1/scry/shares/{slug}`.
-Rendered at: `https://exopriors.com/scry/share/{slug}`.
+Rendered at: `https://scry.io/scry/share/{slug}`.
 
 ### E9. Emit a structured agent judgement
 
 ```bash
 curl -s -X POST https://api.exopriors.com/v1/scry/judgements \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "emitter": "my-agent",
@@ -398,7 +403,7 @@ See `references/error-reference.md` for the full catalogue. Key patterns:
 **Auth + timeout diagnostics for CLI users:**
 1. If curl shows HTTP `000`, that is client-side timeout/network abort, not a server HTTP status. Check `--max-time` and retry with `/v1/scry/estimate` first.
 2. If you see `401` with `"Invalid authorization format"`, check for whitespace/newlines in the key:
-   `KEY_CLEAN="$(printf '%s' \"$EXOPRIORS_API_KEY\" | tr -d '\\r\\n')"`
+   `KEY_CLEAN="$(printf '%s' \"$SCRY_API_KEY\" | tr -d '\\r\\n')"`
    then use `Authorization: Bearer $KEY_CLEAN`.
 
 **Quota fallback strategy:**
