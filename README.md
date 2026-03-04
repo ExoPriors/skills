@@ -1,6 +1,6 @@
 # ExoPriors Agent Skills
 
-Agent skills for [Scry](https://exopriors.com/scry) — read-only SQL + semantic search over 240M+ entities (papers, posts, code, legal docs, predictions, and more).
+Agent skills for [Scry](https://scry.io) — read-only SQL + semantic search over 240M+ entities (papers, posts, code, legal docs, predictions, and more).
 
 Works with Claude Code, Cursor, Codex, Gemini CLI, and [40+ other agents](https://github.com/vercel-labs/skills).
 
@@ -26,14 +26,14 @@ npx skills add exopriors/skills --skill scry-rerank
 
 ## Quick Start
 
-Get a Scry API key at [exopriors.com/scry](https://exopriors.com/scry), then:
+Get a Scry API key at [scry.io](https://scry.io), then:
 
 ```bash
-export EXOPRIORS_API_KEY=exopriors_...
+export SCRY_API_KEY=scry_...
 
 # Your agent can now query 240M+ entities
 curl -s https://api.exopriors.com/v1/scry/query \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: text/plain" \
   --data "SELECT title, uri, source FROM scry.entities WHERE kind = 'paper' ORDER BY original_timestamp DESC LIMIT 5"
 ```
