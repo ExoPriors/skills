@@ -60,26 +60,48 @@ ORDER BY original_timestamp DESC
 
 ## 2. Reddit Patterns
 
-### Fast subreddit discovery from lexical hits
+Reddit data lives in separate windowed tables (not `scry.entities`). Uses TEXT IDs
+(`t1_` comments, `t3_` posts) and does not join to UUID entities.
+
+**Primary query surfaces** (always prefer these over raw `scry.reddit`):
+- `scry.reddit_posts` — union of all 7 post time windows (indexed)
+- `scry.reddit_comments` — union of all 7 comment time windows (indexed)
+- `scry.reddit` — union of both (still large; always filter by subreddit)
+
+**IMPORTANT**: Always filter by subreddit or use search functions. Unfiltered
+queries against `scry.reddit` scan billions of rows.
+
+### Discover available subreddits
 ```sql
-WITH hits AS (
-  SELECT subreddit
-  FROM scry.search_reddit_posts(
-    'twink OR twinks',
-    limit_n=>500,
-    window_key=>'2022_2023'
-  )
-)
-SELECT subreddit, COUNT(*) AS hits
-FROM hits
-GROUP BY subreddit
-ORDER BY hits DESC
-LIMIT 30
+-- Find subreddits matching a pattern (ILIKE, % = wildcard)
+SELECT * FROM scry.reddit_subreddits('%machine%learn%')
+
+-- Top subreddits by total activity
+SELECT * FROM scry.reddit_subreddits(min_total=>1000000, limit_n=>20)
 ```
 
-Use this before expensive full-window `GROUP BY subreddit` scans.
+### Direct query — posts by subreddit (fast, index-backed)
+```sql
+SELECT id, uri, title, upvotes, comment_count, original_timestamp
+FROM scry.reddit_posts
+WHERE subreddit = 'MachineLearning'
+  AND upvotes > 100
+ORDER BY original_timestamp DESC
+LIMIT 50
+```
 
-### Search posts in specific subreddits
+### Direct query — comments by subreddit
+```sql
+SELECT id, uri, original_author, upvotes, original_timestamp,
+       LEFT(payload, 200) AS preview
+FROM scry.reddit_comments
+WHERE subreddit = 'LocalLLaMA'
+  AND original_timestamp >= '2024-01-01'
+ORDER BY upvotes DESC NULLS LAST
+LIMIT 50
+```
+
+### BM25 search — posts
 ```sql
 SELECT id, uri, subreddit, title, original_author, original_timestamp, score
 FROM scry.search_reddit_posts(
@@ -89,6 +111,38 @@ FROM scry.search_reddit_posts(
   window_key=>'recent'
 )
 ORDER BY score DESC NULLS LAST
+```
+
+Window keys: `recent`, `2022_2023`, `2020_2021`, `2018_2019`, `2014_2017`,
+`2010_2013`, `2005_2009`, `all`.
+
+### BM25 search — comments
+```sql
+SELECT id, uri, subreddit, original_author, original_timestamp
+FROM scry.search_reddit_comments(
+  'loss spikes during training',
+  subreddits=>ARRAY['MachineLearning'],
+  limit_n=>50,
+  window_key=>'recent'
+)
+ORDER BY score DESC NULLS LAST
+```
+
+### Fast subreddit discovery from lexical hits
+```sql
+WITH hits AS (
+  SELECT subreddit
+  FROM scry.search_reddit_posts(
+    'mechanistic interpretability',
+    limit_n=>500,
+    window_key=>'all'
+  )
+)
+SELECT subreddit, COUNT(*) AS hits
+FROM hits
+GROUP BY subreddit
+ORDER BY hits DESC
+LIMIT 30
 ```
 
 ### Semantic search over embedded Reddit subset
@@ -104,37 +158,27 @@ FROM scry.search_reddit_posts_semantic(
 ORDER BY distance ASC
 ```
 
-Use this when lexical keyword search misses conceptually similar posts.
-
-### Search comments
+### Retrieve a full thread (post + replies)
 ```sql
-SELECT id, uri, subreddit, original_author, original_timestamp
-FROM scry.search_reddit_comments(
-  'loss spikes during training',
-  subreddits=>ARRAY['MachineLearning'],
-  limit_n=>50,
-  window_key=>'2022_2023'
-)
-ORDER BY score DESC NULLS LAST
+SELECT * FROM scry.reddit_thread('t3_abc123', max_depth=>10, max_comments=>200)
 ```
 
-### Direct Reddit view query (no BM25)
+### Subreddit activity over time
 ```sql
-SELECT id, uri, subreddit, title, upvotes, comment_count, original_timestamp
-FROM scry.mv_reddit_posts_recent
+SELECT month, post_count, comment_count, active_authors
+FROM scry.reddit_subreddit_stats_monthly
 WHERE subreddit = 'MachineLearning'
-  AND upvotes > 100
-ORDER BY original_timestamp DESC
-LIMIT 50
+ORDER BY month DESC
+LIMIT 24
 ```
 
 ### Safe iterative loop for expensive searches
 ```text
-1) Clarify target intent (exact keyword vs conceptual theme).
+1) Discover subreddits: SELECT * FROM scry.reddit_subreddits('%topic%')
 2) Run /v1/scry/estimate for candidate SQL.
-3) Run a narrow probe (single window, LIMIT 20-50).
-4) Confirm relevance with the user.
-5) Expand windows/subreddits/limit only after confirmation.
+3) Narrow probe (single subreddit + window, LIMIT 20-50).
+4) Confirm relevance.
+5) Expand scope only after confirmation.
 ```
 
 ---

@@ -22,7 +22,7 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `20260303`
+**Skill generation**: `20260304`
 
 ## A) When to use / not use
 
@@ -43,7 +43,7 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=20260303`.
+   `GET /v1/scry/context?skill_generation=20260304`.
    If `should_update_skill=true`, tell the user to run `npx skills update`.
 
 2. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
@@ -119,7 +119,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.exopriors.com/v1/scry/context?skill_generation=20260303
+GET https://api.exopriors.com/v1/scry/context?skill_generation=20260304
 Authorization: Bearer $EXOPRIORS_API_KEY
 
 Step 2: Get schema
@@ -191,7 +191,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260303" \
+curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260304" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY"
 ```
 

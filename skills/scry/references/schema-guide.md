@@ -79,33 +79,60 @@ Author/account records across all sources.
 | metadata | JSONB | Source-specific fields |
 | created_at | TIMESTAMPTZ | When ingested |
 
-### scry.reddit
+### scry.reddit_posts / scry.reddit_comments
 
-Reddit-specific view with native Reddit fields.
+**Primary query surfaces for Reddit.** Union views over all 7 indexed time-windowed
+tables. Always prefer these over `scry.reddit` when querying only posts or comments.
+
+Each windowed table has B-tree indexes on `(subreddit, original_timestamp)`,
+`upvotes`, `original_author`, `domain`, plus BM25 full-text indexes. Queries
+filtering by subreddit or author hit these indexes directly.
 
 | Column | Type | Notes |
 |--------|------|-------|
 | id | TEXT | Reddit full ID (`t1_` or `t3_`) |
 | reddit_id | TEXT | Base36 ID without prefix |
 | kind | entity_kind | `post` or `comment` |
-| subreddit | TEXT | Subreddit name |
+| subreddit | TEXT | Subreddit name (indexed) |
 | uri | TEXT | Permalink |
 | payload | TEXT | Body/selftext (50K truncated) |
 | title | TEXT | Post title (NULL for comments) |
-| upvotes | INT | Score (can be negative) |
+| upvotes | INT | Score (can be negative, indexed) |
 | score | INT | Coalesced |
 | comment_count | INT | Post comment count |
-| original_author | TEXT | Handle (NULL if deleted) |
-| original_timestamp | TIMESTAMPTZ | Creation time |
+| original_author | TEXT | Handle (NULL if deleted, indexed) |
+| original_timestamp | TIMESTAMPTZ | Creation time (indexed with subreddit) |
 | link_full_id | TEXT | Parent post for comments |
 | parent_full_id | TEXT | Parent comment or post |
 | over_18 | BOOL | NSFW flag |
 | is_self | BOOL | Self post flag |
-| domain | TEXT | Link domain |
+| domain | TEXT | Link domain (indexed) |
 | source_set | TEXT | `full` or `subreddits24` |
 | source_file | TEXT | Source filename |
 | metadata | JSONB | Moderation flags, flair, etc. |
 | created_at | TIMESTAMPTZ | Ingest time |
+
+### scry.reddit
+
+Union of `scry.reddit_posts` and `scry.reddit_comments`. Same columns. **Always
+filter by subreddit** — unfiltered queries scan billions of rows.
+
+### scry.reddit_subreddits(pattern, min_total, limit_n)
+
+Discover available subreddits. `pattern` uses SQL ILIKE (`%` = wildcard). Returns
+subreddit, post_count, comment_count, total_count, earliest, latest, active_authors.
+
+### scry.reddit_subreddit_stats / scry.reddit_subreddit_stats_monthly
+
+Aggregated subreddit activity counts and monthly time series.
+
+### scry.reddit_author_stats
+
+Aggregated per-author activity across all time windows.
+
+### scry.reddit_domain_stats
+
+Top domains shared on Reddit (materialized view).
 
 ### scry.reddit_embeddings
 
