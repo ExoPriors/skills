@@ -134,6 +134,49 @@ Aggregated per-author activity across all time windows.
 
 Top domains shared on Reddit (materialized view).
 
+### Thematic Cluster Views
+
+Pre-filtered views for common research topics. Each covers 3-22 curated subreddits:
+
+| View | Cluster | Example subreddits |
+|------|---------|--------------------|
+| `scry.reddit_ai` | AI/ML | MachineLearning, LocalLLaMA, ChatGPT, OpenAI, singularity |
+| `scry.reddit_science` | Science | science, askscience, Physics, biology, space |
+| `scry.reddit_rationality` | Rationality/EA | slatestarcodex, EffectiveAltruism, LessWrong, Futurology |
+| `scry.reddit_economics` | Economics/Finance | economics, wallstreetbets, investing, CryptoCurrency |
+| `scry.reddit_law` | Law/Policy | law, scotus, geopolitics, PoliticalDiscussion |
+| `scry.reddit_tech` | Tech/Programming | programming, rust, Python, netsec, ExperiencedDevs |
+| `scry.reddit_health` | Health/Medicine | medicine, Nootropics, longevity, publichealth |
+| `scry.reddit_history` | History | history, AskHistorians, badhistory |
+| `scry.reddit_climate` | Climate/Energy | climate, energy, nuclear, collapse, sustainability |
+| `scry.reddit_philosophy` | Philosophy/CogSci | philosophy, psychology, cogsci, linguistics |
+| `scry.reddit_culture` | Culture/Ideas | books, TrueFilm, TrueReddit, DepthHub |
+| `scry.reddit_education` | Education/Academia | Teachers, AskAcademia, Professors, GradSchool |
+| `scry.reddit_politics` | Political Analysis | worldnews, moderatepolitics, anime_titties |
+| `scry.reddit_business` | Business/Startups | Entrepreneur, smallbusiness, venturecapital |
+| `scry.reddit_math` | Mathematics/Stats | math, statistics, dataisbeautiful, datasets |
+| `scry.reddit_defense` | Defense/OSINT | CredibleDefense, WarCollege, Military, OSINT |
+| `scry.reddit_gaming` | Game Dev/Discussion | Games, pcgaming, gamedev, truegaming |
+| `scry.reddit_urban` | Urban Planning | urbanplanning, fuckcars, transit |
+| `scry.reddit_food` | Food/Nutrition | Cooking, nutrition, AskCulinary, farming |
+
+Discover all clusters and their members: `SELECT * FROM scry.reddit_clusters()`.
+
+### scry.reddit_thread(post_id, max_depth, limit_n)
+
+Returns the full comment tree for a Reddit post as a flat table with depth column.
+Uses recursive CTE on `parent_full_id` chains. Requires `link_full_id` index.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| id | TEXT | Comment ID |
+| depth | INT | 0 = top-level reply, 1+ = nested |
+| parent_id | TEXT | Direct parent (post ID or comment ID) |
+| author | TEXT | Username |
+| score | INT | Upvotes |
+| posted | TIMESTAMPTZ | Comment timestamp |
+| body | TEXT | Comment text (capped at 4000 chars) |
+
 ### scry.reddit_embeddings
 
 Semantic vectors for the embedding-covered Reddit subset (partial corpus coverage by design).

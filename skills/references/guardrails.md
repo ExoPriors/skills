@@ -23,7 +23,7 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 
 ## 3. Tier Limits
 
-| Capability | Public (`exopriors_public_*`) | Private (`exopriors_*`) |
+| Capability | Public (`scry_public_*`) | Private (`exopriors_*` with Scry access) |
 |---|---|---|
 | Max rows per query | 2,000 | 10,000 |
 | Max rows with vectors | 200 | 500 |

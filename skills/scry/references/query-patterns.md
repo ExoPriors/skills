@@ -71,6 +71,24 @@ Reddit data lives in separate windowed tables (not `scry.entities`). Uses TEXT I
 **IMPORTANT**: Always filter by subreddit or use search functions. Unfiltered
 queries against `scry.reddit` scan billions of rows.
 
+### Thematic cluster views (best starting point)
+```sql
+-- Pre-built clusters for common research topics:
+-- scry.reddit_ai, scry.reddit_science, scry.reddit_rationality,
+-- scry.reddit_economics, scry.reddit_law, scry.reddit_tech,
+-- scry.reddit_health, scry.reddit_history, scry.reddit_climate,
+-- scry.reddit_philosophy, scry.reddit_culture
+
+-- Top AI posts this year
+SELECT id, subreddit, title, score, original_timestamp
+FROM scry.reddit_ai
+WHERE kind = 'post' AND original_timestamp > '2025-01-01'
+ORDER BY score DESC NULLS LAST LIMIT 20
+
+-- List all clusters and their subreddits
+SELECT * FROM scry.reddit_clusters()
+```
+
 ### Discover available subreddits
 ```sql
 -- Find subreddits matching a pattern (ILIKE, % = wildcard)
@@ -160,7 +178,14 @@ ORDER BY distance ASC
 
 ### Retrieve a full thread (post + replies)
 ```sql
-SELECT * FROM scry.reddit_thread('t3_abc123', max_depth=>10, max_comments=>200)
+-- Get comment tree with depth, author, score
+SELECT * FROM scry.reddit_thread('t3_abc123', max_depth=>10, limit_n=>200)
+
+-- Find the post first, then get its thread
+SELECT id, title, score FROM scry.reddit_ai
+WHERE kind = 'post' AND title ILIKE '%mechanistic interp%'
+ORDER BY score DESC LIMIT 5;
+-- Then: SELECT * FROM scry.reddit_thread('t3_...id from above...')
 ```
 
 ### Subreddit activity over time

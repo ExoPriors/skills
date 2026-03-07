@@ -39,7 +39,7 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Check key format (`exopriors_*` or `exopriors_public_*`) |
+| `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Check key format (`exopriors_*` or `scry_public_*`) and ensure the private key has Scry access |
 | `unauthorized` | "Invalid authorization format" | Authorization header malformed (extra quotes, whitespace, or newline in env var) | Strip CR/LF from key, ensure exact `Authorization: Bearer <key>` |
 | `unauthorized` | "API key expired" | Key past 30-day expiry | Regenerate via `/api/scry/regenerate-key` or get new pass |
 
@@ -48,13 +48,13 @@ The `Retry-After` header (seconds) is present on 429 responses.
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
 | `insufficient_credits` | "Embedding token budget exhausted" | 1.5M token budget used up | Notify user; budget resets with new pass |
-| `subscription_required` | "Active Scry pass required" | Feature requires paid pass | Purchase day/week/month pass at exopriors.com/scry |
+| `subscription_required` | "Active Scry pass required" | Feature requires paid pass | Purchase day/week/month pass at scry.io |
 
 ### 403 Forbidden
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `forbidden` | "Public keys cannot..." | Public key used for private-only feature (vectors, alerts, rerank) | Use private key (`exopriors_*`) |
+| `forbidden` | "Public keys cannot..." | Public key used for private-only feature (vectors, alerts, rerank) | Use a private key with Scry access (`exopriors_*`) |
 | `forbidden` | "Postgres introspection blocked" | Public key querying `pg_*` catalogs, `current_setting()`, `version()`, etc. | Use `GET /v1/scry/schema` instead |
 | `forbidden` | "Only the share owner can update" | PATCH on share you don't own | Use the key that created the share |
 

@@ -39,24 +39,24 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 ```bash
 # Smoke test
 curl -s "https://api.exopriors.com/v1/scry/query" \
-  -H "Authorization: Bearer $SCRY_API_KEY" \
+  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: text/plain" \
   --data-binary "SELECT 1 AS ok LIMIT 1"
 ```
 
 Canonical key naming:
-- Env var: `SCRY_API_KEY`
-- Private key format: `scry_*`
+- Env var: `EXOPRIORS_API_KEY`
+- Private key format: `exopriors_*` with Scry access
 - Public key format: `scry_public_*`
 
 Public key: `scry_public_readonly_v1_2026` (shared namespace, 200-row vector cap, write-once handles).
-Private keys: get one at `https://scry.io` (500-row vector cap, overwritable handles, 1.5M token embed budget per 30 days).
+Private keys: create one in Console with Scry access (500-row vector cap, overwritable handles, 1.5M token embed budget per 30 days).
 
 ## Recipe 1: Embed a Concept
 
 ```bash
 curl -s "https://api.exopriors.com/v1/scry/embed" \
-  -H "Authorization: Bearer $SCRY_API_KEY" \
+  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "my_concept",
