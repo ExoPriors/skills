@@ -15,7 +15,7 @@ The main content view. 229M+ rows. Filter aggressively.
 | id | UUID | Primary key |
 | kind | entity_kind | `post`, `comment`, `paper`, `tweet`, `twitter_thread`, `text`, `webpage`, `document`, `grant`, `prediction_market`, `book`, `podcast_episode`. Cast with `kind::text` in GROUP BY. |
 | uri | TEXT | Canonical URL |
-| payload | TEXT | Full text content, truncated to 50K chars |
+| content_text | TEXT | Canonical human-readable content, truncated to 50K chars |
 | title | TEXT | Title when available. NULL for many comments, tweets, some sources. |
 | upvotes | INT | Raw upvote/score value from source (sparse) |
 | score | INT | COALESCE of upvotes/baseScore/score/likes. Still sparse for sources without votes. For fast sorting prefer `upvotes` directly. |
@@ -38,7 +38,8 @@ The main content view. 229M+ rows. Filter aggressively.
 `github_skills`, `astralcodexten`, `offshoreleaks`, `biorxiv`, `sec_edgar`,
 `nih_reporter`, `federal_register`, `openalex`, `europepmc`, `inspire_hep`,
 `congress`, `nsf_awards`, `nvd`, `ecfr`, `crs`, `nasa_ntrs`, `hal`, `osti`,
-`zenodo`, `datacite`, `npm`, `polymarket`, `kalshi`, `mailing_list`.
+`zenodo`, `datacite`, `npm`, `polymarket`, `kalshi`, `mailing_list`,
+`musingsandroughdrafts`.
 
 ### scry.embeddings
 
@@ -223,15 +224,17 @@ Relationship edges between entities (currently OffshoreLeaks).
 Three layers of author resolution, bottom to top:
 
 1. **`scry.actors`** -- one row per platform account (`source` + `external_id` is unique). Content links here via `author_actor_id`.
-2. **`scry.person_aliases`** -- Bayesian-scored edges linking actors to canonical people records. Only surfaces links with probability >= 0.9. Join key to `mv_author_profiles`: `ON ap.source = pa.source AND ap.author_norm = pa.author_norm`.
-3. **`scry.people`** -- one row per real-world person (only those with >= 1 high-confidence actor link).
+2. **`scry.person_accounts`** -- accepted public actor-to-person edges. One row per linked public account with confidence, link method, and activity counts.
+3. **`scry.people`** -- one row per real-world person (only those with >= 1 high-confidence actor link), including `actor_count` and `entity_count`.
+4. **`scry.person_aliases`** -- alias helper derived from accepted links (`handle` + `display_name` normalized forms). Useful for loose text lookup, not the primary canonical join path.
 
 | View | Description |
 |------|-------------|
 | `scry.actors` | Per-source account records |
-| `scry.people` | Cross-platform merged identities (high confidence) |
-| `scry.person_aliases` | Links people to source-specific author keys (columns: `person_id`, `actor_id`, `source`, `author_name`, `author_norm`, `author_key`, `handle`, `display_name`, `profile_url`, `external_id`, `link_method`, `confidence`) |
-| `scry.mv_author_profiles` | Author stats aggregated per source (threshold: >= 3 entities) |
+| `scry.people` | Cross-platform merged identities (high confidence) with public counts |
+| `scry.person_accounts` | Canonical public person-account edges (columns: `person_id`, `actor_id`, `source`, `external_id`, `handle`, `display_name`, `profile_url`, `link_method`, `confidence`, `entity_count`, `post_count`, `comment_count`, `first_activity`, `last_activity`) |
+| `scry.person_aliases` | Alias forms derived from accepted person-account links |
+| `scry.mv_author_profiles` | Per-source author stats aggregated from entity rows (threshold: >= 3 entities) |
 | `scry.mv_author_stats` | Author post counts and score aggregates |
 | `scry.github_people` | GitHub-specific maintainer aggregates (stars, repos, comments) |
 | `scry.github_person_repos` | GitHub person-to-repo mapping |
@@ -246,7 +249,9 @@ Three layers of author resolution, bottom to top:
 
 Common names produce false merges. When `display_name` is generic (e.g., "John Smith"), verify with secondary evidence (same bio, cross-linked profiles, overlapping topics).
 
-**Helper function:** `normalize_author_name(text)` -- lowercases, trims, collapses whitespace. Used by `mv_author_profiles` and `person_aliases` for stable joins.
+**Primary query path:** find the person in `scry.people`, inspect linked public accounts in `scry.person_accounts`, then query `scry.entities` by `author_person_id`.
+
+**Helper function:** `normalize_author_name(text)` -- lowercases, trims, collapses whitespace. Used for alias helpers, not as the canonical merge authority.
 
 ---
 
@@ -256,7 +261,6 @@ Common names produce false merges. When `display_name` is generic (e.g., "John S
 |------|-------------|
 | `scry.agent_judgements` | Structured agent observations (queryable) |
 | `scry.agent_emitters` | Registered agent emitter identities |
-| `scry.keepalive_funding_status` | Funding status observations |
 
 ---
 
@@ -442,7 +446,7 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
 - **LW/EA posts**: `score` reliable, `title` usually populated.
 - **LW/EA comments**: `title` often NULL, `score` from baseScore.
 - **HN posts/comments**: `score` from metadata, `title` may be NULL on comments.
-- **Twitter**: `score`/`upvotes` often NULL. `title` frequently NULL (use `payload`).
+- **Twitter**: `score`/`upvotes` often NULL. `title` frequently NULL (use `content_text`).
   `original_author` may be NULL; prefer `metadata->>'username'`.
 - **arXiv**: `title` often in metadata. `score` is always NULL.
 - **Bluesky**: embeddings still ramping. No score field.
@@ -454,16 +458,16 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
 
 | Function | Description | Max limit |
 |----------|-------------|-----------|
-| `scry.search(query_text, mode, kinds, limit_n)` | BM25 lexical search with result details | 100 |
-| `scry.search_ids(query, mode, kinds, limit_n)` | IDs-only lexical search (cheaper) | 2000 |
+| `scry.search(query_text, mode, kinds, limit_n)` | BM25 lexical search over canonical `content_text` | 100 |
+| `scry.search_ids(query, mode, kinds, limit_n)` | Lightweight lexical search (returns id, uri, kind) | 2000 |
 | `scry.search_reddit_posts(query, subreddits, limit_n, window_key)` | Reddit post search | 50 per window |
 | `scry.search_reddit_comments(query, subreddits, limit_n, window_key)` | Reddit comment search | 50 per window |
 | `scry.search_reddit_posts_semantic(query_embedding, subreddits, limit_n, min_upvotes, min_timestamp)` | Reddit semantic search over embedding-covered subset | 200 |
 | `scry.search_exhaustive(query_text, mode, kinds, limit_n, offset_n)` | Higher-cap paginated search | 1000 |
 | `scry.hybrid_search(query, query_vector, kinds, limit_n)` | Lexical + semantic rerank | 100 |
 | `scry.author_topics(author_pattern, topics)` | Per-author topic hit counts | -- |
-| `scry.preview_text(input, max_chars)` | Safe payload prefix helper | -- |
-| `scry.preview_text_safe(input, max_chars)` | Exception-safe payload prefix helper | -- |
+| `scry.preview_text(input, max_chars)` | Safe content-text prefix helper | -- |
+| `scry.preview_text_safe(input, max_chars)` | Exception-safe content-text prefix helper | -- |
 
 Default kinds for omitted `kinds`: `post`, `paper`, `document`, `webpage`, `twitter_thread`, `grant`.
 `scry.search()` broadens once to `comment` if that default returns 0 rows.
@@ -487,8 +491,7 @@ Default kinds for omitted `kinds`: `post`, `paper`, `document`, `webpage`, `twit
 | Function | Description |
 |----------|-------------|
 | `debias_vector(axis, topic)` | Remove axis projection from topic ("X but not Y") |
-| `debias_removed_fraction(axis, topic)` | Quick check if debias would be a no-op |
+| `debias_removed_fraction(axis, topic)` | Quick overlap check before debiasing; treat as a diagnostic, not a strict energy fraction |
 | `debias_diagnostics(axis, topic)` | Norm/cosine/projection sanity checks |
 | `contrast_axis(@pos, @neg)` | Build axis from two opposing embeddings |
-| `contrast_axis_balanced(@pos, @neg)` | Balanced contrast axis |
 | `unit_vector(vec)` | Normalize vector to unit length |

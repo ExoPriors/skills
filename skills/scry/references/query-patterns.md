@@ -35,7 +35,7 @@ LIMIT 30
 
 ### IDs-only for large candidate sets
 ```sql
--- Get up to 2000 candidate IDs (no payload detoasting)
+-- Get up to 2000 candidate IDs (no content_text detoasting)
 WITH ids AS (
   SELECT id FROM scry.search_ids('transformer scaling laws',
     kinds=>ARRAY['paper'], limit_n=>2000)
@@ -111,7 +111,7 @@ LIMIT 50
 ### Direct query — comments by subreddit
 ```sql
 SELECT id, uri, original_author, upvotes, original_timestamp,
-       LEFT(payload, 200) AS preview
+       LEFT(content_text, 200) AS preview
 FROM scry.reddit_comments
 WHERE subreddit = 'LocalLLaMA'
   AND original_timestamp >= '2024-01-01'
@@ -273,23 +273,21 @@ LIMIT 50
 
 ### Cross-platform identity lookup
 ```sql
-SELECT p.display_name, pa.source::text, pa.author_name, pa.handle,
-       pa.profile_url, pa.confidence
+SELECT p.id, p.display_name, p.entity_count,
+       pa.source::text, pa.handle, pa.profile_url, pa.confidence
 FROM scry.people p
-JOIN scry.person_aliases pa ON pa.person_id = p.id
+JOIN scry.person_accounts pa ON pa.person_id = p.id
 WHERE p.display_name ILIKE '%eliezer%'
-ORDER BY pa.confidence DESC, pa.source
+ORDER BY p.entity_count DESC, pa.confidence DESC, pa.source
 LIMIT 50
 ```
 
 ### All content by a person across platforms
 ```sql
 SELECT e.title, e.uri, e.source::text, e.kind::text,
-       e.original_timestamp, e.upvotes, a.handle
+       e.original_timestamp, e.upvotes
 FROM scry.entities e
-JOIN scry.actors a ON a.id = e.author_actor_id
-JOIN scry.person_aliases pa ON pa.actor_id = a.id
-WHERE pa.person_id = 'PERSON_UUID_HERE'
+WHERE e.author_person_id = 'PERSON_UUID_HERE'
   AND e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY e.original_timestamp DESC
 LIMIT 200
@@ -300,8 +298,8 @@ LIMIT 200
 SELECT pa1.person_id, p.display_name,
        pa1.source AS source_1, pa1.handle AS handle_1,
        pa2.source AS source_2, pa2.handle AS handle_2
-FROM scry.person_aliases pa1
-JOIN scry.person_aliases pa2 ON pa2.person_id = pa1.person_id
+FROM scry.person_accounts pa1
+JOIN scry.person_accounts pa2 ON pa2.person_id = pa1.person_id
 JOIN scry.people p ON p.id = pa1.person_id
 WHERE pa1.source = 'twitter' AND pa1.handle ILIKE 'ESYudkowsky'
   AND pa2.source = 'lesswrong'
@@ -324,16 +322,14 @@ WITH github_actor AS (
   SELECT actor_id FROM scry.github_people WHERE github_login = 'gwern' LIMIT 1
 ),
 linked_person AS (
-  SELECT pa.person_id FROM scry.person_aliases pa
+  SELECT pa.person_id FROM scry.person_accounts pa
   JOIN github_actor ga ON ga.actor_id = pa.actor_id LIMIT 1
 )
-SELECT pa.source::text, pa.author_name, pa.handle, pa.profile_url,
-       ap.entity_count, ap.post_count
+SELECT pa.source::text, pa.handle, pa.profile_url,
+       pa.entity_count, pa.post_count
 FROM linked_person lp
-JOIN scry.person_aliases pa ON pa.person_id = lp.person_id
-LEFT JOIN scry.mv_author_profiles ap
-  ON ap.source = pa.source AND ap.author_norm = pa.author_norm
-ORDER BY ap.entity_count DESC NULLS LAST
+JOIN scry.person_accounts pa ON pa.person_id = lp.person_id
+ORDER BY pa.entity_count DESC NULLS LAST
 LIMIT 20
 ```
 
@@ -412,7 +408,7 @@ LIMIT 20
 ### Find all replies in a thread
 ```sql
 SELECT id, uri, original_author, original_timestamp,
-       LEFT(payload, 200) AS preview
+       LEFT(content_text, 200) AS preview
 FROM scry.entities
 WHERE anchor_entity_id = 'ROOT_ENTITY_UUID_HERE'
   AND content_risk IS DISTINCT FROM 'dangerous'
@@ -423,7 +419,7 @@ LIMIT 100
 ### Find direct replies to a specific entity
 ```sql
 SELECT id, uri, original_author, original_timestamp,
-       LEFT(payload, 200) AS preview
+       LEFT(content_text, 200) AS preview
 FROM scry.entities
 WHERE parent_entity_id = 'PARENT_ENTITY_UUID_HERE'
   AND content_risk IS DISTINCT FROM 'dangerous'
@@ -653,7 +649,7 @@ curl -s -X POST https://api.exopriors.com/v1/scry/shares \
       "metric": "paper_count_yoy",
       "2023": 1420,
       "2024": 2983,
-      "methodology": "COUNT WHERE primary_category LIKE cs.AI AND payload ILIKE alignment"
+      "methodology": "COUNT WHERE primary_category LIKE cs.AI AND content_text ILIKE alignment"
     }
   }'
 ```
@@ -732,14 +728,14 @@ LIMIT 50
 1. **Use MVs over scry.entities** for any source-specific query. MVs are
    pre-filtered and often have indexes that scry.entities does not.
 
-2. **Avoid `payload ILIKE '%...'`** on scry.entities. This detoasts every row.
+2. **Avoid `content_text ILIKE '%...'`** on scry.entities. This detoasts every row.
    Use `scry.search()` for text search instead.
 
 3. **Avoid `COUNT(*)` on large tables.** Use `/v1/scry/schema` row estimates or
    `pg_class.reltuples` (authenticated keys only).
 
-4. **Use `scry.search_ids()` over `scry.search()`** when you only need IDs
-   for further filtering. It avoids detoasting payload/snippet.
+4. **Use `scry.search_ids()` over `scry.search()`** when you only need id/uri/kind
+   for further filtering. It returns `(id, uri, kind)` and avoids detoasting content_text/snippet.
 
 5. **Filter `embedding_voyage4 IS NOT NULL`** when joining scry.embeddings.
    Not all entities have embeddings.

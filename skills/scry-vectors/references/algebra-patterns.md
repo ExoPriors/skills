@@ -2,6 +2,8 @@
 
 Patterns for composing vector operations beyond basic search and debiasing. Covers operation ordering, multi-concept composition, failure mode detection, and diagnostic workflows.
 
+Current public-surface note: treat `debias_removed_fraction` as an overlap diagnostic, not a guaranteed energy fraction. `debias_safe` and `contrast_axis_balanced` may appear in local schema notes but are not reliable public-SQL helpers, so the patterns below only rely on helpers confirmed live.
+
 ## The Operations and What They Do
 
 Every operation either preserves or removes signal. None can add information that was not in the input vectors.
@@ -12,7 +14,6 @@ Every operation either preserves or removes signal. None can add information tha
 | `v1 + v2` | Vector addition | Blends directions; magnitude depends on angle between v1 and v2 |
 | `contrast_axis(pos, neg)` | `unit_vector(pos - neg)` | Cancels shared semantics, amplifies differences |
 | `debias_vector(axis, topic)` | Removes projection onto topic | Removes signal along one direction |
-| `debias_safe(axis, topic, cap)` | Capped removal | Removes up to `cap` fraction of energy |
 | `project_onto(axis, topic)` | Extracts the removed component | The complement of debias_vector |
 | `unit_vector(v)` | Normalizes to unit length | No effect on cosine distance ranking |
 
@@ -73,7 +74,7 @@ SELECT debias_removed_fraction(
 );
 ```
 
-If this returns 0.65 (as it did in the quality report for these specific concepts), 65% of the mixed vector was removed. The results are focused but the surviving direction is narrow. Consider using `debias_safe` with a 0.4 cap.
+If this returns about `0.65`, the mixed vector and `@hype` overlap heavily on the current public surface. Expect an aggressive debias; inspect raw vs. debiased results, check `debiased_norm`, and tighten the topic handle if the residual looks too narrow.
 
 ## Pattern 3: Contrast Then Debias (Tone Search)
 
@@ -110,7 +111,7 @@ SELECT debias_removed_fraction(
   contrast_axis(@humble_tone, @proud_tone),
   @humility_topic
 ) AS topic_removal;
--- Below 0.4 is safe. Above 0.5 means the axis was mostly topic, not tone.
+-- Near zero suggests little topic contamination. Material overlap means inspect carefully.
 ```
 
 **Alternative: Debias each pole first, then contrast.**
@@ -156,7 +157,7 @@ SELECT * FROM debias_diagnostics(
 - `debiased_norm`: Length after debiasing. If this is near zero, the operation destroyed the signal.
 - `axis_topic_cosine`: How aligned axis and topic are. High absolute value = heavy overlap = aggressive removal.
 - `removed_component_norm`: Length of what was removed.
-- `removed_fraction`: Energy fraction removed (cos^2 of the angle). The single most important diagnostic number.
+- `removed_fraction`: On the current public surface, best treated as an overlap diagnostic rather than literal energy removed.
 
 ## Pattern 5: Inspecting What Was Removed
 
@@ -194,10 +195,10 @@ SELECT cosine_similarity(
 **Detection:**
 ```sql
 SELECT debias_removed_fraction(@axis, @topic);
--- Danger: > 0.5. Garbage: > 0.85.
+-- Material overlap plus a small `debiased_norm` is the danger sign.
 ```
 
-**Fix:** Use `debias_safe(@axis, @topic, 0.4)` to cap removal. Or choose a more orthogonal debias target -- embed a narrower, more specific concept for `@topic`.
+**Fix:** Compare raw vs. debiased retrieval, inspect `project_onto(@axis, @topic)`, and choose a more orthogonal debias target. If the removed direction still contains wanted signal, tighten the topic handle or skip debiasing.
 
 ### 2. Near-Zero Residual
 
@@ -228,7 +229,7 @@ SELECT
 
 **Root cause:** One pole's embedding text is much richer/longer than the other, so it dominates the difference vector.
 
-**Fix:** Use `contrast_axis_balanced(@pos, @neg)` which normalizes both poles before subtracting. Or rewrite the shorter pole's text to be comparably detailed.
+**Fix:** Rewrite the shorter pole's text to be comparably detailed and specific before contrasting. Do not rely on a separate balanced-axis helper on the public SQL surface.
 
 ### 4. Sequential Debias Order Dependence
 
@@ -269,25 +270,22 @@ SELECT cosine_similarity(@topic_a, @topic_b) AS topic_correlation;
 
 3. **Diagnose before trusting.** Check `removed_fraction` and `cosine_similarity` between all vector pairs before interpreting results.
 
-4. **One debias per query** (recommended). Each debias removes signal irreversibly. Stacking two debias operations can remove 60%+ of the original energy. If you need to remove two directions, try combining them into a single debias target: `debias_vector(@axis, scale_vector(@topic_a, 0.5) + scale_vector(@topic_b, 0.5))`.
+4. **One debias per query** (recommended). Each debias removes signal irreversibly. Stacking two debias operations can strip most of the remaining signal. If you need to remove two directions, try combining them into a single debias target: `debias_vector(@axis, scale_vector(@topic_a, 0.5) + scale_vector(@topic_b, 0.5))`.
 
 5. **`unit_vector` is rarely needed.** Cosine distance (`<=>`) normalizes internally. Only use `unit_vector` when you need consistent norms for other operations (e.g., as input to `contrast_axis` which already normalizes internally).
 
-## Energy Budget Mental Model
+## Signal Budget Mental Model
 
-Think of your original vector as having 100% energy (squared norm). Each operation has an energy cost:
+Think in terms of how much distinct direction survives composition:
 
-| Operation | Energy after |
-|-----------|-------------|
-| `scale_vector(v, s)` | s^2 * original (scaling changes magnitude) |
-| `v1 + v2` | Depends on angle; range from (n1-n2)^2 to (n1+n2)^2 |
-| `contrast_axis(pos, neg)` | Always 1.0 (it normalizes) |
-| `debias_vector(axis, topic)` | (1 - removed_fraction) * input energy |
-| `debias_safe(axis, topic, cap)` | At least (1 - cap) * input energy |
+| Operation | What to watch |
+|-----------|---------------|
+| `scale_vector(v, s)` | Direction stays the same; magnitude only matters if you reuse the vector in later algebra |
+| `v1 + v2` | Broadens the query unless the two concepts are already close |
+| `contrast_axis(pos, neg)` | Emphasizes differences, but weak poles make the axis noisy |
+| `debias_vector(axis, topic)` | Removes one component; inspect `debiased_norm` and the resulting retrieval set |
 
-For cosine distance searches, energy does not affect ranking. But it affects the **signal-to-noise ratio** of subsequent operations. A vector with 10% of its original energy has 10x worse SNR against the halfvec(2048) noise floor.
-
-**Practical threshold:** Below ~5% of original energy, the vector is indistinguishable from noise in halfvec precision. This corresponds to two debias operations each removing 50%+, or one removing 95%+.
+For pure cosine search, magnitude does not affect ranking. It does affect how stable later operations are. The practical question is not "what exact fraction of energy remains?" but "does the residual still retrieve coherent documents?" That is why raw-vs.-debiased comparisons and `debiased_norm` matter more than reading `removed_fraction` as a literal budget meter.
 
 ## Worked Example: Complete Workflow
 
@@ -306,7 +304,7 @@ SELECT
   cosine_similarity(@technical_governance, @policy_advocacy) AS overlap,
   debias_removed_fraction(@technical_governance, @policy_advocacy) AS removal;
 -- Suppose: overlap = 0.52, removal = 0.27
--- 0.27 removed_fraction is in the sweet spot. Proceed.
+-- Removal is material but not extreme. Proceed, but inspect raw vs. debiased results.
 
 -- Step 3: Search with debiasing
 SELECT uri, title, original_author, source,

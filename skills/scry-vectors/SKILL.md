@@ -31,6 +31,7 @@ The key insight: `embedding_voyage4 <=> @concept` is a single SQL expression tha
 - Not all entities have embeddings. Use `scry.mv_*` views or filter `embedding_voyage4 IS NOT NULL`.
 - `chunk_index = 0` is the document-level embedding. Higher chunks are passages within the document.
 - Use `GET /v1/scry/schema` to confirm column/view names before writing queries.
+- Current public-surface note: treat `debias_removed_fraction` as an overlap diagnostic, not a guaranteed energy fraction. `debias_safe` and `contrast_axis_balanced` may exist in local schema notes but are not reliable public-SQL helpers, so this skill sticks to the helpers confirmed live.
 
 For full tier limits, timeout policies, and degradation strategies, see [Shared Guardrails](../references/guardrails.md).
 
@@ -179,20 +180,16 @@ LIMIT 20;
 SELECT debias_removed_fraction(@mech_interp, @hype);
 ```
 
-| removed_fraction | Interpretation |
-|-----------------|----------------|
-| 0.00 - 0.05 | No-op. Concepts are nearly orthogonal. Debiasing changes nothing. |
-| 0.05 - 0.20 | Gentle correction. Safe and useful. |
-| 0.20 - 0.40 | Meaningful debiasing. Sweet spot for most use cases. |
-| 0.40 - 0.60 | Heavy removal. Results may drift from original intent. Check carefully. |
-| 0.60 - 0.85 | Severe. Most of your query pointed along the removed direction. Residual is narrow and may surface unexpected content. |
-| 0.85 - 1.00 | Garbage. Residual is dominated by floating-point noise. Do not trust results. |
+Use it as a quick overlap check, not a literal fraction of signal removed:
+- Near zero usually means debiasing will be close to a no-op.
+- Material positive overlap means debiasing will matter; compare raw vs. debiased results.
+- If overlap is material and `debiased_norm` is small, expect collapse into narrow or noisy results.
 
 **Full diagnostics:**
 ```sql
 SELECT * FROM debias_diagnostics(@mech_interp, @hype);
 ```
-Returns: `axis_norm`, `topic_norm`, `debiased_norm`, `axis_topic_cosine`, `removed_component_norm`, `removed_fraction`.
+Returns: `axis_norm`, `topic_norm`, `debiased_norm`, `axis_topic_cosine`, `removed_component_norm`, `removed_fraction` (best read on the public surface as another overlap diagnostic).
 
 ## Recipe 6: Contrastive Axes (Tone vs. Topic)
 
@@ -213,11 +210,7 @@ LIMIT 20;
 
 `contrast_axis(pos, neg)` computes `unit_vector(pos - neg)`. Documents close to the result are "more pos than neg."
 
-**For balanced poles** (when one description is much longer/richer than the other):
-```sql
--- Normalizes both poles before subtracting, so neither dominates
-embedding_voyage4 <=> contrast_axis_balanced(@humble_tone, @proud_tone) AS distance
-```
+If one pole description is much longer or richer than the other, rewrite the weaker pole to similar specificity before contrasting. Do not rely on a separate balanced-axis helper on the public SQL surface.
 
 **Tone search: contrast then debias** (the full pattern):
 ```sql
@@ -234,27 +227,31 @@ LIMIT 20;
 
 Check pole quality: `cosine_similarity(@humble_tone, @proud_tone)` should be 0.4-0.8. Below 0.3, poles share too little context for cancellation to work. Above 0.85, poles are too similar and the axis is dominated by noise.
 
-## Recipe 7: Safe Debiasing (Signal Loss Protection)
+## Recipe 7: High-Overlap Fallbacks
 
-When `removed_fraction` is too high, use `debias_safe` to cap removal:
+If `debias_removed_fraction` shows substantial overlap, do not assume a clean debias will still preserve your intent. On the current public surface, use a manual fallback workflow instead of relying on an unavailable capped-debias helper:
 
 ```sql
--- Caps removal at 50% of energy (default). Blends back signal if over the cap.
+-- Compare raw and debiased retrieval side by side
 SELECT uri, title,
-       embedding_voyage4 <=> debias_safe(@mech_interp, @hype) AS distance
+       embedding_voyage4 <=> @mech_interp AS raw_distance,
+       embedding_voyage4 <=> debias_vector(@mech_interp, @hype) AS debiased_distance
 FROM scry.mv_high_score_posts
-ORDER BY distance
-LIMIT 20;
-
--- Custom cap (30% max removal for weak-signal searches like tone)
-SELECT uri, title,
-       embedding_voyage4 <=> debias_safe(@mech_interp, @hype, 0.3) AS distance
-FROM scry.mv_high_score_posts
-ORDER BY distance
+ORDER BY debiased_distance
 LIMIT 20;
 ```
 
-`debias_safe(axis, topic, max_removal DEFAULT 0.5)` behaves identically to `debias_vector` when removal is below the cap. Above it, the function smoothly bleeds back enough of the removed component to keep total removal at the cap.
+Then inspect the removed direction directly:
+
+```sql
+SELECT uri, title,
+       embedding_voyage4 <=> project_onto(@mech_interp, @hype) AS removed_distance
+FROM scry.mv_high_score_posts
+ORDER BY removed_distance
+LIMIT 10;
+```
+
+If the removed direction contains signal you still want, tighten `@hype`, rewrite the concept handles, or skip debiasing entirely.
 
 ## Recipe 8: Serendipity Search (Interesting Far Neighbors)
 
@@ -317,9 +314,7 @@ For richer identity data (cross-platform, profile URLs), join through `scry.acto
 | Search for concept | `embedding_voyage4 <=> @concept` |
 | Mix two concepts | `embedding_voyage4 <=> (scale_vector(@a, 0.6) + scale_vector(@b, 0.4))` |
 | Remove unwanted direction | `embedding_voyage4 <=> debias_vector(@concept, @unwanted)` |
-| Safe removal (capped) | `embedding_voyage4 <=> debias_safe(@concept, @unwanted, 0.5)` |
 | Contrastive axis | `embedding_voyage4 <=> contrast_axis(@pos_pole, @neg_pole)` |
-| Balanced contrastive axis | `embedding_voyage4 <=> contrast_axis_balanced(@pos, @neg)` |
 | Tone search (full) | `embedding_voyage4 <=> debias_vector(contrast_axis(@tone_a, @tone_b), @topic)` |
 | Check removal | `SELECT debias_removed_fraction(@axis, @topic)` |
 | Full diagnostics | `SELECT * FROM debias_diagnostics(@axis, @topic)` |
@@ -337,18 +332,16 @@ For richer identity data (cross-platform, profile URLs), join through `scry.acto
 | `unit_vector` | `(halfvec) -> halfvec` | Unit vector (NULL if near-zero) |
 | `l2_normalize` | `(halfvec) -> halfvec` | Alias for `unit_vector` |
 | `debias_vector` | `(halfvec, halfvec) -> halfvec` | Orthogonal projection removal |
-| `debias_safe` | `(halfvec, halfvec, float8 DEFAULT 0.5) -> halfvec` | Capped debiasing |
-| `debias_removed_fraction` | `(halfvec, halfvec) -> float8` | Energy fraction removed (cos^2 theta) |
+| `debias_removed_fraction` | `(halfvec, halfvec) -> float8` | Overlap diagnostic on the current public surface |
 | `debias_diagnostics` | `(halfvec, halfvec) -> TABLE` | Full diagnostic bundle |
 | `contrast_axis` | `(halfvec, halfvec) -> halfvec` | `unit_vector(pos - neg)` |
-| `contrast_axis_balanced` | `(halfvec, halfvec) -> halfvec` | `unit_vector(unit(pos) - unit(neg))` |
 | `project_onto` | `(halfvec, halfvec) -> halfvec` | Projection of axis onto topic |
 | `cosine_similarity` | `(halfvec, halfvec) -> float8` | Cosine similarity [-1, 1] |
 
 ## Common Mistakes
 
-**1. Debiasing related concepts without checking removal.**
-"Find mech interp work, debiased against AI safety" -- these overlap 60%+. The residual is "the part of mech interp unrelated to AI safety," which is not what the user wanted. Always check `debias_removed_fraction` first.
+**1. Debiasing related concepts without checking overlap.**
+"Find mech interp work, debiased against AI safety" -- these overlap heavily. The residual is "the part of mech interp unrelated to AI safety," which is not what the user wanted. Always check `debias_removed_fraction` first, then inspect `debiased_norm` if the overlap is material.
 
 **2. Chaining multiple debias operations.**
 Sequential debiasing is order-dependent and can over-remove. `debias_vector(debias_vector(@a, @t1), @t2)` gives a different result than reversing the order. If you need to remove multiple directions, debias against the most important one and check removal before adding more.
