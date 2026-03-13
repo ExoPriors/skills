@@ -1,8 +1,11 @@
 # Scry Schema Guide
 
-Authoritative reference for the `scry.*` schema. Always call `GET /v1/scry/schema`
-for live column metadata -- this document provides context and guidance that the
-schema endpoint alone cannot convey.
+Reference guide for the documented `scry.*` surface. Treat
+`GET /v1/scry/schema` on the target instance as the only source of truth for
+live view/function availability and live column metadata. This guide provides
+context and query patterns that the schema endpoint alone cannot convey, but it
+may mention repo-defined surfaces that are not yet deployed on every public
+instance.
 
 ## Core Views
 
@@ -391,6 +394,13 @@ Authors --[authorships]--> Works --[references]--> Works, with Institutions and 
 **Well-known concept IDs:** Machine Learning `C199360897`, AI `C41008148`, Deep Learning `C154945302`, Computer Science `C119857082`, Biology `C86803240`, Mathematics `C33923547`.
 
 ### Patent Views
+
+`src/db/corpus.sql` defines these patent views, but they are **not guaranteed**
+to exist on every public instance. Before using them, confirm they appear in
+`GET /v1/scry/schema`. If the schema endpoint does not list them, or SQL returns
+`relation "scry.patent_*" does not exist`, treat the public patent surface as
+unavailable on that instance rather than inferring zero matching patents from an
+empty query.
 
 | View | Description |
 |------|-------------|

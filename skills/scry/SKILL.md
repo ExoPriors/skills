@@ -22,7 +22,7 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `20260304`
+**Skill generation**: `20260313`
 
 ## A) When to use / not use
 
@@ -43,42 +43,46 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=20260304`.
+   `GET /v1/scry/context?skill_generation=20260313`.
    If `should_update_skill=true`, tell the user to run `npx skills update`.
 
 2. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
    Never guess column names or types. The schema endpoint returns live
    column metadata and row-count estimates for every view.
 
-3. **Clarify ambiguous intent before heavy queries.** If the request is vague
+3. **Check operational status when search looks wrong.** If lexical search,
+   materialized-view freshness, or corpus behavior seems off, call
+   `GET /v1/scry/index-view-status` before assuming the query or schema is wrong.
+
+4. **Clarify ambiguous intent before heavy queries.** If the request is vague
    ("search Reddit for X", "find things about Y"), ask one short clarification
    question about the goal/output format before running expensive SQL.
 
-4. **Start with a cheap probe.** Before any query likely to run >5s, run
+5. **Start with a cheap probe.** Before any query likely to run >5s, run
    `/v1/scry/estimate` and/or a tight exploratory query (`LIMIT 20` plus scoped
    source/window filters), then scale only after confirming relevance.
 
-5. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
+6. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
    exact terms and named entities. For conceptual intent ("themes", "things like",
    "similar to"), route to scry-vectors first, then optionally hybridize.
 
-6. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
+7. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
 
-7. **Prefer materialized views.** `scry.entities` has 229M+ rows. Scanning it
+8. **Prefer materialized views.** `scry.entities` has 229M+ rows. Scanning it
    without filters is slow. Use `scry.mv_lesswrong_posts`, `scry.mv_arxiv_papers`,
    `scry.mv_hackernews_posts`, etc. for targeted access. They are pre-filtered
    and often have embeddings pre-joined.
 
-8. **Filter dangerous content.** Always include
+9. **Filter dangerous content.** Always include
    `WHERE content_risk IS DISTINCT FROM 'dangerous'` unless the user explicitly
    asks for unfiltered results. Dangerous content contains adversarial
    prompt-injection content.
 
-9. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
+10. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
    with raw SQL in the body. Not JSON-wrapped SQL.
 
-10. **File rough edges promptly.** If Scry blocks the task, misses an obvious
+11. **File rough edges promptly.** If Scry blocks the task, misses an obvious
    result set, or exposes a rough edge, submit a brief markdown note to
    `POST /v1/feedback?feedback_type=suggestion|bug|other&channel=scry_skill`
    using `Content-Type: text/markdown` (or `text/plain`). Do not silently work
@@ -115,7 +119,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.exopriors.com/v1/scry/context?skill_generation=20260304
+GET https://api.exopriors.com/v1/scry/context?skill_generation=20260313
 Authorization: Bearer $EXOPRIORS_API_KEY
 
 Step 2: Get schema
@@ -189,7 +193,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260304" \
+curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260313" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY"
 ```
 

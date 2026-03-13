@@ -15,6 +15,7 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 |------|--------|
 | Context handshake | At session start, call `GET /v1/scry/context` (include `skill_generation` when available) and honor `should_update_skill` advisories |
 | Schema first | Call `GET /v1/scry/schema` before constructing any SQL |
+| Operational status | If lexical search or curated views look degraded, call `GET /v1/scry/index-view-status` before assuming the query or schema is wrong |
 | Clarify vague asks | If user intent is ambiguous, ask one short clarification question before expensive queries |
 | Probe before scale | Run `/v1/scry/estimate` and a small `LIMIT` probe before broad scans |
 | LIMIT required | Every query must include a `LIMIT` clause (max governed by tier) |

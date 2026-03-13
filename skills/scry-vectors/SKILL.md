@@ -364,6 +364,7 @@ Cosine distance (`<=>`) is already scale-invariant. You do not need to normalize
 | `/v1/scry/vectors/{name}` | DELETE | Personal `exopriors_*` key | Delete a stored vector |
 | `/v1/scry/query` | POST | Personal `exopriors_*` key | Execute SQL (Content-Type: text/plain) |
 | `/v1/scry/schema` | GET | Any key | Live schema introspection |
+| `/v1/scry/index-view-status` | GET | Any key | Index/materialized-view/view health and rebuild ETA |
 
 ## Handoff Contract
 
