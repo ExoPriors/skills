@@ -23,12 +23,12 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 
 ## 3. Tier Limits
 
-| Capability | Public (`scry_public_*`) | Private (`exopriors_*` with Scry access) |
+| Capability | Base account (`exopriors_*`) | Pass / priority add-on (`exopriors_*`) |
 |---|---|---|
-| Max rows per query | 2,000 | 10,000 |
-| Max rows with vectors | 200 | 500 |
-| Bandwidth | 200 MB/day | -- |
-| Embedding budget | -- | 1.5M tokens / 30 days |
+| Max rows per query | 2,000 | higher than base account |
+| Max rows with vectors | 200 | higher than base account |
+| Bandwidth | 1 GB/day | plan-dependent |
+| Embedding budget | 1.5M tokens / 30 days | 1.5M tokens / 30 days |
 
 ## 4. Auth
 
@@ -45,8 +45,8 @@ Server applies load-aware statement timeouts:
 
 | Tier | Range |
 |------|-------|
-| Public | ~20s (heavy load) to ~1800s (idle). Typical: 60-120s. |
-| Private | ~20s (heavy load) to ~3600s (idle). Typical: 60-120s. |
+| Base account | ~20s (heavy load) to ~1800s (idle). Typical: 60-120s. |
+| Pass / priority add-on | higher timeout ceilings than base account |
 
 Do not hardcode a single timeout expectation. If a query times out, reduce `LIMIT` and retry.
 
@@ -60,7 +60,7 @@ Do not hardcode a single timeout expectation. If a query times out, reduce `LIMI
 
 | Failure | Response |
 |---------|----------|
-| 403 on private-only feature | Fall back to public-tier patterns |
+| 403 on private-only feature | Tell the user the feature needs a Scry pass or priority add-on |
 | Timeout | Reduce `LIMIT`, simplify query, retry |
 | Bandwidth exceeded (429/413) | Wait or reduce result size |
 | 5xx | Retry once with backoff; surface error to user if persistent |

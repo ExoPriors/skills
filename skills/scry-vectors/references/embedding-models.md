@@ -78,8 +78,6 @@ Each private API key has an embedding token budget (default: 1.5M tokens). Every
 - 1.5M tokens = ~10,000 embed calls with 150-token descriptions.
 - Typical skill workflow uses 2-6 handles = negligible budget impact.
 
-Public keys also have a per-IP budget (100K tokens) and a global budget (50M tokens), with a hard cap of 4,000 chars and 1,000 tokens per request.
-
 ## Choosing a Model
 
 For interactive vector composition workflows (what this skill is about), the decision is simple:
@@ -98,7 +96,7 @@ The quality of your search depends on the quality of your embed text. Guidelines
 
 **Match the register of what you want to find.** If you want academic papers, embed in academic style. If you want blog posts, embed in casual style. The model encodes tone/register weakly but measurably.
 
-**Iterate.** Embed, search, inspect results, refine the text, re-embed (private keys can overwrite handles). The first embedding is rarely the best one.
+**Iterate.** Embed, search, inspect results, refine the text, re-embed (personal keys can overwrite handles). The first embedding is rarely the best one.
 
 ## Stored Vector Schema
 
@@ -106,7 +104,7 @@ Stored vectors live in `scry.stored_vectors` with RLS (row-level security) enfor
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `user_id` | UUID | Owner (private) or public sentinel UUID |
+| `user_id` | UUID | Owner |
 | `name` | TEXT | Handle name (the `@handle` reference) |
 | `embedding_voyage4` | halfvec(2048) | Voyage-4 vector (mutually exclusive with fnv384) |
 | `embedding_fnv384` | halfvec(384) | FNV hash vector (mutually exclusive with voyage4) |
@@ -117,14 +115,14 @@ Stored vectors live in `scry.stored_vectors` with RLS (row-level security) enfor
 
 A stored vector has exactly one of `embedding_voyage4` or `embedding_fnv384` populated (enforced by a CHECK constraint). In practice, all API-created vectors use `embedding_voyage4`.
 
-Private keys can list vectors via `GET /v1/scry/vectors` and delete via `DELETE /v1/scry/vectors/{name}`. Public keys cannot list or delete.
+Personal keys can list vectors via `GET /v1/scry/vectors` and delete via `DELETE /v1/scry/vectors/{name}`.
 
 ## Limits
 
-| Constraint | Public key | Private key |
-|-----------|------------|-------------|
+| Constraint | Base account key | Pass-enabled account key |
+|-----------|------------------|--------------------------|
 | Max rows with vectors in output | 200 | 500 |
-| Handle naming | `p_<8hex>_<name>` (write-once) | Any valid identifier (overwritable) |
-| List/delete vectors | No | Yes |
-| Embed token budget | 100K per IP | 1.5M per key |
-| Max text per embed request | 4,000 chars | 8,192 tokens |
+| Handle naming | Any valid identifier (overwritable) | Any valid identifier (overwritable) |
+| List/delete vectors | Yes | Yes |
+| Embed token budget | 1.5M per key | 1.5M per key |
+| Max text per embed request | 8,192 tokens | 8,192 tokens |

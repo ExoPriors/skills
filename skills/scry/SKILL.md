@@ -78,6 +78,12 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 9. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
    with raw SQL in the body. Not JSON-wrapped SQL.
 
+10. **File rough edges promptly.** If Scry blocks the task, misses an obvious
+   result set, or exposes a rough edge, submit a brief markdown note to
+   `POST /v1/feedback?feedback_type=suggestion|bug|other&channel=scry_skill`
+   using `Content-Type: text/markdown` (or `text/plain`). Do not silently work
+   around it. Logged-in users can review their submissions with `GET /v1/feedback`.
+
 For full tier limits, timeout policies, and degradation strategies, see [Shared Guardrails](../references/guardrails.md).
 
 ### B.1 API Key Setup (Canonical)
@@ -85,8 +91,7 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 Recommended default for less-technical users: in the directory where you launch the agent, store `EXOPRIORS_API_KEY` in `.env` so skills and copied prompts use the same place.
 Canonical key naming for this skill:
 - Env var: `EXOPRIORS_API_KEY`
-- Private key format: `exopriors_*` with Scry access
-- Public key format: `scry_public_*`
+- Personal key format: `exopriors_*` with Scry access
 
 ```bash
 printf '%s\n' 'EXOPRIORS_API_KEY=exopriors_...' >> .env
@@ -175,6 +180,8 @@ User wants to search the ExoPriors corpus?
   +-- Need to share results? --> POST /v1/scry/shares
   |
   +-- Need to emit a structured observation? --> POST /v1/scry/judgements
+  |
+  +-- Scry blocked / missing obvious results? --> POST /v1/feedback
 ```
 
 ## E) Recipes
@@ -188,6 +195,23 @@ curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260304" \
 
 If response includes `"should_update_skill": true`, ask the user to run:
 `npx skills update`.
+
+### E0b. Submit feedback when Scry blocks the task
+
+```bash
+curl -s "https://api.exopriors.com/v1/feedback?feedback_type=bug&channel=scry_skill" \
+  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Content-Type: text/markdown" \
+  --data $'## What happened\n- Query: ...\n- Problem: ...\n\n## Why it matters\n- ...\n\n## Suggested fix\n- ...'
+```
+
+Success response includes a receipt `id`. Logged-in users can review their own
+submissions with:
+
+```bash
+curl -s "https://api.exopriors.com/v1/feedback?limit=10" \
+  -H "Authorization: Bearer $EXOPRIORS_API_KEY"
+```
 
 ### E1. Lexical search (BM25)
 
@@ -372,7 +396,7 @@ WHERE relname = 'mv_lesswrong_posts'
 LIMIT 1
 ```
 
-Note: `pg_class` access is blocked for public keys. Use `/v1/scry/schema` instead.
+Note: `pg_class` access is blocked on the public Scry SQL surface. Use `/v1/scry/schema` instead.
 
 ## F) Error Handling
 

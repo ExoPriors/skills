@@ -30,8 +30,8 @@ Cost scales with `comparisons x model_tier`. A typical 100-entity, 2-attribute r
 
 ## Setup
 
-1. Create an `exopriors_*` key in Console with Scry access (rerank requires private keys).
-2. Set `EXOPRIORS_API_KEY` to your key (`exopriors_*` format; not `scry_public_*`).
+1. Create an `exopriors_*` key in Console with Scry access (rerank requires a personal key).
+2. Set `EXOPRIORS_API_KEY` to your personal `exopriors_*` key from Console.
 3. Optional: set `EXOPRIORS_API_BASE` (defaults to `https://api.exopriors.com`).
 
 Canonical key naming:
@@ -53,7 +53,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
 
 ## Guardrails
 
-- **Private keys only.** Public keys get 403 on `/v1/scry/rerank`.
+- **Pass-required feature.** Rerank uses your personal `exopriors_*` key, but it still requires an active Scry pass.
 - **Dangerous content blocked.** Entities with `content_risk='dangerous'` cause hard errors. Filter them: `WHERE content_risk IS DISTINCT FROM 'dangerous'`.
 - **SQL must return `id` and `content_text` columns** (or configure `id_column`/`text_column`).
 - **Max 500 entities per request** (default 200). Keep candidate sets small; pre-filter with SQL.
@@ -434,7 +434,7 @@ For explicit persistence control, use the `persist` field:
 
 | Error | Cause | Fix |
 |---|---|---|
-| 403 Forbidden | Public key used | Switch to a private API key |
+| 403 Forbidden | Missing pass, missing Scry scope, or wrong key type | Use your personal `exopriors_*` key with Scry access and an active pass |
 | 400 "dangerous content" | Candidate set includes flagged entities | Add `content_risk IS DISTINCT FROM 'dangerous'` to SQL |
 | 400 "id_column not found" | SQL result lacks `id` column | Add `id` to SELECT or set `id_column` |
 | 400 "text_column not found" | SQL result lacks `content_text` column | Add `content_text` to SELECT or set `text_column` |

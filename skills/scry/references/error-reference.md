@@ -39,7 +39,7 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Check key format (`exopriors_*` or `scry_public_*`) and ensure the private key has Scry access |
+| `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Use your personal `exopriors_*` key from `scry.io/console` and ensure it has Scry access |
 | `unauthorized` | "Invalid authorization format" | Authorization header malformed (extra quotes, whitespace, or newline in env var) | Strip CR/LF from key, ensure exact `Authorization: Bearer <key>` |
 | `unauthorized` | "API key expired" | Key past 30-day expiry | Regenerate via `/api/scry/regenerate-key` or get new pass |
 
@@ -54,8 +54,8 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `forbidden` | "Public keys cannot..." | Public key used for private-only feature (vectors, alerts, rerank) | Use a private key with Scry access (`exopriors_*`) |
-| `forbidden` | "Postgres introspection blocked" | Public key querying `pg_*` catalogs, `current_setting()`, `version()`, etc. | Use `GET /v1/scry/schema` instead |
+| `forbidden` | "Active Scry pass required" | Feature requires a paid Scry pass (for example rerank or premium queue access) | Upgrade in `scry.io/console` and retry with the same `exopriors_*` key |
+| `forbidden` | "Postgres introspection blocked" | Query touched `pg_*` catalogs, `current_setting()`, `version()`, etc. | Use `GET /v1/scry/schema` instead |
 | `forbidden` | "Only the share owner can update" | PATCH on share you don't own | Use the key that created the share |
 
 ### 404 Not Found
@@ -69,7 +69,7 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `conflict` | "Handle already exists" | Public @handle name collision | Use a different handle name |
+| `conflict` | "Handle already exists" | Concurrent write or namespace collision on an owned handle | Retry or choose a different handle name |
 
 ### 429 Too Many Requests
 
@@ -81,7 +81,7 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 | Tier | RPM | Max Concurrent |
 |------|-----|----------------|
-| Public (per IP) | 20 | 1 |
+| Base account | 60 | 1 |
 | Day pass | 120 | 1 |
 | Week pass | 240 | 2 |
 | Month pass | 600 | 3 |
@@ -101,15 +101,15 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 | Tier | Standard | With Vectors (`?include_vectors=1`) |
 |------|----------|--------------------------------------|
-| Public | 2,000 | 200 |
-| Private | 10,000 | 500 |
+| Base account | 2,000 | 200 |
+| Pass | higher than base account | higher than base account |
 
 ### Bandwidth Limits (24h Rolling)
 
 | Tier | Daily Cap |
 |------|-----------|
-| Public (per IP) | 200 MB |
-| Private (user) | 1 GB |
+| Base account | 1 GB |
+| Pass / priority add-on | plan-dependent |
 | Week pass | 2 GB |
 | Month pass | 5 GB |
 
@@ -123,8 +123,8 @@ Private keys get 1.5M tokens per 30-day key lifecycle. Tokens are consumed by
 Timeouts are dynamic based on server load. The system reserves 12 cores for
 non-Scry work and 10 cores for burst headroom.
 
-| Condition | Public | Paid | Priority |
-|-----------|--------|------|----------|
+| Condition | Base account | Pass | Priority |
+|-----------|--------------|------|----------|
 | Idle | up to 30 min | up to 60 min | up to 2 hr |
 | Normal | up to 10 min | up to 30 min | up to 60 min |
 | Overloaded | up to 2 min | up to 10 min | up to 30 min |
@@ -141,7 +141,7 @@ non-Scry work and 10 cores for burst headroom.
 - No SELECT INTO
 - No writes inside CTEs
 - No Cartesian products (unjoined tables)
-- Public keys: no `pg_*` catalog access, no `current_setting()`, `version()`,
+- The public Scry SQL surface blocks `pg_*` catalog access, `current_setting()`, `version()`,
   `current_user`, `session_user`, etc.
 
 ### Share Limits
@@ -215,7 +215,7 @@ entities in LLM-visible contexts.
 | Missing LIMIT | "Query must include a LIMIT clause" | Add LIMIT |
 | API key from `.env` fails intermittently | 401 "Invalid authorization format" | Clean key with `KEY_CLEAN=\"$(printf '%s' \"$EXOPRIORS_API_KEY\" | tr -d '\\r\\n')\"` |
 | Using `kind = 'post'` without cast | Type mismatch | Use `kind = 'post'` (enum literal) or `kind::text = 'post'` |
-| Querying `pg_catalog` with public key | Forbidden | Use `GET /v1/scry/schema` |
+| Querying `pg_catalog` on the Scry SQL surface | Forbidden | Use `GET /v1/scry/schema` |
 | Assuming all entities have embeddings | Empty results | Add `WHERE embedding_voyage4 IS NOT NULL` |
 | Using `id IN (SELECT ...)` | Slow O(n^2) | Use `EXISTS` or `JOIN` instead |
 | Scanning scry.entities without WHERE | Timeout | Use a materialized view or add filters |

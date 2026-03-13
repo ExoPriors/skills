@@ -74,7 +74,7 @@ SELECT debias_removed_fraction(
 );
 ```
 
-If this returns about `0.65`, the mixed vector and `@hype` overlap heavily on the current public surface. Expect an aggressive debias; inspect raw vs. debiased results, check `debiased_norm`, and tighten the topic handle if the residual looks too narrow.
+If this returns about `0.65`, the mixed vector and `@hype` overlap heavily on the current live surface. Expect an aggressive debias; inspect raw vs. debiased results, check `debiased_norm`, and tighten the topic handle if the residual looks too narrow.
 
 ## Pattern 3: Contrast Then Debias (Tone Search)
 
@@ -157,7 +157,7 @@ SELECT * FROM debias_diagnostics(
 - `debiased_norm`: Length after debiasing. If this is near zero, the operation destroyed the signal.
 - `axis_topic_cosine`: How aligned axis and topic are. High absolute value = heavy overlap = aggressive removal.
 - `removed_component_norm`: Length of what was removed.
-- `removed_fraction`: On the current public surface, best treated as an overlap diagnostic rather than literal energy removed.
+- `removed_fraction`: On the current live surface, best treated as an overlap diagnostic rather than literal energy removed.
 
 ## Pattern 5: Inspecting What Was Removed
 
