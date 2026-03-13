@@ -83,9 +83,9 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    with raw SQL in the body. Not JSON-wrapped SQL.
 
 11. **File rough edges promptly.** If Scry blocks the task, misses an obvious
-   result set, or exposes a rough edge, submit a brief markdown note to
+   result set, or exposes a rough edge, submit a brief note to
    `POST /v1/feedback?feedback_type=suggestion|bug|other&channel=scry_skill`
-   using `Content-Type: text/markdown` (or `text/plain`). Do not silently work
+   using `Content-Type: text/plain` by default (`text/markdown` also works). Do not silently work
    around it. Logged-in users can review their submissions with `GET /v1/feedback`.
 
 For full tier limits, timeout policies, and degradation strategies, see [Shared Guardrails](../references/guardrails.md).
@@ -205,7 +205,7 @@ If response includes `"should_update_skill": true`, ask the user to run:
 ```bash
 curl -s "https://api.exopriors.com/v1/feedback?feedback_type=bug&channel=scry_skill" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
-  -H "Content-Type: text/markdown" \
+  -H "Content-Type: text/plain" \
   --data $'## What happened\n- Query: ...\n- Problem: ...\n\n## Why it matters\n- ...\n\n## Suggested fix\n- ...'
 ```
 

@@ -26,8 +26,8 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 
 | Capability | Base account (`exopriors_*`) | Pass / priority add-on (`exopriors_*`) |
 |---|---|---|
-| Max rows per query | 2,000 | higher than base account |
-| Max rows with vectors | 200 | higher than base account |
+| Max rows per query | 2,000 | 10,000 |
+| Max rows with vectors | 200 | 500 |
 | Bandwidth | 1 GB/day | plan-dependent |
 | Embedding budget | 1.5M tokens / 30 days | 1.5M tokens / 30 days |
 
