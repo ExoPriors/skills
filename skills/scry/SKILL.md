@@ -115,6 +115,31 @@ npx skills add exopriors/skills
 npx skills update
 ```
 
+### B.1b x402 Query-Only Access
+
+`POST /v1/scry/query` also supports standard x402 when no `Authorization`
+header is present. Use this path when the user already has an x402-capable
+wallet/client and only needs direct paid query execution. For schema/context,
+shares, judgements, feedback, or repeated multi-endpoint usage, prefer a
+personal `exopriors_*` API key.
+
+If the user wants wallet-native durable identity plus a reusable key, use
+`POST /v1/auth/agent/signup` first. That binds the wallet to a user and returns
+a session token plus API key in one flow.
+
+Minimal client shape:
+
+```js
+import { wrapFetchWithPayment } from 'x402-fetch';
+
+const paidFetch = wrapFetchWithPayment(fetch, walletClient);
+const resp = await paidFetch('https://api.exopriors.com/v1/scry/query', {
+  method: 'POST',
+  headers: { 'content-type': 'text/plain' },
+  body: 'SELECT 1 LIMIT 1',
+});
+```
+
 ## C) Quickstart
 
 One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
