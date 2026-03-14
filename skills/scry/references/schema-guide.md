@@ -85,12 +85,15 @@ Author/account records across all sources.
 
 ### scry.reddit_posts / scry.reddit_comments
 
-**Primary query surfaces for Reddit.** Union views over all 7 indexed time-windowed
-tables. Always prefer these over `scry.reddit` when querying only posts or comments.
+Repo-defined union views over all 7 time-window shards. On the public instance
+these direct retrieval surfaces are currently **degraded**: they appear in the
+live schema, but performance is not reliable enough to treat them as the normal
+happy path.
 
-Each windowed table has B-tree indexes on `(subreddit, original_timestamp)`,
-`upvotes`, `original_author`, `domain`, plus BM25 full-text indexes. Queries
-filtering by subreddit or author hit these indexes directly.
+Use these only if `/v1/scry/schema` marks them healthy again. For default
+Reddit work today, start with `scry.reddit_subreddit_stats`,
+`scry.reddit_subreddit_stats_monthly`, `scry.reddit_clusters()`, and
+`scry.reddit_embeddings`.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -129,6 +132,8 @@ subreddit, post_count, comment_count, total_count, earliest, latest, active_auth
 ### scry.reddit_subreddit_stats / scry.reddit_subreddit_stats_monthly
 
 Aggregated subreddit activity counts and monthly time series.
+`reddit_subreddit_stats` is one row per subreddit across all shard windows.
+`reddit_subreddit_stats_monthly` is one row per `(subreddit, month)`.
 
 ### scry.reddit_author_stats
 
@@ -344,7 +349,10 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 
 ### Reddit Windowed Views
 
-Reddit is sharded by time period for performance:
+Reddit is sharded by time period for performance. These `mv_` names are legacy
+and currently backed by plain views, not materialized views. On the public
+instance they are also currently **degraded**, so treat them as diagnostic /
+repo-defined surfaces unless live schema status says otherwise.
 
 | View | Period |
 |------|--------|
@@ -460,7 +468,9 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
   `original_author` may be NULL; prefer `metadata->>'username'`.
 - **arXiv**: `title` often in metadata. `score` is always NULL.
 - **Bluesky**: embeddings still ramping. No score field.
-- **Reddit**: `upvotes` can be negative. Use windowed views for performance.
+- **Reddit**: `upvotes` can be negative. On the public instance, direct retrieval
+  and BM25 helper surfaces are currently degraded; trust `/v1/scry/schema`
+  status before using them.
 
 ---
 
@@ -480,6 +490,10 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
 | `scry.preview_text_safe(input, max_chars)` | Exception-safe content-text prefix helper | -- |
 
 Default kinds for omitted `kinds`: `post`, `paper`, `document`, `webpage`, `twitter_thread`, `grant`.
+
+`scry.search_reddit_posts(...)` and `scry.search_reddit_comments(...)` may still
+appear in live schema, but if the schema response marks them `degraded`, do not
+use them as the normal path.
 `scry.search()` broadens once to `comment` if that default returns 0 rows.
 
 ### OpenAlex Helper Functions

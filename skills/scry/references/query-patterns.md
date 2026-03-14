@@ -63,13 +63,21 @@ ORDER BY original_timestamp DESC
 Reddit data lives in separate windowed tables (not `scry.entities`). Uses TEXT IDs
 (`t1_` comments, `t3_` posts) and does not join to UUID entities.
 
-**Primary query surfaces** (always prefer these over raw `scry.reddit`):
-- `scry.reddit_posts` — union of all 7 post time windows (indexed)
-- `scry.reddit_comments` — union of all 7 comment time windows (indexed)
-- `scry.reddit` — union of both (still large; always filter by subreddit)
+**Current default surfaces**:
+- `scry.reddit_subreddit_stats` / `scry.reddit_subreddit_stats_monthly` — reliable discovery and counting
+- `scry.reddit_clusters()` plus the thematic cluster views — reliable starting points
+- `scry.reddit_embeddings` — semantic subset with explicit partial-coverage semantics
 
-**IMPORTANT**: Always filter by subreddit or use search functions. Unfiltered
-queries against `scry.reddit` scan billions of rows.
+**Currently degraded on the public instance**:
+- `scry.reddit_posts`
+- `scry.reddit_comments`
+- `scry.reddit`
+- `scry.mv_reddit_*`
+- `scry.search_reddit_posts(...)`
+- `scry.search_reddit_comments(...)`
+
+Trust `/v1/scry/schema` status. If a Reddit retrieval surface is marked
+`degraded`, do not treat it as the happy path.
 
 ### Thematic cluster views (best starting point)
 ```sql
@@ -98,7 +106,7 @@ SELECT * FROM scry.reddit_subreddits('%machine%learn%')
 SELECT * FROM scry.reddit_subreddits(min_total=>1000000, limit_n=>20)
 ```
 
-### Direct query — posts by subreddit (fast, index-backed)
+### Direct query — posts by subreddit (degraded on the public instance)
 ```sql
 SELECT id, uri, title, upvotes, comment_count, original_timestamp
 FROM scry.reddit_posts
@@ -108,7 +116,7 @@ ORDER BY original_timestamp DESC
 LIMIT 50
 ```
 
-### Direct query — comments by subreddit
+### Direct query — comments by subreddit (degraded on the public instance)
 ```sql
 SELECT id, uri, original_author, upvotes, original_timestamp,
        LEFT(content_text, 200) AS preview
@@ -119,7 +127,7 @@ ORDER BY upvotes DESC NULLS LAST
 LIMIT 50
 ```
 
-### BM25 search — posts
+### BM25 search — posts (degraded on the public instance)
 ```sql
 SELECT id, uri, subreddit, title, original_author, original_timestamp, score
 FROM scry.search_reddit_posts(
@@ -134,7 +142,7 @@ ORDER BY score DESC NULLS LAST
 Window keys: `recent`, `2022_2023`, `2020_2021`, `2018_2019`, `2014_2017`,
 `2010_2013`, `2005_2009`, `all`.
 
-### BM25 search — comments
+### BM25 search — comments (degraded on the public instance)
 ```sql
 SELECT id, uri, subreddit, original_author, original_timestamp
 FROM scry.search_reddit_comments(

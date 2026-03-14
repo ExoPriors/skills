@@ -194,8 +194,10 @@ User wants to search the ExoPriors corpus?
   |
   +-- By keywords/phrases? --> scry.search() (BM25 lexical over canonical content_text)
   |     +-- Specific forum?  --> pass mode='mv_lesswrong_posts' or kinds filter
-  |     +-- Reddit?          --> START with scry.search_reddit_posts() /
-  |                              scry.search_reddit_comments()
+  |     +-- Reddit?          --> START with scry.reddit_subreddit_stats /
+  |                              scry.reddit_clusters() / scry.reddit_embeddings
+  |                              and trust /v1/scry/schema status before
+  |                              using direct retrieval helpers
   |     +-- Large result?    --> scry.search_ids() (id+uri+kind, up to 2000)
   |
   +-- By structured filters (source, date, author)? --> Direct SQL on MVs
@@ -264,24 +266,22 @@ Default `kinds` if omitted: `['post','paper','document','webpage','twitter_threa
 Pass explicit `kinds` for strict scope (for example comment-only or tweet-only).
 Pass `mode=>'mv_lesswrong_posts'` to scope to LessWrong posts.
 
-### E2. Reddit-specific search
+### E2. Reddit-specific discovery
 
 ```sql
-SELECT id, uri, subreddit, original_author, original_timestamp
-FROM scry.search_reddit_posts(
-  'transformer architecture',
-  subreddits=>ARRAY['MachineLearning','LocalLLaMA'],
-  limit_n=>50,
-  window_key=>'recent'
-)
-ORDER BY score DESC
+SELECT subreddit, total_count, latest
+FROM scry.reddit_subreddit_stats
+WHERE subreddit IN ('MachineLearning', 'LocalLLaMA')
+ORDER BY total_count DESC
 ```
 
-Window keys: `recent`, `2022_2023`, `2020_2021`, `2018_2019`, `2014_2017`,
-`2010_2013`, `2005_2009`. Also: `scry.search_reddit_comments(...)`.
+For semantic Reddit retrieval over the embedding-covered subset, use
+`scry.reddit_embeddings` or `scry.search_reddit_posts_semantic(...)`.
 
-For semantic Reddit retrieval over the embedding-covered subset:
-`scry.search_reddit_posts_semantic(query_embedding=>..., subreddits=>..., limit_n=>...)`.
+Direct retrieval helpers (`scry.reddit_posts`, `scry.reddit_comments`,
+`scry.mv_reddit_*`, `scry.search_reddit_posts(...)`,
+`scry.search_reddit_comments(...)`) are currently degraded on the public
+instance. Check `/v1/scry/schema` status before using them.
 
 ### E3. Source-filtered materialized view query
 
