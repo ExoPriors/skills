@@ -41,7 +41,7 @@ The `Retry-After` header (seconds) is present on 429 responses.
 |------|----------------|-------|-----|
 | `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Use your personal `exopriors_*` key from `scry.io/console` and ensure it has Scry access |
 | `unauthorized` | "Invalid authorization format" | Authorization header malformed (extra quotes, whitespace, or newline in env var) | Strip CR/LF from key, ensure exact `Authorization: Bearer <key>` |
-| `unauthorized` | "API key expired" | Key past 30-day expiry | Regenerate via `/api/scry/regenerate-key` or get new pass |
+| `unauthorized` | "API key expired" | Key past 30-day expiry | Regenerate via `/api/console/scry/regenerate-key` or get new pass |
 
 ### 402 Payment Required
 
