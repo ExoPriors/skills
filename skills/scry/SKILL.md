@@ -44,6 +44,8 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 
 1. **Context handshake first.** At session start, call
    `GET /v1/scry/context?skill_generation=20260313`.
+   Use the returned `offerings` block for the current product summary
+   budgets, canonical env var, default skill, and specialized skill catalog.
    If `should_update_skill=true`, tell the user to run `npx skills update`.
 
 2. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
