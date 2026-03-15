@@ -13,7 +13,7 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 
 | Rule | Detail |
 |------|--------|
-| Context handshake | At session start, call `GET /v1/scry/context` (include `skill_generation` when available) and honor `should_update_skill` advisories |
+| Context handshake | At session start, call `GET /v1/scry/context` (include `skill_generation` when available), honor `should_update_skill`, and read `lexical_search.status` before leaning on global BM25 helpers |
 | Schema first | Call `GET /v1/scry/schema` before constructing any SQL |
 | Operational status | If lexical search or curated views look degraded, call `GET /v1/scry/index-view-status` before assuming the query or schema is wrong |
 | Clarify vague asks | If user intent is ambiguous, ask one short clarification question before expensive queries |

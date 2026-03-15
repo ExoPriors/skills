@@ -22,7 +22,7 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `20260315`
+**Skill generation**: `2026031501`
 
 ## A) When to use / not use
 
@@ -43,7 +43,7 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=20260315`.
+   `GET /v1/scry/context?skill_generation=2026031501`.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
    If you need deeper docs, use `offerings.canonical_doc_path`, each skill's
@@ -51,6 +51,10 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    docs live.
    If you cache descriptive bootstrap context across turns or sessions, also
    track `surface_context_generation` and refresh when it changes.
+   Read `lexical_search.status` as well: if it is not `healthy`, stop assuming
+   global `scry.search*` is reliable and pivot to source-local `scry.*` /
+   `mv_*` surfaces or semantic retrieval while the canonical BM25 index
+   recovers.
    If `should_update_skill=true`, tell the user to run `npx skills update`.
 
 2. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
@@ -151,7 +155,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.exopriors.com/v1/scry/context?skill_generation=20260315
+GET https://api.exopriors.com/v1/scry/context?skill_generation=2026031501
 Authorization: Bearer $EXOPRIORS_API_KEY
 
 Step 2: Get schema
@@ -225,12 +229,15 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260315" \
+curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=2026031501" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY"
 ```
 
 If response includes `"should_update_skill": true`, ask the user to run:
 `npx skills update`.
+If response includes `"lexical_search": {"status": "rebuilding"|"degraded"|"stale"|...}`,
+prefer source-local `scry.*` / `mv_*` surfaces and use
+`/v1/scry/index-view-status` for detailed rebuild timing before blaming the query.
 
 ### E0b. Submit feedback when Scry blocks the task
 
@@ -359,6 +366,8 @@ curl -s -X POST https://api.exopriors.com/v1/scry/estimate \
 Returns EXPLAIN (FORMAT JSON) output. Use this for expensive queries before committing.
 It does not prove BM25 helper health: if `scry.search*` fails, check
 `/v1/scry/index-view-status` and `/v1/scry/schema` status as well.
+The `/v1/scry/context` handshake now also exposes `lexical_search.status` for
+cheap degraded-mode detection before you start issuing lexical helpers.
 
 ### E8. Create a shareable artifact
 
