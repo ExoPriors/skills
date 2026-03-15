@@ -22,7 +22,7 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `20260313`
+**Skill generation**: `20260315`
 
 ## A) When to use / not use
 
@@ -43,9 +43,12 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=20260313`.
+   `GET /v1/scry/context?skill_generation=20260315`.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
+   If you need deeper docs, use `offerings.canonical_doc_path`, each skill's
+   `repo_path`, and `reference_paths` instead of guessing where the maintained
+   docs live.
    If you cache descriptive bootstrap context across turns or sessions, also
    track `surface_context_generation` and refresh when it changes.
    If `should_update_skill=true`, tell the user to run `npx skills update`.
@@ -148,7 +151,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.exopriors.com/v1/scry/context?skill_generation=20260313
+GET https://api.exopriors.com/v1/scry/context?skill_generation=20260315
 Authorization: Bearer $EXOPRIORS_API_KEY
 
 Step 2: Get schema
@@ -162,21 +165,19 @@ Content-Type: text/plain
 
 WITH hits AS (
   SELECT id FROM scry.search('RLHF reinforcement learning human feedback',
-    kinds=>ARRAY['post'], limit_n=>100)
+    mode=>'mv_lesswrong_posts', kinds=>ARRAY['post'], limit_n=>100)
 )
-SELECT e.uri, e.title, e.original_author, e.original_timestamp, e.score
+SELECT mv.uri, mv.title, mv.original_author, mv.original_timestamp, mv.base_score
 FROM hits h
-JOIN scry.entities e ON e.id = h.id
-WHERE e.source = 'lesswrong'
-  AND e.content_risk IS DISTINCT FROM 'dangerous'
-ORDER BY e.score DESC NULLS LAST
+JOIN scry.mv_lesswrong_posts mv ON mv.entity_id = h.id
+ORDER BY mv.base_score DESC NULLS LAST, mv.original_timestamp DESC
 LIMIT 20
 ```
 
 Response shape:
 ```json
 {
-  "columns": ["uri", "title", "original_author", "original_timestamp", "score"],
+  "columns": ["uri", "title", "original_author", "original_timestamp", "base_score"],
   "rows": [["https://...", "My RLHF Post", "author", "2025-01-15T...", 142], ...],
   "row_count": 20,
   "duration_ms": 312,
@@ -198,7 +199,7 @@ User wants to search the ExoPriors corpus?
   |                              scry.reddit_clusters() / scry.reddit_embeddings
   |                              and trust /v1/scry/schema status before
   |                              using direct retrieval helpers
-  |     +-- Large result?    --> scry.search_ids() (id+uri+kind, up to 2000)
+  |     +-- Large result?    --> scry.search_ids() (up to 2000 lexical IDs; join for fields)
   |
   +-- By structured filters (source, date, author)? --> Direct SQL on MVs
   |
@@ -224,7 +225,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260313" \
+curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=20260315" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY"
 ```
 
@@ -265,6 +266,8 @@ Default `kinds` if omitted: `['post','paper','document','webpage','twitter_threa
 `scry.search()` broadens once to `kinds=>ARRAY['comment']` if that default returns 0 rows.
 Pass explicit `kinds` for strict scope (for example comment-only or tweet-only).
 Pass `mode=>'mv_lesswrong_posts'` to scope to LessWrong posts.
+When a source-specific MV exists, join that MV and use its native score field
+(`base_score` for LessWrong / EA Forum) instead of sorting the full `scry.entities` row.
 
 ### E2. Reddit-specific discovery
 
@@ -293,6 +296,9 @@ ORDER BY original_timestamp DESC
 LIMIT 50
 ```
 
+`score` is NULL for arXiv papers on the public surface. Sort by
+`original_timestamp`, category, or downstream citation proxies instead.
+
 ### E4. Author activity across sources
 
 ```sql
@@ -305,16 +311,21 @@ ORDER BY docs DESC
 LIMIT 20
 ```
 
-### E5. Entity kind distribution for a source
+### E5. Recent entity kind distribution for a source
 
 ```sql
 SELECT kind::text, COUNT(*)
 FROM scry.entities
 WHERE source = 'hackernews'
+  AND original_timestamp >= '2025-01-01'
 GROUP BY kind::text
 ORDER BY 2 DESC
 LIMIT 20
 ```
+
+Removing the date bound turns this into a large base-table aggregation. Run
+`/v1/scry/estimate` first or prefer source-specific MVs when they already cover
+the question.
 
 ### E6. Hybrid search (lexical + semantic rerank in SQL)
 
@@ -346,6 +357,8 @@ curl -s -X POST https://api.exopriors.com/v1/scry/estimate \
 ```
 
 Returns EXPLAIN (FORMAT JSON) output. Use this for expensive queries before committing.
+It does not prove BM25 helper health: if `scry.search*` fails, check
+`/v1/scry/index-view-status` and `/v1/scry/schema` status as well.
 
 ### E8. Create a shareable artifact
 

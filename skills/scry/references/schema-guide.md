@@ -479,7 +479,7 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
 | Function | Description | Max limit |
 |----------|-------------|-----------|
 | `scry.search(query_text, mode, kinds, limit_n)` | BM25 lexical search over canonical `content_text` | 100 |
-| `scry.search_ids(query, mode, kinds, limit_n)` | Lightweight lexical search (returns id, uri, kind) | 2000 |
+| `scry.search_ids(query, mode, kinds, limit_n)` | Lightweight lexical search (returns ids only; join to `scry.entities` for fields) | 2000 |
 | `scry.search_reddit_posts(query, subreddits, limit_n, window_key)` | Reddit post search | 50 per window |
 | `scry.search_reddit_comments(query, subreddits, limit_n, window_key)` | Reddit comment search | 50 per window |
 | `scry.search_reddit_posts_semantic(query_embedding, subreddits, limit_n, min_upvotes, min_timestamp)` | Reddit semantic search over embedding-covered subset | 200 |
@@ -495,6 +495,9 @@ Default kinds for omitted `kinds`: `post`, `paper`, `document`, `webpage`, `twit
 appear in live schema, but if the schema response marks them `degraded`, do not
 use them as the normal path.
 `scry.search()` broadens once to `comment` if that default returns 0 rows.
+`/v1/scry/estimate` checks planner cost, not BM25 helper health. If a
+`scry.search*` call fails, also inspect `/v1/scry/index-view-status` and the
+object `status` fields in `/v1/scry/schema`.
 
 ### OpenAlex Helper Functions
 

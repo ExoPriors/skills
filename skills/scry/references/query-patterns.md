@@ -26,12 +26,15 @@ WITH c AS (
   SELECT id FROM scry.search('corrigibility',
     mode=>'mv_lesswrong_posts', kinds=>ARRAY['post'], limit_n=>100)
 )
-SELECT e.uri, e.title, e.score, e.original_timestamp
-FROM c JOIN scry.entities e ON e.id = c.id
-WHERE e.content_risk IS DISTINCT FROM 'dangerous'
-ORDER BY e.score DESC NULLS LAST
+SELECT mv.uri, mv.title, mv.base_score, mv.original_timestamp
+FROM c
+JOIN scry.mv_lesswrong_posts mv ON mv.entity_id = c.id
+ORDER BY mv.base_score DESC NULLS LAST, mv.original_timestamp DESC
 LIMIT 30
 ```
+
+When a source-specific MV exists, join that MV and use its native score field
+instead of sorting `scry.entities`.
 
 ### IDs-only for large candidate sets
 ```sql
@@ -226,6 +229,9 @@ WHERE original_timestamp >= '2025-01-01'
 ORDER BY original_timestamp DESC
 LIMIT 50
 ```
+
+`score` is NULL for arXiv on the public surface. Prefer recency, category, or
+downstream citation-proxy fields for ranking.
 
 ### arXiv papers filtered by primary category (via metadata)
 ```sql
@@ -439,15 +445,19 @@ LIMIT 50
 
 ## 8. Aggregation / Analytics Patterns
 
-### Entity kind distribution for a source
+### Recent entity kind distribution for a source
 ```sql
 SELECT kind::text, COUNT(*)
 FROM scry.entities
 WHERE source = 'hackernews'
+  AND original_timestamp >= '2025-01-01'
 GROUP BY kind::text
 ORDER BY 2 DESC
 LIMIT 20
 ```
+
+If you need the full-history distribution, run `/v1/scry/estimate` first.
+Source-wide `GROUP BY` on `scry.entities` is not a happy-path query.
 
 ### Posts per month for a source
 ```sql
