@@ -32,7 +32,7 @@ Cost scales with `comparisons x model_tier`. A typical 100-entity, 2-attribute r
 
 1. Create an `exopriors_*` key in Console with Scry access (rerank requires a personal key).
 2. Set `EXOPRIORS_API_KEY` to your personal `exopriors_*` key from Console.
-3. Optional: set `EXOPRIORS_API_BASE` (defaults to `https://api.exopriors.com`).
+3. Optional: set `EXOPRIORS_API_BASE` (defaults to `https://api.scry.io`).
 
 Canonical key naming:
 - Env var: `EXOPRIORS_API_KEY`
@@ -40,7 +40,7 @@ Canonical key naming:
 
 Smoke test:
 ```bash
-curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
+curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -66,7 +66,7 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 
 ### POST /v1/scry/rerank
 
-Base URL: `https://api.exopriors.com`
+Base URL: `https://api.scry.io`
 Auth: `Authorization: Bearer $EXOPRIORS_API_KEY`
 
 Two input modes: SQL or cached list.
@@ -227,7 +227,7 @@ You can also pass `model` directly with any allowed model ID.
 Find the clearest recent LessWrong posts:
 
 ```bash
-curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
+curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -257,7 +257,7 @@ cat > /tmp/rerank_req.json <<'JSON'
 }
 JSON
 
-curl -s "${EXOPRIORS_API_BASE:-https://api.exopriors.com}/v1/scry/rerank" \
+curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d @/tmp/rerank_req.json
@@ -396,19 +396,19 @@ For large jobs, use the raw `/v1/rerank/multi` endpoint with `"async": true`:
 
 ```bash
 # Submit
-curl -s https://api.exopriors.com/v1/rerank/multi \
+curl -s https://api.scry.io/v1/rerank/multi \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -H "Idempotency-Key: my-unique-key" \
   -d '{"entities":[...],"attributes":[...],"topk":{"k":10},"async":true}'
 
 # Poll
-curl -s https://api.exopriors.com/v1/rerank/operations/OPERATION_ID \
+curl -s https://api.scry.io/v1/rerank/operations/OPERATION_ID \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "If-None-Match: ETAG_FROM_LAST_POLL"
 
 # Cancel
-curl -s -X DELETE https://api.exopriors.com/v1/rerank/operations/OPERATION_ID \
+curl -s -X DELETE https://api.scry.io/v1/rerank/operations/OPERATION_ID \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY"
 ```
 

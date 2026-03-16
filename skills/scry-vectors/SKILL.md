@@ -39,7 +39,7 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 
 ```bash
 # Smoke test
-curl -s "https://api.exopriors.com/v1/scry/query" \
+curl -s "https://api.scry.io/v1/scry/query" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: text/plain" \
   --data-binary "SELECT 1 AS ok LIMIT 1"
@@ -54,7 +54,7 @@ Create a free account in Console and use your personal key. Base account keys ha
 ## Recipe 1: Embed a Concept
 
 ```bash
-curl -s "https://api.exopriors.com/v1/scry/embed" \
+curl -s "https://api.scry.io/v1/scry/embed" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

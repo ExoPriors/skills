@@ -22,7 +22,7 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `2026031501`
+**Skill generation**: `2026031601`
 
 ## A) When to use / not use
 
@@ -43,9 +43,11 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026031501`.
+   `GET /v1/scry/context?skill_generation=2026031601`.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
+   If you need a concise shareable bootstrap prompt for another agent, use
+   `offerings.public_agent_prompt.copy_text` instead of paraphrasing your own.
    If you need deeper docs, use `offerings.canonical_doc_path`, each skill's
    `repo_path`, and `reference_paths` instead of guessing where the maintained
    docs live.
@@ -142,7 +144,7 @@ Minimal client shape:
 import { wrapFetchWithPayment } from 'x402-fetch';
 
 const paidFetch = wrapFetchWithPayment(fetch, walletClient);
-const resp = await paidFetch('https://api.exopriors.com/v1/scry/query', {
+const resp = await paidFetch('https://api.scry.io/v1/scry/query', {
   method: 'POST',
   headers: { 'content-type': 'text/plain' },
   body: 'SELECT 1 LIMIT 1',
@@ -155,15 +157,15 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.exopriors.com/v1/scry/context?skill_generation=2026031501
+GET https://api.scry.io/v1/scry/context?skill_generation=2026031601
 Authorization: Bearer $EXOPRIORS_API_KEY
 
 Step 2: Get schema
-GET https://api.exopriors.com/v1/scry/schema
+GET https://api.scry.io/v1/scry/schema
 Authorization: Bearer $EXOPRIORS_API_KEY
 
 Step 3: Run query
-POST https://api.exopriors.com/v1/scry/query
+POST https://api.scry.io/v1/scry/query
 Authorization: Bearer $EXOPRIORS_API_KEY
 Content-Type: text/plain
 
@@ -229,7 +231,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.exopriors.com/v1/scry/context?skill_generation=2026031501" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031601" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY"
 ```
 
@@ -242,7 +244,7 @@ prefer source-local `scry.*` / `mv_*` surfaces and use
 ### E0b. Submit feedback when Scry blocks the task
 
 ```bash
-curl -s "https://api.exopriors.com/v1/feedback?feedback_type=bug&channel=scry_skill" \
+curl -s "https://api.scry.io/v1/feedback?feedback_type=bug&channel=scry_skill" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: text/plain" \
   --data $'## What happened\n- Query: ...\n- Problem: ...\n\n## Why it matters\n- ...\n\n## Suggested fix\n- ...'
@@ -252,7 +254,7 @@ Success response includes a receipt `id`. Logged-in users can review their own
 submissions with:
 
 ```bash
-curl -s "https://api.exopriors.com/v1/feedback?limit=10" \
+curl -s "https://api.scry.io/v1/feedback?limit=10" \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY"
 ```
 
@@ -357,7 +359,7 @@ skill for creating handles.
 ### E7. Cost estimation before execution
 
 ```bash
-curl -s -X POST https://api.exopriors.com/v1/scry/estimate \
+curl -s -X POST https://api.scry.io/v1/scry/estimate \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"sql": "SELECT id, title FROM scry.mv_arxiv_papers LIMIT 1000"}'
@@ -374,7 +376,7 @@ cheap degraded-mode detection before you start issuing lexical helpers.
 ```bash
 # 1. Run query and capture results
 # 2. POST share
-curl -s -X POST https://api.exopriors.com/v1/scry/shares \
+curl -s -X POST https://api.scry.io/v1/scry/shares \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -395,7 +397,7 @@ Rendered at: `https://scry.io/scry/share/{slug}`.
 ### E9. Emit a structured agent judgement
 
 ```bash
-curl -s -X POST https://api.exopriors.com/v1/scry/judgements \
+curl -s -X POST https://api.scry.io/v1/scry/judgements \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

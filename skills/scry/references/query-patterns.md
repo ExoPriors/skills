@@ -617,7 +617,7 @@ LIMIT 50
 
 ### Create a query share
 ```bash
-curl -s -X POST https://api.exopriors.com/v1/scry/shares \
+curl -s -X POST https://api.scry.io/v1/scry/shares \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -634,7 +634,7 @@ curl -s -X POST https://api.exopriors.com/v1/scry/shares \
 ### Progressive share (stub then update)
 ```bash
 # Step 1: Create stub
-curl -s -X POST https://api.exopriors.com/v1/scry/shares \
+curl -s -X POST https://api.scry.io/v1/scry/shares \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -645,7 +645,7 @@ curl -s -X POST https://api.exopriors.com/v1/scry/shares \
 # Returns: {"slug": "abc123", ...}
 
 # Step 2: Update with results
-curl -s -X PATCH https://api.exopriors.com/v1/scry/shares/abc123 \
+curl -s -X PATCH https://api.scry.io/v1/scry/shares/abc123 \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -656,7 +656,7 @@ curl -s -X PATCH https://api.exopriors.com/v1/scry/shares/abc123 \
 
 ### Create an insight share
 ```bash
-curl -s -X POST https://api.exopriors.com/v1/scry/shares \
+curl -s -X POST https://api.scry.io/v1/scry/shares \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -674,7 +674,7 @@ curl -s -X POST https://api.exopriors.com/v1/scry/shares \
 
 ### Create a markdown transcript share
 ```bash
-curl -s -X POST https://api.exopriors.com/v1/scry/shares \
+curl -s -X POST https://api.scry.io/v1/scry/shares \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -694,7 +694,7 @@ curl -s -X POST https://api.exopriors.com/v1/scry/shares \
 
 ### Emit a classification judgement
 ```bash
-curl -s -X POST https://api.exopriors.com/v1/scry/judgements \
+curl -s -X POST https://api.scry.io/v1/scry/judgements \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -715,7 +715,7 @@ curl -s -X POST https://api.exopriors.com/v1/scry/judgements \
 
 ### Judgement on a judgement (meta-judgement)
 ```bash
-curl -s -X POST https://api.exopriors.com/v1/scry/judgements \
+curl -s -X POST https://api.scry.io/v1/scry/judgements \
   -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{

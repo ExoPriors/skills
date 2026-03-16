@@ -35,7 +35,7 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 
 ```
 Authorization: Bearer $EXOPRIORS_API_KEY
-Base URL: https://api.exopriors.com
+Base URL: https://api.scry.io
 ```
 
 Use `EXOPRIORS_API_KEY` as the canonical env var in examples and agent chats.
