@@ -30,18 +30,18 @@ Cost scales with `comparisons x model_tier`. A typical 100-entity, 2-attribute r
 
 ## Setup
 
-1. Create an `exopriors_*` key in Console with Scry access (rerank requires a personal key).
-2. Set `EXOPRIORS_API_KEY` to your personal `exopriors_*` key from Console.
+1. Create an personal Scry API key in Console with Scry access (rerank requires a personal key).
+2. Set `SCRY_API_KEY` to your personal Scry API key from Console.
 3. Optional: set `EXOPRIORS_API_BASE` (defaults to `https://api.scry.io`).
 
 Canonical key naming:
-- Env var: `EXOPRIORS_API_KEY`
-- Required key format for rerank: `exopriors_*` with Scry access
+- Env var: `SCRY_API_KEY`
+- Required key format for rerank: personal Scry API key with Scry access
 
 Smoke test:
 ```bash
 curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "sql": "SELECT id, content_text FROM scry.entities WHERE kind='\''post'\'' AND source='\''lesswrong'\'' ORDER BY created_at DESC LIMIT 10",
@@ -53,7 +53,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
 
 ## Guardrails
 
-- **Pass-required feature.** Rerank uses your personal `exopriors_*` key, but it still requires an active Scry pass.
+- **Pass-required feature.** Rerank uses your personal Scry API key, but it still requires an active Scry pass.
 - **Dangerous content blocked.** Entities with `content_risk='dangerous'` cause hard errors. Filter them: `WHERE content_risk IS DISTINCT FROM 'dangerous'`.
 - **SQL must return `id` and `content_text` columns** (or configure `id_column`/`text_column`).
 - **Max 500 entities per request** (default 200). Keep candidate sets small; pre-filter with SQL.
@@ -67,7 +67,7 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 ### POST /v1/scry/rerank
 
 Base URL: `https://api.scry.io`
-Auth: `Authorization: Bearer $EXOPRIORS_API_KEY`
+Auth: `Authorization: Bearer $SCRY_API_KEY`
 
 Two input modes: SQL or cached list.
 
@@ -228,7 +228,7 @@ Find the clearest recent LessWrong posts:
 
 ```bash
 curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "sql": "SELECT id, content_text FROM scry.entities WHERE kind='\''post'\'' AND source='\''lesswrong'\'' AND original_timestamp > now() - interval '\''30 days'\'' AND content_risk IS DISTINCT FROM '\''dangerous'\'' ORDER BY score DESC NULLS LAST LIMIT 50",
@@ -258,7 +258,7 @@ cat > /tmp/rerank_req.json <<'JSON'
 JSON
 
 curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d @/tmp/rerank_req.json
 ```
@@ -397,19 +397,19 @@ For large jobs, use the raw `/v1/rerank/multi` endpoint with `"async": true`:
 ```bash
 # Submit
 curl -s https://api.scry.io/v1/rerank/multi \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -H "Idempotency-Key: my-unique-key" \
   -d '{"entities":[...],"attributes":[...],"topk":{"k":10},"async":true}'
 
 # Poll
 curl -s https://api.scry.io/v1/rerank/operations/OPERATION_ID \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "If-None-Match: ETAG_FROM_LAST_POLL"
 
 # Cancel
 curl -s -X DELETE https://api.scry.io/v1/rerank/operations/OPERATION_ID \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY"
+  -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
 Async mode uses lease-based execution with heartbeat. Cancelled operations charge only for work completed.
@@ -434,7 +434,7 @@ For explicit persistence control, use the `persist` field:
 
 | Error | Cause | Fix |
 |---|---|---|
-| 403 Forbidden | Missing pass, missing Scry scope, or wrong key type | Use your personal `exopriors_*` key with Scry access and an active pass |
+| 403 Forbidden | Missing pass, missing Scry scope, or wrong key type | Use your personal Scry API key with Scry access and an active pass |
 | 400 "dangerous content" | Candidate set includes flagged entities | Add `content_risk IS DISTINCT FROM 'dangerous'` to SQL |
 | 400 "id_column not found" | SQL result lacks `id` column | Add `id` to SELECT or set `id_column` |
 | 400 "text_column not found" | SQL result lacks `content_text` column | Add `content_text` to SELECT or set `text_column` |

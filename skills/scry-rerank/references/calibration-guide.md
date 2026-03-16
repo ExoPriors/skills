@@ -81,7 +81,7 @@ Rerank the cached list with each tier:
 for tier in fast balanced quality; do
   echo "=== $tier ==="
   curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
-    -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+    -H "Authorization: Bearer $SCRY_API_KEY" \
     -H "Content-Type: application/json" \
     -d "{
       \"list_id\": \"CACHED_LIST_ID\",

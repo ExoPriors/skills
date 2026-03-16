@@ -44,6 +44,7 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 
 1. **Context handshake first.** At session start, call
    `GET /v1/scry/context?skill_generation=2026031601`.
+   This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
    If you need a concise shareable bootstrap prompt for another agent, use
@@ -105,20 +106,38 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 
 ### B.1 API Key Setup (Canonical)
 
-Recommended default for less-technical users: in the directory where you launch the agent, store `EXOPRIORS_API_KEY` in `.env` so skills and copied prompts use the same place.
+Recommended default for less-technical users: in the directory where you launch the agent, store `SCRY_API_KEY` in `.env` so skills and copied prompts use the same place.
 Canonical key naming for this skill:
-- Env var: `EXOPRIORS_API_KEY`
-- Personal key format: `exopriors_*` with Scry access
+- Env var: `SCRY_API_KEY`
+- Anonymous bootstrap key format: `scry_anon_*` from `POST /v1/scry/anonymous-key`
+- Personal key format: personal Scry API key with Scry access
+- Recommended anonymous client header: `X-Scry-Client-Tag: <short-stable-tag>`
 
 ```bash
-printf '%s\n' 'EXOPRIORS_API_KEY=exopriors_...' >> .env
+printf '%s\n' 'SCRY_API_KEY=<your key>' >> .env
 set -a && source .env && set +a
 ```
 
 Verify:
 ```bash
-echo "$EXOPRIORS_API_KEY"
+echo "$SCRY_API_KEY"
 ```
+
+Anonymous bootstrap flow when the user wants immediate public access without signup:
+```bash
+CLIENT_TAG="${SCRY_CLIENT_TAG:-dev-laptop}"
+ANON_KEY="$(curl -s https://api.scry.io/v1/scry/anonymous-key -X POST -H "X-Scry-Client-Tag: $CLIENT_TAG" | python3 -c 'import json,sys; print(json.load(sys.stdin)[\"api_key\"])')"
+curl -s https://api.scry.io/v1/scry/schema \
+  -H "Authorization: Bearer $ANON_KEY" \
+  -H "X-Scry-Client-Tag: $CLIENT_TAG"
+curl -s https://api.scry.io/v1/scry/query \
+  -H "Authorization: Bearer $ANON_KEY" \
+  -H "X-Scry-Client-Tag: $CLIENT_TAG" \
+  -H "Content-Type: text/plain" \
+  --data "SELECT 1 LIMIT 1"
+```
+Use this for fast trial access only. The anonymous bootstrap lane is intentionally generous for the first few queries and then degrades. For sustained usage, prefer a personal Scry API key.
+Keep the same `X-Scry-Client-Tag` value on the same device when staying anonymous so the backend can distinguish a real first-use session from abuse behind shared IPs.
 
 If using packaged skills, keep them current:
 ```bash
@@ -128,11 +147,12 @@ npx skills update
 
 ### B.1b x402 Query-Only Access
 
-`POST /v1/scry/query` also supports standard x402 when no `Authorization`
-header is present. Use this path when the user already has an x402-capable
-wallet/client and only needs direct paid query execution. For schema/context,
-shares, judgements, feedback, or repeated multi-endpoint usage, prefer a
-personal `exopriors_*` API key.
+`POST /v1/scry/query` still supports standard x402, but it is now an explicit
+paid path rather than the default no-auth bootstrap path. Use x402 when the
+user already has an x402-capable wallet/client and only needs direct paid query
+execution. For public trial use, use `POST /v1/scry/anonymous-key`. For
+schema/context, shares, judgements, feedback, or repeated multi-endpoint usage,
+prefer a personal Scry API key.
 
 If the user wants wallet-native durable identity plus a reusable key, use
 `POST /v1/auth/agent/signup` first. That binds the wallet to a user and returns
@@ -158,15 +178,15 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 ```
 Step 1: Get dynamic context + update advisory
 GET https://api.scry.io/v1/scry/context?skill_generation=2026031601
-Authorization: Bearer $EXOPRIORS_API_KEY
+Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
 GET https://api.scry.io/v1/scry/schema
-Authorization: Bearer $EXOPRIORS_API_KEY
+Authorization: Bearer $SCRY_API_KEY
 
 Step 3: Run query
 POST https://api.scry.io/v1/scry/query
-Authorization: Bearer $EXOPRIORS_API_KEY
+Authorization: Bearer $SCRY_API_KEY
 Content-Type: text/plain
 
 WITH hits AS (
@@ -232,7 +252,7 @@ User wants to search the ExoPriors corpus?
 
 ```bash
 curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031601" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY"
+  -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
 If response includes `"should_update_skill": true`, ask the user to run:
@@ -245,7 +265,7 @@ prefer source-local `scry.*` / `mv_*` surfaces and use
 
 ```bash
 curl -s "https://api.scry.io/v1/feedback?feedback_type=bug&channel=scry_skill" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: text/plain" \
   --data $'## What happened\n- Query: ...\n- Problem: ...\n\n## Why it matters\n- ...\n\n## Suggested fix\n- ...'
 ```
@@ -255,7 +275,7 @@ submissions with:
 
 ```bash
 curl -s "https://api.scry.io/v1/feedback?limit=10" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY"
+  -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
 ### E1. Lexical search (BM25)
@@ -360,7 +380,7 @@ skill for creating handles.
 
 ```bash
 curl -s -X POST https://api.scry.io/v1/scry/estimate \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"sql": "SELECT id, title FROM scry.mv_arxiv_papers LIMIT 1000"}'
 ```
@@ -377,7 +397,7 @@ cheap degraded-mode detection before you start issuing lexical helpers.
 # 1. Run query and capture results
 # 2. POST share
 curl -s -X POST https://api.scry.io/v1/scry/shares \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "kind": "query",
@@ -398,7 +418,7 @@ Rendered at: `https://scry.io/scry/share/{slug}`.
 
 ```bash
 curl -s -X POST https://api.scry.io/v1/scry/judgements \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "emitter": "my-agent",
@@ -470,7 +490,7 @@ See `references/error-reference.md` for the full catalogue. Key patterns:
 **Auth + timeout diagnostics for CLI users:**
 1. If curl shows HTTP `000`, that is client-side timeout/network abort, not a server HTTP status. Check `--max-time` and retry with `/v1/scry/estimate` first.
 2. If you see `401` with `"Invalid authorization format"`, check for whitespace/newlines in the key:
-   `KEY_CLEAN="$(printf '%s' \"$EXOPRIORS_API_KEY\" | tr -d '\\r\\n')"`
+   `KEY_CLEAN="$(printf '%s' \"$SCRY_API_KEY\" | tr -d '\\r\\n')"`
    then use `Authorization: Bearer $KEY_CLEAN`.
 
 **Quota fallback strategy:**

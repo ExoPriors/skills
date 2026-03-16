@@ -24,7 +24,7 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 
 ## 3. Tier Limits
 
-| Capability | Base account (`exopriors_*`) | Pass / priority add-on (`exopriors_*`) |
+| Capability | Base account (personal Scry API key) | Pass / priority add-on (personal Scry API key) |
 |---|---|---|
 | Max rows per query | 2,000 | 10,000 |
 | Max rows with vectors | 200 | 500 |
@@ -34,11 +34,11 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 ## 4. Auth
 
 ```
-Authorization: Bearer $EXOPRIORS_API_KEY
+Authorization: Bearer $SCRY_API_KEY
 Base URL: https://api.scry.io
 ```
 
-Use `EXOPRIORS_API_KEY` as the canonical env var in examples and agent chats.
+Use `SCRY_API_KEY` as the canonical env var in examples and agent chats.
 
 ## 5. Adaptive Timeouts
 

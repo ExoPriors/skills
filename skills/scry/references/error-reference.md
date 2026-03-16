@@ -39,7 +39,7 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Use your personal `exopriors_*` key from `scry.io/console` and ensure it has Scry access |
+| `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Use your personal Scry API key from `scry.io/console` and ensure it has Scry access |
 | `unauthorized` | "Invalid authorization format" | Authorization header malformed (extra quotes, whitespace, or newline in env var) | Strip CR/LF from key, ensure exact `Authorization: Bearer <key>` |
 | `unauthorized` | "API key expired" | Key past 30-day expiry | Regenerate via `/api/console/scry/regenerate-key` or get new pass |
 
@@ -54,7 +54,7 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `forbidden` | "Active Scry pass required" | Feature requires a paid Scry pass (for example rerank or premium queue access) | Upgrade in `scry.io/console` and retry with the same `exopriors_*` key |
+| `forbidden` | "Active Scry pass required" | Feature requires a paid Scry pass (for example rerank or premium queue access) | Upgrade in `scry.io/console` and retry with the same personal Scry API key |
 | `forbidden` | "Postgres introspection blocked" | Query touched `pg_*` catalogs, `current_setting()`, `version()`, etc. | Use `GET /v1/scry/schema` instead |
 | `forbidden` | "Only the share owner can update" | PATCH on share you don't own | Use the key that created the share |
 
@@ -213,7 +213,7 @@ entities in LLM-visible contexts.
 |---------|-------|-----|
 | JSON-wrapping the SQL body | Parse error | Use `Content-Type: text/plain` with raw SQL |
 | Missing LIMIT | "Query must include a LIMIT clause" | Add LIMIT |
-| API key from `.env` fails intermittently | 401 "Invalid authorization format" | Clean key with `KEY_CLEAN=\"$(printf '%s' \"$EXOPRIORS_API_KEY\" | tr -d '\\r\\n')\"` |
+| API key from `.env` fails intermittently | 401 "Invalid authorization format" | Clean key with `KEY_CLEAN=\"$(printf '%s' \"$SCRY_API_KEY\" | tr -d '\\r\\n')\"` |
 | Using `kind = 'post'` without cast | Type mismatch | Use `kind = 'post'` (enum literal) or `kind::text = 'post'` |
 | Querying `pg_catalog` on the Scry SQL surface | Forbidden | Use `GET /v1/scry/schema` |
 | Assuming all entities have embeddings | Empty results | Add `WHERE embedding_voyage4 IS NOT NULL` |

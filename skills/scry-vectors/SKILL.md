@@ -40,14 +40,14 @@ For full tier limits, timeout policies, and degradation strategies, see [Shared 
 ```bash
 # Smoke test
 curl -s "https://api.scry.io/v1/scry/query" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: text/plain" \
   --data-binary "SELECT 1 AS ok LIMIT 1"
 ```
 
 Canonical key naming:
-- Env var: `EXOPRIORS_API_KEY`
-- Personal key format: `exopriors_*` with Scry access
+- Env var: `SCRY_API_KEY`
+- Personal key format: personal Scry API key with Scry access
 
 Create a free account in Console and use your personal key. Base account keys have a 200-row vector cap and 1.5M token embed budget per 30 days. Optional Scry passes raise query limits and unlock premium features.
 
@@ -55,7 +55,7 @@ Create a free account in Console and use your personal key. Base account keys ha
 
 ```bash
 curl -s "https://api.scry.io/v1/scry/embed" \
-  -H "Authorization: Bearer $EXOPRIORS_API_KEY" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "my_concept",
@@ -359,10 +359,10 @@ Cosine distance (`<=>`) is already scale-invariant. You do not need to normalize
 
 | Endpoint | Method | Auth | Description |
 |----------|--------|------|-------------|
-| `/v1/scry/embed` | POST | Personal `exopriors_*` key | Embed text, store as @handle |
-| `/v1/scry/vectors` | GET | Personal `exopriors_*` key | List stored vectors |
-| `/v1/scry/vectors/{name}` | DELETE | Personal `exopriors_*` key | Delete a stored vector |
-| `/v1/scry/query` | POST | Personal `exopriors_*` key | Execute SQL (Content-Type: text/plain) |
+| `/v1/scry/embed` | POST | Personal personal Scry API key | Embed text, store as @handle |
+| `/v1/scry/vectors` | GET | Personal personal Scry API key | List stored vectors |
+| `/v1/scry/vectors/{name}` | DELETE | Personal personal Scry API key | Delete a stored vector |
+| `/v1/scry/query` | POST | Personal personal Scry API key | Execute SQL (Content-Type: text/plain) |
 | `/v1/scry/schema` | GET | Any key | Live schema introspection |
 | `/v1/scry/index-view-status` | GET | Any key | Index/materialized-view/view health and rebuild ETA |
 
