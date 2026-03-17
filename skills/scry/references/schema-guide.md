@@ -303,7 +303,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 
 | View | Description | Has embedding_voyage4? |
 |------|-------------|----------------------|
-| `scry.mv_posts` | Legacy convenience aggregate for post-kind entities across sources; check live schema before depending on it | Yes / schema-dependent |
+| `scry.mv_posts` | Legacy post-only convenience aggregate; prefer `scry.semantic_entities` or `scry.entity_doc_embeddings`, and check live schema before depending on it | Yes / schema-dependent |
 | `scry.mv_high_score_posts` | Posts with score >= threshold | Yes |
 | `scry.mv_papers` | Papers from arxiv, pubmed, biorxiv, openalex, etc. | Yes |
 | `scry.mv_af_posts` | Alignment Forum posts only | Yes |
@@ -349,7 +349,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 
 | View | Description |
 |------|-------------|
-| `scry.mv_posts_doc_embeddings` | Legacy post-only doc embedding subset |
+| `scry.mv_posts_doc_embeddings` | Legacy post-only doc embedding subset; prefer `scry.entity_doc_embeddings` for canonical coverage |
 | `scry.mv_substantive_doc_embeddings` | Higher-quality doc embeddings (filtered) |
 | `scry.mv_twitter_doc_embeddings` | Twitter thread doc embeddings |
 | `scry.mv_embedding_atlas_lw_posts` | LessWrong posts prepared for embedding-atlas analysis |
