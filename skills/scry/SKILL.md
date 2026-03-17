@@ -22,7 +22,7 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `2026031602`
+**Skill generation**: `2026031603`
 
 ## A) When to use / not use
 
@@ -43,7 +43,7 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026031602`.
+   `GET /v1/scry/context?skill_generation=2026031603`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -86,7 +86,8 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 8. **Prefer canonical surfaces with tight filters.** `scry.entities` has 229M+
    rows, so do not scan it blindly. Use `scry.search*` for lexical retrieval,
    `scry.semantic_entities` or `scry.entity_doc_embeddings` for semantic
-   retrieval, and only reach for a specific `mv_*` convenience view when
+   retrieval, `scry.embedding_coverage` to inspect source/kind coverage, and
+   only reach for a specific `mv_*` convenience view when
    `/v1/scry/schema` confirms it is healthy and useful for the task.
 
 9. **Filter dangerous content.** Always include
@@ -178,7 +179,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026031602
+GET https://api.scry.io/v1/scry/context?skill_generation=2026031603
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -253,7 +254,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031602" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031603" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 

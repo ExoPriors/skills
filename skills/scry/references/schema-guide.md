@@ -298,6 +298,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 |------|-------------|----------------------|
 | `scry.semantic_entities` | Canonical public entity rows joined to doc-level embeddings; filter `kind` and `source` as needed | Yes |
 | `scry.entity_doc_embeddings` | Canonical doc-level embeddings (`chunk_index = 0`) for all embedded public entities | Yes |
+| `scry.embedding_coverage` | Source/kind coverage accounting: total entities, searchable text, doc embeddings, coverage fractions, latest embedding timestamp | N/A |
 
 ### Cross-Source Aggregates
 
