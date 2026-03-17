@@ -399,7 +399,7 @@ LIMIT 20
 ```sql
 SELECT id, uri, title, original_author, source,
        embedding_voyage4 <=> @p_deadbeef_topic AS distance
-FROM scry.semantic_entities
+FROM scry.embedded_entities
 WHERE kind = 'post'
   AND source IN ('lesswrong', 'eaforum', 'hackernews')
 ORDER BY distance
@@ -449,9 +449,19 @@ LIMIT 50
 ### Recent entity kind distribution for a source
 ```sql
 SELECT kind::text, COUNT(*)
-FROM scry.entities
-WHERE source = 'hackernews'
-  AND original_timestamp >= '2025-01-01'
+FROM scry.hackernews_items
+WHERE original_timestamp >= '2025-01-01'
+GROUP BY kind::text
+ORDER BY 2 DESC
+LIMIT 20
+```
+
+Source-native corpora follow the same pattern:
+
+```sql
+SELECT kind::text, COUNT(*)
+FROM scry.wikipedia_articles
+WHERE original_timestamp >= '2025-01-01'
 GROUP BY kind::text
 ORDER BY 2 DESC
 LIMIT 20

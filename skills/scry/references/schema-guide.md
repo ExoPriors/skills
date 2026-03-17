@@ -68,6 +68,63 @@ Chunked semantic vectors for entities.
 - For full-document FNV search, aggregate across chunks:
   `SELECT entity_id, MIN(embedding_fnv384 <=> @handle) AS dist ... GROUP BY entity_id`
 
+**Derived helpers:**
+- `scry.document_embeddings` gives you exactly the `chunk_index = 0` rows.
+- `scry.embedded_entities` is `scry.entities` pre-joined to `scry.document_embeddings`.
+- `scry.embedding_inventory` is a reporting surface for source/kind coverage and freshness.
+
+### Source-native corpus views
+
+Not all large corpora live canonically in `scry.entities`. Source-native tables
+are first-class query surfaces, and `scry.source_records` is the cross-source
+union view over those records.
+
+| View | Notes |
+|------|-------|
+| `scry.source_records` | Cross-source union of source-native records. Includes `source`, `external_id`, `entity_id`, `kind`, `uri`, `title`, `content_text`, `metadata`, `created_at`, `updated_at`. |
+| `scry.hackernews_items` | Canonical HN substrate keyed by `hn_id`. Contains posts and comments, thread ancestry (`parent_hn_id`, `story_hn_id`), outbound URL, score, full text, and `anchor_entity_id` for joins to crawled webpage entities. |
+| `scry.wikipedia_articles` | Canonical Wikipedia substrate keyed by `page_id`. Contains revisions, categories, article text, and quality metadata. |
+| `scry.pubmed_papers` | Canonical PubMed substrate keyed by `pmid`. Contains paper text, DOI/PMC identifiers, journal metadata, and MeSH/keyword metadata. |
+| `scry.repec_records` | Canonical RePEc substrate keyed by `handle`. Contains source-specific bibliographic fields, file links, full-text fetch status, and economics metadata. |
+| `scry.bluesky_posts` | Canonical Bluesky substrate keyed by AT URI. |
+| `scry.mailing_list_messages` | Canonical mailing-list message substrate keyed by `message_key`. |
+| `scry.openlibrary_editions` / `works` / `authors` | Canonical Open Library bibliographic substrates. |
+
+Source-local lexical helpers exist for some of these views:
+
+| Function | Notes |
+|----------|-------|
+| `scry.search_hackernews_items(query_text, mode, kinds, limit_n)` | BM25 over HN `title`, `payload`, and `original_author`. |
+| `scry.search_wikipedia_articles(query_text, mode, limit_n)` | BM25 over Wikipedia `title`, `payload`, and `original_author`. |
+| `scry.search_pubmed_papers(query_text, mode, limit_n)` | BM25 over PubMed `title`, `payload`, `original_author`, and `journal`. |
+| `scry.search_repec_records(query_text, mode, external_types, limit_n)` | BM25 over RePEc `title`, `payload`, `original_author`, `journal`, `series`, and `institution`. |
+| `scry.search_mailing_list_messages(query_text, mode, list_keys, limit_n)` | BM25 over mailing-list message rows. |
+
+It is normal to combine multiple source-native helpers in one statement:
+
+```sql
+WITH hn AS (
+  SELECT 'hackernews'::text AS source, hn_id::text AS external_id, score
+  FROM scry.search_hackernews_items('alignment tax', kinds => ARRAY['post'], limit_n => 20)
+),
+wiki AS (
+  SELECT 'wikipedia'::text AS source, page_id::text AS external_id, score
+  FROM scry.search_wikipedia_articles('alignment tax', limit_n => 20)
+),
+hits AS (
+  SELECT * FROM hn
+  UNION ALL
+  SELECT * FROM wiki
+)
+SELECT h.source, r.uri, r.title, h.score
+FROM hits h
+JOIN scry.source_records r
+  ON r.source = h.source
+ AND r.external_id = h.external_id
+ORDER BY h.score DESC
+LIMIT 20;
+```
+
 ### scry.actors
 
 Author/account records across all sources.
@@ -296,15 +353,16 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 
 | View | Description | Has embedding_voyage4? |
 |------|-------------|----------------------|
-| `scry.semantic_entities` | Canonical public entity rows joined to doc-level embeddings; filter `kind` and `source` as needed | Yes |
-| `scry.entity_doc_embeddings` | Canonical doc-level embeddings (`chunk_index = 0`) for all embedded public entities | Yes |
-| `scry.embedding_coverage` | Source/kind coverage accounting: total entities, searchable text, doc embeddings, coverage fractions, latest embedding timestamp | N/A |
+| `scry.embeddings` | Canonical chunk-level embedding substrate keyed by `entity_id` + `chunk_index` | Yes |
+| `scry.document_embeddings` | Canonical document-level embedding helper (`chunk_index = 0`) for embedded public entities | Yes |
+| `scry.embedded_entities` | Public entity rows joined to `scry.document_embeddings`; filter `kind` and `source` as needed | Yes |
+| `scry.embedding_inventory` | Source/kind embedding coverage and freshness inventory | N/A |
 
 ### Cross-Source Aggregates
 
 | View | Description | Has embedding_voyage4? |
 |------|-------------|----------------------|
-| `scry.mv_posts` | Legacy post-only convenience aggregate; prefer `scry.semantic_entities` or `scry.entity_doc_embeddings`, and check live schema before depending on it | Yes / schema-dependent |
+| `scry.mv_posts` | Legacy post-only convenience aggregate; prefer `scry.embedded_entities` or `scry.document_embeddings`, and check live schema before depending on it | Yes / schema-dependent |
 | `scry.mv_high_score_posts` | Posts with score >= threshold | Yes |
 | `scry.mv_papers` | Papers from arxiv, pubmed, biorxiv, openalex, etc. | Yes |
 | `scry.mv_af_posts` | Alignment Forum posts only | Yes |
@@ -350,7 +408,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 
 | View | Description |
 |------|-------------|
-| `scry.mv_posts_doc_embeddings` | Legacy post-only doc embedding subset; prefer `scry.entity_doc_embeddings` for canonical coverage |
+| `scry.mv_posts_doc_embeddings` | Legacy post-only doc embedding subset; prefer `scry.document_embeddings` for canonical coverage |
 | `scry.mv_substantive_doc_embeddings` | Higher-quality doc embeddings (filtered) |
 | `scry.mv_twitter_doc_embeddings` | Twitter thread doc embeddings |
 | `scry.mv_embedding_atlas_lw_posts` | LessWrong posts prepared for embedding-atlas analysis |

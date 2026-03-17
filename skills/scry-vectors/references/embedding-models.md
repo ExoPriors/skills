@@ -4,7 +4,7 @@ Reference for models available in Scry's vector pipeline. Covers what each model
 
 ## Models Available for Corpus Search
 
-These models have pre-computed embeddings stored in `public_embeddings` and exposed canonically through `scry.entity_doc_embeddings`, `scry.semantic_entities`, and `scry.embeddings`.
+These models have pre-computed embeddings stored in `public_embeddings` and exposed canonically through `scry.embeddings`, `scry.document_embeddings`, and `scry.embedded_entities`.
 
 ### voyage-4-lite (canonical)
 
