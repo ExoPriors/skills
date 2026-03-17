@@ -399,7 +399,7 @@ LIMIT 20
 ```sql
 SELECT id, uri, title, original_author, source,
        embedding_voyage4 <=> @p_deadbeef_topic AS distance
-FROM scry.embedded_entities
+FROM scry.entities_with_embeddings
 WHERE kind = 'post'
   AND source IN ('lesswrong', 'eaforum', 'hackernews')
 ORDER BY distance

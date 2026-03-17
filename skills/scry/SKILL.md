@@ -89,12 +89,12 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 
 8. **Prefer canonical surfaces with tight filters.** `scry.entities` has 229M+
    rows, so do not scan it blindly. Use `scry.search*` for lexical retrieval,
-   `scry.chunk_embeddings` for chunk-level semantic retrieval, `scry.document_embeddings`
-   or `scry.embedded_entities` when you want one document-level vector row per
-   entity, `scry.embedding_inventory` to inspect public vs staged vs ready
+   `scry.chunk_embeddings` for chunk-level semantic retrieval, `scry.entity_embeddings`
+   or `scry.entities_with_embeddings` only when you want one entity-level vector
+   row per entity, `scry.embedding_coverage` to inspect public vs staged vs ready
    source/kind coverage, and
    source-native tables such as `scry.hackernews_items`,
-   `scry.wikipedia_articles`, `scry.pubmed_papers`, `scry.repec_records`, `scry.bluesky_posts`,
+   `scry.wikipedia_articles`, `scry.pubmed_papers`, `scry.repec_records`, `scry.openalex_works`, `scry.bluesky_posts`,
    `scry.mailing_list_messages`, and `scry.openlibrary_*` when a corpus no
    longer lives canonically in `scry.entities`. Reach for a specific `mv_*`
    convenience view only when `/v1/scry/schema` confirms it is healthy and
@@ -305,7 +305,7 @@ using packaged Scry skills, or if local instructions still point at
 `api.exopriors.com` / `exopriors.com/console`, stop and ask the user to run
 `npx skills update` before deeper debugging.
 If response includes `"lexical_search": {"status": "rebuilding"|"degraded"|"stale"|...}`,
-prefer source-local `scry.*` surfaces or `scry.embedded_entities` and use
+prefer source-local `scry.*` surfaces or `scry.entities_with_embeddings` and use
 `/v1/scry/index-view-status` for detailed rebuild timing before blaming the query.
 
 ### E0b. Submit feedback when Scry blocks the task

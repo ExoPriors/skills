@@ -4,7 +4,7 @@ Reference for models available in Scry's vector pipeline. Covers what each model
 
 ## Models Available for Corpus Search
 
-These models have pre-computed embeddings stored in `public_embeddings` and exposed canonically through `scry.chunk_embeddings`, `scry.document_embeddings`, and `scry.embedded_entities`.
+These models have pre-computed embeddings stored in `public_embeddings` and exposed canonically through `scry.chunk_embeddings`, `scry.entity_embeddings`, and `scry.entities_with_embeddings`.
 
 ### voyage-4-lite (canonical)
 
@@ -21,29 +21,6 @@ These models have pre-computed embeddings stored in `public_embeddings` and expo
 This is the only model you should use for semantic search in Scry. The canonical semantic surfaces expose it as `embedding_voyage4`, and the entire vector algebra toolkit (`debias_vector`, `contrast_axis`, `scale_vector`, etc.) operates on `halfvec(2048)` -- the Voyage-4-lite dimensionality.
 
 Voyage-4-lite is part of the Voyage-4 model family. All Voyage-4 variants (nano, lite, full, large) share the same embedding space. A vector from voyage-4-lite and a vector from voyage-4 are directly comparable via cosine distance. The corpus uses a mix of voyage-4-lite (bulk) and voyage-4-nano (some older embeddings), but they coexist in the same `embedding_voyage4` column.
-
-### fnv-384 (local hash)
-
-| Property | Value |
-|----------|-------|
-| Column | `embedding_fnv384` |
-| Dimensions | 384 (halfvec) |
-| Provider | Local (FNV-1a hash) |
-| Cost | Zero (no API call) |
-| Coverage | Sparse; not computed for most entities |
-| Index type | vchordrq (approximate cosine) |
-| Operator | `<=>` (cosine distance) |
-
-A deterministic hash-based embedding. Not a learned model -- it uses FNV-1a hashing to map text to a fixed 384-dimensional vector. Characteristics:
-
-- **Zero cost**: No API call, no token budget consumption. Computed locally.
-- **Deterministic**: Same text always produces the same vector. No model version drift.
-- **Low semantic fidelity**: Hash embeddings capture lexical co-occurrence patterns, not deep semantic similarity. "dog" and "canine" will have different hash vectors. "bank" (financial) and "bank" (river) will have the same hash vector.
-- **Sparse coverage**: Most corpus entities do not have `embedding_fnv384` computed. Not suitable as a primary search model.
-
-Use case: Zero-cost similarity for lexically-focused tasks, or as a cheap pre-filter before a more expensive Voyage-4-lite search. In practice, `voyage-4-lite` is almost always the right choice.
-
-**FNV-384 is NOT available through `/v1/scry/embed`.** The embed endpoint only supports `voyage-4-lite`. FNV-384 embeddings exist in the corpus from batch processing but cannot be created interactively.
 
 ## Model Available for /v1/scry/embed
 
@@ -84,8 +61,6 @@ For interactive vector composition workflows (what this skill is about), the dec
 
 **Use `voyage-4-lite` for everything.** It is the only model available for `/v1/scry/embed`, it has the broadest corpus coverage, and the vector algebra functions are designed for its 2048-dimensional space. The token cost is negligible for concept embedding (a few hundred tokens per handle).
 
-FNV-384 is relevant only when querying pre-computed `embedding_fnv384` columns in the corpus, which is uncommon.
-
 ## Embedding Quality Tips
 
 The quality of your search depends on the quality of your embed text. Guidelines:
@@ -106,14 +81,11 @@ Stored vectors live in `scry.stored_vectors` with RLS (row-level security) enfor
 |--------|------|-------|
 | `user_id` | UUID | Owner |
 | `name` | TEXT | Handle name (the `@handle` reference) |
-| `embedding_voyage4` | halfvec(2048) | Voyage-4 vector (mutually exclusive with fnv384) |
-| `embedding_fnv384` | halfvec(384) | FNV hash vector (mutually exclusive with voyage4) |
+| `embedding_voyage4` | halfvec(2048) | Voyage-4 vector |
 | `source_text` | TEXT | Original text that was embedded |
 | `token_count` | INT | Tokens consumed |
 | `model_name` | TEXT | Model used |
 | `created_at` | TIMESTAMPTZ | Creation timestamp |
-
-A stored vector has exactly one of `embedding_voyage4` or `embedding_fnv384` populated (enforced by a CHECK constraint). In practice, all API-created vectors use `embedding_voyage4`.
 
 Personal keys can list vectors via `GET /v1/scry/vectors` and delete via `DELETE /v1/scry/vectors/{name}`.
 
