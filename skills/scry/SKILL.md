@@ -22,7 +22,7 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `2026031601`
+**Skill generation**: `2026031602`
 
 ## A) When to use / not use
 
@@ -43,7 +43,7 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026031601`.
+   `GET /v1/scry/context?skill_generation=2026031602`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -83,10 +83,11 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 7. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
 
-8. **Prefer materialized views.** `scry.entities` has 229M+ rows. Scanning it
-   without filters is slow. Use `scry.mv_lesswrong_posts`, `scry.mv_arxiv_papers`,
-   `scry.mv_hackernews_posts`, etc. for targeted access. They are pre-filtered
-   and often have embeddings pre-joined.
+8. **Prefer canonical surfaces with tight filters.** `scry.entities` has 229M+
+   rows, so do not scan it blindly. Use `scry.search*` for lexical retrieval,
+   `scry.semantic_entities` or `scry.entity_doc_embeddings` for semantic
+   retrieval, and only reach for a specific `mv_*` convenience view when
+   `/v1/scry/schema` confirms it is healthy and useful for the task.
 
 9. **Filter dangerous content.** Always include
    `WHERE content_risk IS DISTINCT FROM 'dangerous'` unless the user explicitly
@@ -177,7 +178,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026031601
+GET https://api.scry.io/v1/scry/context?skill_generation=2026031602
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -191,19 +192,20 @@ Content-Type: text/plain
 
 WITH hits AS (
   SELECT id FROM scry.search('RLHF reinforcement learning human feedback',
-    mode=>'mv_lesswrong_posts', kinds=>ARRAY['post'], limit_n=>100)
+    kinds=>ARRAY['post'], limit_n=>100)
 )
-SELECT mv.uri, mv.title, mv.original_author, mv.original_timestamp, mv.base_score
+SELECT e.uri, e.title, e.original_author, e.original_timestamp, e.score
 FROM hits h
-JOIN scry.mv_lesswrong_posts mv ON mv.entity_id = h.id
-ORDER BY mv.base_score DESC NULLS LAST, mv.original_timestamp DESC
+JOIN scry.entities e ON e.id = h.id
+WHERE e.source = 'lesswrong'
+ORDER BY e.score DESC NULLS LAST, e.original_timestamp DESC
 LIMIT 20
 ```
 
 Response shape:
 ```json
 {
-  "columns": ["uri", "title", "original_author", "original_timestamp", "base_score"],
+  "columns": ["uri", "title", "original_author", "original_timestamp", "score"],
   "rows": [["https://...", "My RLHF Post", "author", "2025-01-15T...", 142], ...],
   "row_count": 20,
   "duration_ms": 312,
@@ -220,7 +222,7 @@ User wants to search the ExoPriors corpus?
   |     scry-vectors for semantic search (optionally hybridize with lexical)
   |
   +-- By keywords/phrases? --> scry.search() (BM25 lexical over canonical content_text)
-  |     +-- Specific forum?  --> pass mode='mv_lesswrong_posts' or kinds filter
+  |     +-- Specific forum?  --> join/filter `source` explicitly (or use a healthy source-local view if schema confirms it)
   |     +-- Reddit?          --> START with scry.reddit_subreddit_stats /
   |                              scry.reddit_clusters() / scry.reddit_embeddings
   |                              and trust /v1/scry/schema status before
@@ -251,14 +253,14 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031601" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031602" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
 If response includes `"should_update_skill": true`, ask the user to run:
 `npx skills update`.
 If response includes `"lexical_search": {"status": "rebuilding"|"degraded"|"stale"|...}`,
-prefer source-local `scry.*` / `mv_*` surfaces and use
+prefer source-local `scry.*` surfaces or `scry.semantic_entities` and use
 `/v1/scry/index-view-status` for detailed rebuild timing before blaming the query.
 
 ### E0b. Submit feedback when Scry blocks the task
@@ -294,9 +296,9 @@ LIMIT 50
 Default `kinds` if omitted: `['post','paper','document','webpage','twitter_thread','grant']`.
 `scry.search()` broadens once to `kinds=>ARRAY['comment']` if that default returns 0 rows.
 Pass explicit `kinds` for strict scope (for example comment-only or tweet-only).
-Pass `mode=>'mv_lesswrong_posts'` to scope to LessWrong posts.
-When a source-specific MV exists, join that MV and use its native score field
-(`base_score` for LessWrong / EA Forum) instead of sorting the full `scry.entities` row.
+For source scoping, join back to `scry.entities` and filter `source` explicitly.
+Healthy source-specific MVs can still be useful for source-native score fields
+such as `base_score`, but they are optional convenience slices rather than the default path.
 
 ### E2. Reddit-specific discovery
 

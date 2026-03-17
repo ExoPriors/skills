@@ -24,12 +24,13 @@ LIMIT 50
 ```sql
 WITH c AS (
   SELECT id FROM scry.search('corrigibility',
-    mode=>'mv_lesswrong_posts', kinds=>ARRAY['post'], limit_n=>100)
+    kinds=>ARRAY['post'], limit_n=>100)
 )
-SELECT mv.uri, mv.title, mv.base_score, mv.original_timestamp
+SELECT e.uri, e.title, e.score, e.original_timestamp
 FROM c
-JOIN scry.mv_lesswrong_posts mv ON mv.entity_id = c.id
-ORDER BY mv.base_score DESC NULLS LAST, mv.original_timestamp DESC
+JOIN scry.entities e ON e.id = c.id
+WHERE e.source = 'lesswrong'
+ORDER BY e.score DESC NULLS LAST, e.original_timestamp DESC
 LIMIT 30
 ```
 
@@ -396,11 +397,11 @@ LIMIT 20
 
 ### Cross-source semantic search
 ```sql
-SELECT entity_id, uri, title, original_author, source,
+SELECT id, uri, title, original_author, source,
        embedding_voyage4 <=> @p_deadbeef_topic AS distance
-FROM scry.mv_posts
-WHERE source IN ('lesswrong', 'eaforum', 'hackernews')
-  AND embedding_voyage4 IS NOT NULL
+FROM scry.semantic_entities
+WHERE kind = 'post'
+  AND source IN ('lesswrong', 'eaforum', 'hackernews')
 ORDER BY distance
 LIMIT 20
 ```

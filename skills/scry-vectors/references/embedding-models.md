@@ -4,7 +4,7 @@ Reference for models available in Scry's vector pipeline. Covers what each model
 
 ## Models Available for Corpus Search
 
-These models have pre-computed embeddings stored in `public_embeddings` and exposed through `scry.mv_*` views.
+These models have pre-computed embeddings stored in `public_embeddings` and exposed canonically through `scry.entity_doc_embeddings`, `scry.semantic_entities`, and `scry.embeddings`.
 
 ### voyage-4-lite (canonical)
 
@@ -18,7 +18,7 @@ These models have pre-computed embeddings stored in `public_embeddings` and expo
 | Index type | vchordrq (approximate cosine) |
 | Operator | `<=>` (cosine distance) |
 
-This is the only model you should use for semantic search in Scry. All `scry.mv_*` views expose `embedding_voyage4`. The entire vector algebra toolkit (`debias_vector`, `contrast_axis`, `scale_vector`, etc.) operates on `halfvec(2048)` -- the Voyage-4-lite dimensionality.
+This is the only model you should use for semantic search in Scry. The canonical semantic surfaces expose it as `embedding_voyage4`, and the entire vector algebra toolkit (`debias_vector`, `contrast_axis`, `scale_vector`, etc.) operates on `halfvec(2048)` -- the Voyage-4-lite dimensionality.
 
 Voyage-4-lite is part of the Voyage-4 model family. All Voyage-4 variants (nano, lite, full, large) share the same embedding space. A vector from voyage-4-lite and a vector from voyage-4 are directly comparable via cosine distance. The corpus uses a mix of voyage-4-lite (bulk) and voyage-4-nano (some older embeddings), but they coexist in the same `embedding_voyage4` column.
 
