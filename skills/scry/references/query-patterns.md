@@ -362,7 +362,7 @@ SELECT e.uri, e.title, e.original_author,
        emb.embedding_voyage4 <=> @p_deadbeef_deceptive_alignment AS distance
 FROM c
 JOIN scry.entities e ON e.id = c.id
-JOIN scry.embeddings emb ON emb.entity_id = c.id AND emb.chunk_index = 0
+JOIN scry.chunk_embeddings emb ON emb.entity_id = c.id AND emb.chunk_index = 0
 WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY distance
 LIMIT 50
@@ -766,7 +766,7 @@ LIMIT 50
 4. **Use `scry.search_ids()` over `scry.search()`** when you only need id/uri/kind
    for further filtering. It returns `(id, uri, kind)` and avoids detoasting content_text/snippet.
 
-5. **Filter `embedding_voyage4 IS NOT NULL`** when joining scry.embeddings.
+5. **Filter `embedding_voyage4 IS NOT NULL`** when joining `scry.chunk_embeddings`.
    Not all entities have embeddings.
 
 6. **Use `chunk_index = 0`** for document-level semantic search. Omit it only

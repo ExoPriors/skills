@@ -89,9 +89,10 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 
 8. **Prefer canonical surfaces with tight filters.** `scry.entities` has 229M+
    rows, so do not scan it blindly. Use `scry.search*` for lexical retrieval,
-   `scry.embeddings` for chunk-level semantic retrieval, `scry.document_embeddings`
+   `scry.chunk_embeddings` for chunk-level semantic retrieval, `scry.document_embeddings`
    or `scry.embedded_entities` when you want one document-level vector row per
-   entity, `scry.embedding_inventory` to inspect source/kind coverage, and
+   entity, `scry.embedding_inventory` to inspect public vs staged vs ready
+   source/kind coverage, and
    source-native tables such as `scry.hackernews_items`,
    `scry.wikipedia_articles`, `scry.pubmed_papers`, `scry.repec_records`, `scry.bluesky_posts`,
    `scry.mailing_list_messages`, and `scry.openlibrary_*` when a corpus no
@@ -274,7 +275,7 @@ User wants to search the ExoPriors corpus?
   +-- By semantic similarity? --> (scry-vectors skill, not this one)
   |
   +-- Hybrid (keywords + semantic rerank)? --> scry.hybrid_search() or
-  |     lexical CTE + JOIN scry.embeddings
+  |     lexical CTE + JOIN scry.chunk_embeddings
   |
   +-- Author/people lookup? --> scry.actors, scry.people, scry.person_accounts
   |
@@ -423,7 +424,7 @@ SELECT e.uri, e.title, e.original_author,
        emb.embedding_voyage4 <=> @p_deadbeef_topic AS distance
 FROM c
 JOIN scry.entities e ON e.id = c.id
-JOIN scry.embeddings emb ON emb.entity_id = c.id AND emb.chunk_index = 0
+JOIN scry.chunk_embeddings emb ON emb.entity_id = c.id AND emb.chunk_index = 0
 WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY distance
 LIMIT 50

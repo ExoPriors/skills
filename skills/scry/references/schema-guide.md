@@ -44,7 +44,7 @@ The main content view. 229M+ rows. Filter aggressively.
 `zenodo`, `datacite`, `npm`, `polymarket`, `kalshi`, `mailing_list`,
 `musingsandroughdrafts`.
 
-### scry.embeddings
+### scry.chunk_embeddings
 
 Chunked semantic vectors for entities.
 
@@ -71,7 +71,7 @@ Chunked semantic vectors for entities.
 **Derived helpers:**
 - `scry.document_embeddings` gives you exactly the `chunk_index = 0` rows.
 - `scry.embedded_entities` is `scry.entities` pre-joined to `scry.document_embeddings`.
-- `scry.embedding_inventory` is a reporting surface for source/kind coverage and freshness.
+- `scry.embedding_inventory` is a reporting surface for source/kind public vs staged vs ready coverage and freshness.
 
 ### Source-native corpus views
 
@@ -353,10 +353,10 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 
 | View | Description | Has embedding_voyage4? |
 |------|-------------|----------------------|
-| `scry.embeddings` | Canonical chunk-level embedding substrate keyed by `entity_id` + `chunk_index` | Yes |
+| `scry.chunk_embeddings` | Canonical chunk-level embedding substrate keyed by `entity_id` + `chunk_index` | Yes |
 | `scry.document_embeddings` | Canonical document-level embedding helper (`chunk_index = 0`) for embedded public entities | Yes |
 | `scry.embedded_entities` | Public entity rows joined to `scry.document_embeddings`; filter `kind` and `source` as needed | Yes |
-| `scry.embedding_inventory` | Source/kind embedding coverage and freshness inventory | N/A |
+| `scry.embedding_inventory` | Source/kind public vs staged vs ready embedding coverage inventory | N/A |
 
 ### Cross-Source Aggregates
 
@@ -495,7 +495,7 @@ empty query.
 | `scry.sporc_episodes` | Podcast episodes |
 | `scry.sporc_turns` | Podcast transcript turns |
 | `scry.entities_private` | Private entities (authenticated only) |
-| `scry.embeddings_private` | Private embeddings (authenticated only) |
+| `scry.chunk_embeddings_private` | Private chunk embeddings (authenticated only) |
 | `scry.entities_all` | Union of public + private (authenticated only) |
 
 ---
