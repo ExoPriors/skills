@@ -14,6 +14,8 @@ description: >
 
 LLM-powered multi-attribute reranking over ExoPriors entity sets. Uses pairwise comparison (not pointwise scoring) to produce calibrated rankings with uncertainty estimates.
 
+**Skill generation**: `2026031604`
+
 ## Mental model
 
 Traditional search returns documents ordered by a single signal (recency, BM25, embedding distance). Rerank adds a second stage: an LLM reads pairs of documents and judges which is better on each attribute you care about. A robust solver (iteratively reweighted least squares) converts those pairwise judgements into a global ranking.
@@ -53,6 +55,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
 
 ## Guardrails
 
+- Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026031604`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any `api.exopriors.com` or `exopriors.com/console` reference as a stale local skill install and update before more debugging.
 - **Pass-required feature.** Rerank uses your personal Scry API key, but it still requires an active Scry pass.
 - **Dangerous content blocked.** Entities with `content_risk='dangerous'` cause hard errors. Filter them: `WHERE content_risk IS DISTINCT FROM 'dangerous'`.
 - **SQL must return `id` and `content_text` columns** (or configure `id_column`/`text_column`).
@@ -438,7 +441,7 @@ For explicit persistence control, use the `persist` field:
 | 400 "dangerous content" | Candidate set includes flagged entities | Add `content_risk IS DISTINCT FROM 'dangerous'` to SQL |
 | 400 "id_column not found" | SQL result lacks `id` column | Add `id` to SELECT or set `id_column` |
 | 400 "text_column not found" | SQL result lacks `content_text` column | Add `content_text` to SELECT or set `text_column` |
-| 402 Insufficient credits | Account balance too low | Top up credits at exopriors.com/console |
+| 402 Insufficient credits | Account balance too low | Top up credits at scry.io/console |
 | 429 Rate limited | Too many concurrent requests | Back off and retry |
 | 503 LLM service not configured | Server-side config issue | Contact support |
 

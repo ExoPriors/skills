@@ -16,6 +16,15 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 ---
 
+## Before deeper debugging
+
+If local skill instructions still mention `api.exopriors.com` or
+`exopriors.com/console`, or if `/v1/scry/context` reports
+`client_skill_generation: null` while you're using packaged Scry skills, stop
+and run `npx skills update` first.
+
+---
+
 ## Error Codes by HTTP Status
 
 ### 400 Bad Request

@@ -22,7 +22,7 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `2026031603`
+**Skill generation**: `2026031604`
 
 ## A) When to use / not use
 
@@ -43,7 +43,7 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026031603`.
+   `GET /v1/scry/context?skill_generation=2026031604`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -59,6 +59,10 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    `mv_*` surfaces or semantic retrieval while the canonical BM25 index
    recovers.
    If `should_update_skill=true`, tell the user to run `npx skills update`.
+   If the response reports `client_skill_generation: null` while you're using
+   packaged skills, or if local instructions still mention
+   `api.exopriors.com` or `exopriors.com/console`, treat the install as stale
+   and ask the user to run `npx skills update` before more debugging.
 
 2. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
    Never guess column names or types. The schema endpoint returns live
@@ -179,7 +183,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026031603
+GET https://api.scry.io/v1/scry/context?skill_generation=2026031604
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -254,12 +258,16 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031603" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031604" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
 If response includes `"should_update_skill": true`, ask the user to run:
 `npx skills update`.
+If the response shows `"client_skill_generation": null` while the session is
+using packaged Scry skills, or if local instructions still point at
+`api.exopriors.com` / `exopriors.com/console`, stop and ask the user to run
+`npx skills update` before deeper debugging.
 If response includes `"lexical_search": {"status": "rebuilding"|"degraded"|"stale"|...}`,
 prefer source-local `scry.*` surfaces or `scry.semantic_entities` and use
 `/v1/scry/index-view-status` for detailed rebuild timing before blaming the query.
