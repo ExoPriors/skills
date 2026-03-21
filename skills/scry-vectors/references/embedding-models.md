@@ -40,7 +40,7 @@ The `model` field defaults to `voyage-4-lite` if omitted. Passing any other valu
 
 ## Token Budget
 
-Each private API key has an embedding token budget (default: 1.5M tokens). Every call to `/v1/scry/embed` with `voyage-4-lite` consumes tokens from this budget.
+Personal Scry API keys have an embedding token budget (default: 1.5M tokens). Every call to `/v1/scry/embed` with `voyage-4-lite` on a personal key consumes tokens from this budget. Anonymous bootstrap keys can also embed, but they use a session-local handle namespace and do not return `remaining_tokens`.
 
 | Budget detail | Value |
 |--------------|-------|
@@ -48,7 +48,7 @@ Each private API key has an embedding token budget (default: 1.5M tokens). Every
 | Cost per 1M tokens | $0.02 (Voyage AI pricing) |
 | Budget per key | ~$0.03 worth of embeddings |
 | Reset | Regenerating the key resets the budget |
-| Remaining tokens | Returned in every embed response as `remaining_tokens` |
+| Remaining tokens | Returned in personal-key embed responses as `remaining_tokens` |
 
 **Budget math for typical usage:**
 - A 100-word concept description uses ~130-150 tokens.
@@ -71,15 +71,15 @@ The quality of your search depends on the quality of your embed text. Guidelines
 
 **Match the register of what you want to find.** If you want academic papers, embed in academic style. If you want blog posts, embed in casual style. The model encodes tone/register weakly but measurably.
 
-**Iterate.** Embed, search, inspect results, refine the text, re-embed (personal keys can overwrite handles). The first embedding is rarely the best one.
+**Iterate.** Embed, search, inspect results, refine the text, re-embed. Personal keys overwrite handles in your durable namespace; anonymous keys overwrite within the current anonymous session. The first embedding is rarely the best one.
 
 ## Stored Vector Schema
 
-Stored vectors live in `scry.stored_vectors` with RLS (row-level security) enforcing user isolation:
+Stored vectors live in `scry.stored_vectors` with RLS (row-level security) enforcing current-principal isolation:
 
 | Column | Type | Notes |
 |--------|------|-------|
-| `user_id` | UUID | Owner |
+| `user_id` | UUID | Current Scry principal or anonymous session owner |
 | `name` | TEXT | Handle name (the `@handle` reference) |
 | `embedding_voyage4` | halfvec(2048) | Voyage-4 vector |
 | `source_text` | TEXT | Original text that was embedded |
@@ -87,7 +87,7 @@ Stored vectors live in `scry.stored_vectors` with RLS (row-level security) enfor
 | `model_name` | TEXT | Model used |
 | `created_at` | TIMESTAMPTZ | Creation timestamp |
 
-Personal keys can list vectors via `GET /v1/scry/vectors` and delete via `DELETE /v1/scry/vectors/{name}`.
+Personal keys can list vectors via `GET /v1/scry/vectors` and delete via `DELETE /v1/scry/vectors/{name}`. Anonymous bootstrap keys can do the same within the current anonymous session.
 
 ## Limits
 
@@ -96,5 +96,5 @@ Personal keys can list vectors via `GET /v1/scry/vectors` and delete via `DELETE
 | Max rows with vectors in output | 200 | 500 |
 | Handle naming | Any valid identifier (overwritable) | Any valid identifier (overwritable) |
 | List/delete vectors | Yes | Yes |
-| Embed token budget | 1.5M per key | 1.5M per key |
+| Embed token budget | 1.5M per personal key | 1.5M per personal key |
 | Max text per embed request | 8,192 tokens | 8,192 tokens |

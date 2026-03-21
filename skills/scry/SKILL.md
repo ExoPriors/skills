@@ -1,14 +1,16 @@
 ---
 name: scry
 description: >
-  Query the ExoPriors Scry API -- SQL-over-HTTPS search across 229M+ entities
-  spanning forums, papers, social media, government records, and prediction markets.
+  Query the ExoPriors Scry API -- SQL-over-HTTPS search across 240M+ entities
+  spanning forums, papers, social media, government records, legal opinions,
+  books, knowledge graphs, and prediction markets.
   Includes cross-platform author identity resolution (actors, people, aliases),
   OpenAlex academic graph navigation (authors, citations, institutions, concepts),
   shareable artifacts, and structured agent judgements.
   Use when the task involves: Scry API, ExoPriors, /v1/scry/query, scry.search,
   scry.entities, materialized views, corpus search, epistemic infrastructure,
-  229M entities, lexical search, BM25, structured agent judgements, scry shares,
+  240M entities, lexical search, BM25, structured agent judgements, scry shares,
+  StackExchange, caselaw, Gutenberg, Wikidata, KL3M federal corpus,
   cross-corpus analysis, who is this person, cross-platform identity, OpenAlex,
   citation graph, coauthor graph, academic papers, author lookup.
   NOT for: semantic/vector search composition or embedding algebra (use
@@ -18,11 +20,11 @@ description: >
 
 # Scry Skill
 
-Scry gives you read-only SQL access to the ExoPriors public corpus (229M+ entities)
+Scry gives you read-only SQL access to the ExoPriors public corpus (240M+ entities)
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `2026031701`
+**Skill generation**: `2026031702`
 
 ## A) When to use / not use
 
@@ -43,7 +45,7 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026031701`.
+   `GET /v1/scry/context?skill_generation=2026031702`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -87,15 +89,18 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 7. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
 
-8. **Prefer canonical surfaces with tight filters.** `scry.entities` has 229M+
+8. **Prefer canonical surfaces with tight filters.** `scry.entities` has 240M+
    rows, so do not scan it blindly. Use `scry.search*` for lexical retrieval,
    `scry.chunk_embeddings` for chunk-level semantic retrieval, `scry.entity_embeddings`
    or `scry.entities_with_embeddings` only when you want one entity-level vector
    row per entity, `scry.embedding_coverage` to inspect public vs staged vs ready
    source/kind coverage, and
    source-native tables such as `scry.hackernews_items`,
-   `scry.wikipedia_articles`, `scry.pubmed_papers`, `scry.repec_records`, `scry.openalex_works`, `scry.bluesky_posts`,
-   `scry.mailing_list_messages`, and `scry.openlibrary_*` when a corpus no
+   `scry.wikipedia_articles`, `scry.pubmed_papers`, `scry.repec_records`,
+   `scry.openalex_works`, `scry.bluesky_posts`, `scry.mailing_list_messages`,
+   `scry.openlibrary_*`, `scry.stackexchange`, `scry.caselaw`,
+   `scry.gutenberg_books`, `scry.wikidata_items`, `scry.wikidata_claims`,
+   and `scry.kl3m` when a corpus no
    longer lives canonically in `scry.entities`. Reach for a specific `mv_*`
    convenience view only when `/v1/scry/schema` confirms it is healthy and
    useful for the task.
@@ -155,6 +160,7 @@ curl -s https://api.scry.io/v1/scry/query \
 ```
 Use this for fast trial access only. The anonymous bootstrap lane is intentionally generous for the first few queries and then degrades. For sustained usage, prefer a personal Scry API key.
 Keep the same `X-Scry-Client-Tag` value on the same device when staying anonymous so the backend can distinguish a real first-use session from abuse behind shared IPs.
+The same anonymous key can also call `POST /v1/scry/embed`, `GET /v1/scry/vectors`, and `DELETE /v1/scry/vectors/{name}`. Those handles stay bound to the current anonymous session rather than a durable account namespace.
 
 If using packaged skills, keep them current:
 ```bash
@@ -194,7 +200,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026031701
+GET https://api.scry.io/v1/scry/context?skill_generation=2026031702
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -282,6 +288,10 @@ User wants to search the ExoPriors corpus?
   +-- Academic graph (OpenAlex)? --> scry.openalex_find_authors(),
   |     scry.openalex_find_works(), etc. (see schema-guide.md)
   |
+  +-- Bluesky / Twitter / Open Library text lookup? --> scry.search_bluesky_posts(),
+  |     scry.search_twitter_posts(), scry.search_openlibrary_editions(),
+  |     scry.search_openlibrary_works(), scry.search_openlibrary_authors()
+  |
   +-- Need to share results? --> POST /v1/scry/shares
   |
   +-- Need to emit a structured observation? --> POST /v1/scry/judgements
@@ -294,7 +304,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031701" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031702" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 

@@ -11,7 +11,7 @@ instance.
 
 ### scry.entities
 
-The main content view. 229M+ rows. Filter aggressively.
+The main content view. 240M+ rows. Filter aggressively.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -40,9 +40,10 @@ The main content view. 229M+ rows. Filter aggressively.
 `twitter`, `bluesky`, `reddit`, `substack`, `manifold`, `metaculus`, `wikipedia`,
 `github_skills`, `astralcodexten`, `offshoreleaks`, `biorxiv`, `sec_edgar`,
 `nih_reporter`, `federal_register`, `openalex`, `europepmc`, `inspire_hep`,
-`congress`, `nsf_awards`, `nvd`, `ecfr`, `crs`, `nasa_ntrs`, `hal`, `osti`,
+`congress`, `nsf`, `nvd`, `ecfr`, `crs`, `nasa_ntrs`, `hal`, `osti`,
 `zenodo`, `datacite`, `npm`, `polymarket`, `kalshi`, `mailing_list`,
-`musingsandroughdrafts`.
+`musingsandroughdrafts`, `stackexchange`, `wikidata`, `gutenberg`, `kl3m`,
+`courtlistener`, `cap`, `sporc`.
 
 ### scry.chunk_embeddings
 
@@ -79,25 +80,45 @@ union view over those records.
 | View | Notes |
 |------|-------|
 | `scry.source_records` | Cross-source union of source-native records. Includes `source`, `external_id`, `entity_id`, `kind`, `uri`, `title`, `content_text`, `metadata`, `created_at`, `updated_at`. |
+| `scry.bluesky` / `hackernews` / `wikipedia` / `pubmed` / `repec` / `openalex` | Clean primary aliases for the major source-native corpora. Prefer these names in new agent/user queries. |
 | `scry.hackernews_items` | Canonical HN substrate keyed by `hn_id`. Contains posts and comments, thread ancestry (`parent_hn_id`, `story_hn_id`), outbound URL, score, full text, and `anchor_entity_id` for joins to crawled webpage entities. |
 | `scry.wikipedia_articles` | Canonical Wikipedia substrate keyed by `page_id`. Contains revisions, categories, article text, and quality metadata. |
 | `scry.pubmed_papers` | Canonical PubMed substrate keyed by `pmid`. Contains paper text, DOI/PMC identifiers, journal metadata, and MeSH/keyword metadata. |
 | `scry.repec_records` | Canonical RePEc substrate keyed by `handle`. Contains source-specific bibliographic fields, file links, full-text fetch status, and economics metadata. |
 | `scry.openalex_works` | Canonical OpenAlex work surface keyed by `work_id`. Joins graph metadata with dedicated abstract payload rows and optional `entity_id` bridge links. |
 | `scry.bluesky_posts` | Canonical Bluesky substrate keyed by AT URI. |
+| `scry.twitter_posts` | Canonical Twitter/X substrate keyed by canonical tweet URI. Exposes public provenance tags plus aggregated observation-source tags such as `observation_sources`, `capture_channels`, and `has_extension_observation`. |
+| `scry.twitter_post_observations` | Public-safe provenance rows for the Twitter substrate. Exposes source collection, observation source, capture channel, trust tier, verification status, and metrics without uploader PII. |
 | `scry.mailing_list_messages` | Canonical mailing-list message substrate keyed by `message_key`. |
 | `scry.openlibrary_editions` / `works` / `authors` | Canonical Open Library bibliographic substrates. |
+| `scry.stackexchange` | Canonical StackExchange substrate. Questions and answers from Stack Overflow and 170+ Stack Exchange sites, keyed by `{site}:{post_id}`. Windowed by time period. |
+| `scry.caselaw` | US legal opinions from CourtListener and Caselaw Access Project. Keyed by `cl:{opinion_id}` or `cap:{case_id}`. Includes court, jurisdiction, citations, opinion text. Windowed by decade. |
+| `scry.gutenberg_books` | Project Gutenberg full-text public domain books. Keyed by `gutenberg:{ebook_number}`. Includes subject, bookshelf, language, download count. |
+| `scry.wikidata_items` | Wikidata structured knowledge graph items and properties. Keyed by QID (e.g., `Q42`). Includes labels, descriptions, aliases, instance_of, subclass_of. |
+| `scry.wikidata_claims` | Wikidata structured claims (property-value assertions). Subject QID → property → value. Join to `scry.wikidata_items` on `subject_qid`. |
+| `scry.kl3m` | KL3M federal corpus from PleIAs. Government documents, regulations, and .gov web pages. Partitioned by collection family (govinfo, dotgov, courtlistener). Windowed for lexical search. |
 
-Source-local lexical helpers exist for some of these views:
+Source-local lexical helpers exist for many of these views:
 
 | Function | Notes |
 |----------|-------|
+| `scry.search_bluesky_posts(query_text, mode, limit_n)` | BM25 over Bluesky `payload` plus DID / handle / display-name fields. |
+| `scry.search_twitter_posts(query_text, mode, limit_n)` | BM25 over canonical Twitter `payload` plus handle / display-name / tweet-id fields. Returns canonical URI plus public provenance-tag arrays. |
 | `scry.search_hackernews_items(query_text, mode, kinds, limit_n)` | BM25 over HN `title`, `payload`, and `original_author`. |
 | `scry.search_wikipedia_articles(query_text, mode, limit_n)` | BM25 over Wikipedia `title`, `payload`, and `original_author`. |
 | `scry.search_pubmed_papers(query_text, mode, limit_n)` | BM25 over PubMed `title`, `payload`, `original_author`, and `journal`. |
 | `scry.search_repec_records(query_text, mode, external_types, limit_n)` | BM25 over RePEc `title`, `payload`, `original_author`, `journal`, `series`, and `institution`. |
+| `scry.search_openlibrary_editions(query_text, mode, limit_n)` | BM25 over Open Library edition `title`, `payload`, `original_author`, and `publish_date`. |
+| `scry.search_openlibrary_works(query_text, mode, limit_n)` | BM25 over Open Library work `title`, `payload`, and `original_author`. |
+| `scry.search_openlibrary_authors(query_text, mode, limit_n)` | BM25 over Open Library author `name`, `payload`, `original_author`, and life-date fields. |
 | `scry.openalex_find_works(query, min_year, limit)` | Source-native OpenAlex work lookup over titles and DOIs with dedicated abstract payload link-through. |
 | `scry.search_mailing_list_messages(query_text, mode, list_keys, limit_n)` | BM25 over mailing-list message rows. |
+| `scry.search_stackexchange_questions(query_text, mode, sites, tags, limit_n, window_key)` | BM25 over StackExchange question windows. Default window: `recent`. Use `window_key='all'` to search all periods. |
+| `scry.search_stackexchange_answers(query_text, mode, sites, limit_n, window_key)` | BM25 over StackExchange answer windows. |
+| `scry.search_caselaw(query_text, mode, courts, jurisdictions, limit_n, window_key)` | BM25 over US caselaw by decade. Default window: `2020s`. Windows: `2020s`, `2010s`, `2000s`, `1990s`, `1980s`, `pre1980`, `all`. |
+| `scry.search_gutenberg(query_text, mode, languages, subjects, limit_n)` | BM25 over Project Gutenberg full-text books. Filter by language (`en`, `fr`, etc.) and/or subject. |
+| `scry.search_wikidata(query_text, mode, entity_types, limit_n)` | BM25 over Wikidata items. `entity_types` defaults to `['item', 'property']`. |
+| `scry.search_kl3m(query_text, mode, collections, agencies, limit_n, window_key)` | BM25 over KL3M federal corpus. `agencies` filters by regulatory body. `collections` filters by collection name (e.g., `govinfo-fr`, `dotgov-*`). Windows: `govinfo_recent`, `govinfo_2010s`, `govinfo_2000s`, `govinfo_pre2000`, `dotgov_recent`, `dotgov_2010s`, `dotgov_pre2010`, `govinfo_all`, `dotgov_all`, `all`. |
 
 It is normal to combine multiple source-native helpers in one statement:
 
@@ -410,7 +431,6 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 | `scry.mv_posts_doc_embeddings` | Legacy post-only entity embedding subset; prefer `scry.entity_embeddings` for canonical coverage |
 | `scry.mv_substantive_doc_embeddings` | Higher-quality doc embeddings (filtered) |
 | `scry.mv_twitter_doc_embeddings` | Twitter thread doc embeddings |
-| `scry.mv_embedding_atlas_lw_posts` | LessWrong posts prepared for embedding-atlas analysis |
 
 ### Reddit Windowed Views
 
@@ -465,6 +485,153 @@ Authors --[authorships]--> Works --[references]--> Works, with Institutions and 
 **Well-known institution IDs:** MIT `I13416579`, Harvard `I136199984`, Stanford `I27837315`, Oxford `I205783295`, Google `I40120149`.
 
 **Well-known concept IDs:** Machine Learning `C199360897`, AI `C41008148`, Deep Learning `C154945302`, Computer Science `C119857082`, Biology `C86803240`, Mathematics `C33923547`.
+
+### StackExchange Views
+
+StackExchange corpus: questions and answers from Stack Overflow and 170+ Stack Exchange
+sites. Windowed by time period, mirroring the Reddit pattern.
+
+| View | Description |
+|------|-------------|
+| `scry.stackexchange` | Base view over all StackExchange posts |
+| `scry.mv_stackexchange_questions_recent` | Recent questions |
+| `scry.mv_stackexchange_questions_2022_2023` | 2022-2023 questions |
+| `scry.mv_stackexchange_questions_2020_2021` | 2020-2021 questions |
+| `scry.mv_stackexchange_questions_2018_2019` | 2018-2019 questions |
+| `scry.mv_stackexchange_questions_2014_2017` | 2014-2017 questions |
+| `scry.mv_stackexchange_questions_2010_2013` | 2010-2013 questions |
+| `scry.mv_stackexchange_questions_2008_2009` | 2008-2009 questions |
+| `scry.mv_stackexchange_answers_recent` through `_2008_2009` | Matching answer windows |
+
+Key columns: `id` (`{site}:{post_id}`), `site`, `site_group`, `post_type`
+(`question`/`answer`), `parent_id`, `title` (questions only), `payload`, `tags`
+(questions only, `TEXT[]`), `original_author`, `score`, `view_count`,
+`answer_count`, `comment_count`, `accepted_answer_id`, `is_accepted`,
+`original_timestamp`, `uri`.
+
+Filter by `site` (e.g., `stackoverflow`, `serverfault`, `math.stackexchange`) and
+`tags` (e.g., `'rust' = ANY(tags)`).
+
+### Caselaw Views
+
+US legal opinions from CourtListener and Caselaw Access Project, windowed by decade.
+
+| View | Period |
+|------|--------|
+| `scry.caselaw` | All opinions (base view) |
+| `scry.mv_caselaw_opinions_2020s` | 2020s |
+| `scry.mv_caselaw_opinions_2010s` | 2010s |
+| `scry.mv_caselaw_opinions_2000s` | 2000s |
+| `scry.mv_caselaw_opinions_1990s` | 1990s |
+| `scry.mv_caselaw_opinions_1980s` | 1980s |
+| `scry.mv_caselaw_opinions_pre1980` | Pre-1980 |
+
+Key columns: `id` (`cl:{opinion_id}` or `cap:{case_id}`), `source`
+(`courtlistener`/`cap`), `court` (slug: `scotus`, `ca9`, `nysd`, ...),
+`court_full_name`, `jurisdiction` (`federal`/`state:{state}`/`territorial`),
+`jurisdiction_level` (supreme/appellate/district), `case_name`, `case_name_short`,
+`docket_number`, `citation`, `citations` (`TEXT[]`), `opinion_type`, `title`,
+`payload` (opinion text), `author_name` (judge), `original_timestamp`,
+`date_filed`, `uri`, `word_count`.
+
+Filter by `court`, `jurisdiction`, or `citations` (GIN-indexed `TEXT[]` for
+cross-reference lookups).
+
+### Gutenberg Views
+
+Project Gutenberg public domain full-text books.
+
+| View | Description |
+|------|-------------|
+| `scry.gutenberg_books` | All Gutenberg books |
+
+Key columns: `id`, `ebook_number`, `title`, `original_author`,
+`author_birth_year`, `author_death_year`, `language` (ISO code, indexed),
+`subject` (`TEXT[]`), `bookshelf` (`TEXT[]`), `rights`, `payload` (full text,
+50K truncated), `word_count`, `download_count` (indexed DESC), `media_type`,
+`uri`, `original_timestamp`.
+
+Filter by `language` (e.g., `'en'`) and `subject` arrays. Sort by
+`download_count DESC` for popular works.
+
+### Wikidata Views
+
+Wikidata structured knowledge graph: items, properties, and claims.
+
+| View | Description |
+|------|-------------|
+| `scry.wikidata_items` | Items and properties keyed by QID |
+| `scry.wikidata_claims` | Structured property-value assertions |
+
+**wikidata_items** columns: `qid` (e.g., `Q42`), `entity_type`
+(`item`/`property`), `label_en`, `description_en`, `aliases_en` (`TEXT[]`),
+`label_json` (JSONB, multilingual), `description_json` (JSONB), `instance_of`
+(`TEXT[]`, GIN-indexed), `subclass_of` (`TEXT[]`), `sitelinks_count`,
+`claims_count`, `wikipedia_title_en`, `payload`, `uri`, `last_modified`.
+
+**wikidata_claims** columns: `id` (`{qid}:{property}:{hash}`), `subject_qid`
+(FK to items), `property` (e.g., `P31`), `property_label`, `value_type`
+(`wikibase-item`/`string`/`time`/...), `value_qid`, `value_string`,
+`value_time`, `rank` (`preferred`/`normal`/`deprecated`).
+
+Common patterns:
+- Find items: `scry.search_wikidata('Douglas Adams', limit_n => 5)`
+- Instance-of lookup: `WHERE 'Q5' = ANY(instance_of)` (humans)
+- Traverse claims: join `scry.wikidata_claims` to `scry.wikidata_items` on
+  `subject_qid = qid`
+- Cross-reference Wikipedia: match `wikipedia_title_en` to
+  `scry.wikipedia_articles` title
+
+### KL3M Federal Corpus Views
+
+KL3M corpus from PleIAs: federal government documents, regulations, and .gov web pages.
+Partitioned by collection family, with windowed tables for lexical search.
+
+| View | Description |
+|------|-------------|
+| `scry.kl3m` | Base view over all KL3M documents |
+| `scry.mv_kl3m_govinfo_recent` | Recent govinfo documents |
+| `scry.mv_kl3m_govinfo_2010s` | 2010s govinfo |
+| `scry.mv_kl3m_govinfo_2000s` | 2000s govinfo |
+| `scry.mv_kl3m_govinfo_pre2000` | Pre-2000 govinfo |
+| `scry.mv_kl3m_dotgov_recent` | Recent .gov web pages |
+| `scry.mv_kl3m_dotgov_2010s` | 2010s .gov pages |
+| `scry.mv_kl3m_dotgov_pre2010` | Pre-2010 .gov pages |
+
+Key columns: `id` (`{collection}:{doc_hash}`), `collection` (e.g.,
+`govinfo-fr`, `govinfo-cfr`, `govinfo-crec`, `govinfo-bills`, `dotgov-*`),
+`collection_group` (`govinfo`/`dotgov`/`courtlistener`/`other`), `doc_type`
+(regulation, bill, hearing, report, webpage, ...), `title`, `payload`,
+`original_author`, `agency`, `original_timestamp`, `uri`, `word_count`.
+
+Filter by `collection_group` for broad categories, `collection` for specific
+document families, or `agency` for regulatory body.
+
+### Government/Academic Sources in scry.entities
+
+These sources live in `scry.entities` (not in dedicated tables). Query with
+`source = '<source_name>'::external_system`. Key metadata fields vary by source:
+
+| Source | Kind | Typical metadata fields |
+|--------|------|------------------------|
+| `sec_edgar` | `post` | `form_type`, `cik`, `ticker`, `company_name`, `accession_number`, `report_date`, `sic_code`, `sic_description` |
+| `nih_reporter` | `grant` | `nih.project_num`, `nih.fiscal_year`, `nih.award_amount`, `nih.organization`, `nih.activity_code`, `nih.principal_investigators` |
+| `federal_register` | `regulation` | `document_number`, `type`, `subtype`, `agency_names`, `agency_ids`, `citation`, `start_page`, `end_page`, `pdf_url` |
+| `congress` | `document` | `congress`, `bill_type`, `bill_number`, `sponsor_name`, `sponsor_party`, `sponsor_state`, `policy_area`, `latest_action`, `has_summary` |
+| `nsf` | `grant` | `award_id`, `pi_name`, `institution`, `estimated_total_amt`, `program`, `directorate`, `division`, `start_date`, `exp_date` |
+| `nvd` | `report` | `cve_id`, `cvss_v31_score`, `cvss_v31_severity`, `cvss_v31_vector`, `cvss_v2_score`, `weaknesses`, `vuln_status` |
+| `ecfr` | `regulation` | `cfr_title_number`, `cfr_title_name`, `part_number`, `citation`, `amendment_citation` |
+| `crs` | `report` | `topics`, `active`, `crs_type`, `crs_id`, `sourceLink` |
+| `nasa_ntrs` | `report` | `ntrs_id`, `sti_type`, `center_code`, `center_name`, `subject_categories`, `keywords`, `doi`, `conference_name` |
+| `inspire_hep` | `paper` | `inspire_id`, `arxiv_id`, `doi`, `journal`, `arxiv_categories`, `inspire_categories`, `document_type`, `author_count` |
+| `europepmc` | `paper` | `pmid`, `doi`, `journal`, `epmc_source`, `pub_year`, `is_open_access`, `cited_by_count`, `keywords`, `mesh_terms` |
+| `hal` | `paper` | `hal_id`, `doc_type`, `language`, `doi`, `journal`, `conference`, `domains`, `keywords` |
+| `osti` | `paper` | `osti_id`, `document_type`, `doi`, `sponsor_org`, `research_org`, `subject_categories`, `keywords`, `language` |
+| `zenodo` | `paper`/`post` | `doi`, `resource_type` (object: `type`, `subtype`), `access_right`, `communities`, `keywords`, `license`, `creator_orcids` |
+| `datacite` | `paper`/`document` | `doi`, `resource_type`, `resource_type_general`, `publisher`, `publication_year`, `subjects`, `citation_count` |
+
+These are all queryable through `scry.search()` / `scry.search_ids()` with
+`kinds` filtering, or through direct `scry.entities` queries with `source` filter.
 
 ### Patent Views
 
