@@ -467,6 +467,41 @@ ORDER BY 2 DESC
 LIMIT 20
 ```
 
+You can use the clean source aliases the same way:
+
+```sql
+SELECT ticker, title, event_ticker, market_status, close_time, volume_24h
+FROM scry.kalshi
+WHERE close_time >= NOW() - INTERVAL '30 days'
+ORDER BY close_time ASC NULLS LAST
+LIMIT 50
+```
+
+```sql
+SELECT appl_id, title, fiscal_year, award_amount, organization_name
+FROM scry.nih_reporter
+WHERE organization_name ILIKE '%stanford%'
+ORDER BY fiscal_year DESC NULLS LAST, award_amount DESC NULLS LAST
+LIMIT 50
+```
+
+```sql
+SELECT granule_id, title, chamber, issue_date, package_id
+FROM scry.govinfo_crec
+WHERE issue_date >= DATE '2025-01-01'
+ORDER BY issue_date DESC NULLS LAST
+LIMIT 50
+```
+
+```sql
+SELECT source, external_id, title, uri, original_timestamp
+FROM scry.source_records
+WHERE source IN ('kalshi', 'nih_reporter', 'govinfo_crec')
+  AND original_timestamp >= NOW() - INTERVAL '90 days'
+ORDER BY original_timestamp DESC NULLS LAST
+LIMIT 100
+```
+
 If you need the full-history distribution, run `/v1/scry/estimate` first.
 Source-wide `GROUP BY` on `scry.entities` is not a happy-path query.
 
@@ -520,7 +555,7 @@ LIMIT 50
 ### Search OffshoreLeaks nodes by name
 ```sql
 SELECT node_id, node_type, name, jurisdiction, countries
-FROM scry.offshoreleaks_nodes
+FROM scry.offshoreleaks
 WHERE name ILIKE '%acme%'
 LIMIT 50
 ```

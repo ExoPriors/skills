@@ -49,6 +49,8 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
+   Read `offerings.portable_entry` as the canonical `/scry` flow:
+   `context -> schema -> route -> query`.
    If you need a concise shareable bootstrap prompt for another agent, use
    `offerings.public_agent_prompt.copy_text` instead of paraphrasing your own.
    If you need deeper docs, use `offerings.canonical_doc_path`, each skill's
@@ -94,16 +96,23 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    `scry.chunk_embeddings` for chunk-level semantic retrieval, `scry.entity_embeddings`
    or `scry.entities_with_embeddings` only when you want one entity-level vector
    row per entity, `scry.embedding_coverage` to inspect public vs staged vs ready
-   source/kind coverage, and
-   source-native tables such as `scry.hackernews_items`,
+   source/kind coverage, source-local `scry.*_embeddings` views when you need
+   the exact semantic owner table, and source-native tables or aliases such as
+   `scry.hackernews`, `scry.wikipedia`, `scry.pubmed`, `scry.repec`,
+   `scry.kalshi`, `scry.nih_reporter`, `scry.govinfo_crec`,
+   `scry.offshoreleaks`, `scry.openalex`, `scry.bluesky`,
+   `scry.huggingface`, `scry.huggingface_papers`,
+   `scry.huggingface_collections`, `scry.huggingface_discussions`,
+   `scry.huggingface_repo_text_artifacts`,
+   `scry.kalshi_markets`, `scry.nih_reporter_projects`,
+   `scry.govinfo_crec_granules`, `scry.hackernews_items`,
    `scry.wikipedia_articles`, `scry.pubmed_papers`, `scry.repec_records`,
    `scry.openalex_works`, `scry.bluesky_posts`, `scry.mailing_list_messages`,
    `scry.openlibrary_*`, `scry.stackexchange`, `scry.caselaw`,
    `scry.gutenberg_books`, `scry.wikidata_items`, `scry.wikidata_claims`,
-   and `scry.kl3m` when a corpus no
-   longer lives canonically in `scry.entities`. Reach for a specific `mv_*`
-   convenience view only when `/v1/scry/schema` confirms it is healthy and
-   useful for the task.
+   and `scry.kl3m` when a corpus no longer lives canonically in
+   `scry.entities`. Reach for a specific `mv_*` convenience view only when
+   `/v1/scry/schema` confirms it is healthy and useful for the task.
 
 9. **Cross-table composition is normal.** If the best records live in multiple
    source-native tables, combine them in one SQL statement with CTEs,

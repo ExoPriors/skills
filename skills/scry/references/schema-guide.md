@@ -80,17 +80,26 @@ union view over those records.
 | View | Notes |
 |------|-------|
 | `scry.source_records` | Cross-source union of source-native records. Includes `source`, `external_id`, `entity_id`, `kind`, `uri`, `title`, `content_text`, `metadata`, `created_at`, `updated_at`. |
-| `scry.bluesky` / `hackernews` / `wikipedia` / `pubmed` / `repec` / `openalex` | Clean primary aliases for the major source-native corpora. Prefer these names in new agent/user queries. |
+| `scry.bluesky` / `hackernews` / `wikipedia` / `pubmed` / `repec` / `kalshi` / `nih_reporter` / `govinfo_crec` / `offshoreleaks` / `openalex` | Clean primary aliases for the major source-native corpora. Prefer these names in new agent/user queries. |
 | `scry.hackernews_items` | Canonical HN substrate keyed by `hn_id`. Contains posts and comments, thread ancestry (`parent_hn_id`, `story_hn_id`), outbound URL, score, full text, and `anchor_entity_id` for joins to crawled webpage entities. |
 | `scry.wikipedia_articles` | Canonical Wikipedia substrate keyed by `page_id`. Contains revisions, categories, article text, and quality metadata. |
 | `scry.pubmed_papers` | Canonical PubMed substrate keyed by `pmid`. Contains paper text, DOI/PMC identifiers, journal metadata, and MeSH/keyword metadata. |
 | `scry.repec_records` | Canonical RePEc substrate keyed by `handle`. Contains source-specific bibliographic fields, file links, full-text fetch status, and economics metadata. |
+| `scry.kalshi_markets` | Canonical Kalshi substrate keyed by `ticker`. Contains event/series tickers, market status/result, pricing snapshots, and market timing fields. |
+| `scry.nih_reporter_projects` | Canonical NIH RePORTER substrate keyed by `appl_id`. Contains fiscal year, award amount, project identifiers, PI lists, and organization metadata. |
+| `scry.govinfo_crec_granules` | Canonical GovInfo Congressional Record substrate keyed by `granule_id`. Contains package/chamber/class metadata and issue/publication dates. |
 | `scry.openalex_works` | Canonical OpenAlex work surface keyed by `work_id`. Joins graph metadata with dedicated abstract payload rows and optional `entity_id` bridge links. |
 | `scry.bluesky_posts` | Canonical Bluesky substrate keyed by AT URI. |
 | `scry.twitter_posts` | Canonical Twitter/X substrate keyed by canonical tweet URI. Exposes public provenance tags plus aggregated observation-source tags such as `observation_sources`, `capture_channels`, and `has_extension_observation`. |
 | `scry.twitter_post_observations` | Public-safe provenance rows for the Twitter substrate. Exposes source collection, observation source, capture channel, trust tier, verification status, and metrics without uploader PII. |
 | `scry.mailing_list_messages` | Canonical mailing-list message substrate keyed by `message_key`. |
 | `scry.openlibrary_editions` / `works` / `authors` | Canonical Open Library bibliographic substrates. |
+| `scry.huggingface` / `huggingface_repositories` | Canonical Hugging Face repository substrate keyed by `repo_id` (`owner/name`). Includes repo type (`model`/`dataset`/`space`), owner handle, card metadata, tags, likes/downloads, and synthesized repo payload text. |
+| `scry.huggingface_repo_text_artifacts` | Selected high-signal repo text files keyed by `artifact_key`. Includes README/model-card text, Space `app.py`, config files, citations, licenses, and requirements. |
+| `scry.huggingface_papers` | Hugging Face Paper Pages keyed by paper id (typically arXiv id). Includes summary, AI summary, authors, upvotes, and discussion id. |
+| `scry.huggingface_collections` / `huggingface_collection_items` | Hugging Face collections and their ordered items (models, datasets, spaces, papers, nested collections). |
+| `scry.huggingface_discussions` / `huggingface_discussion_events` | Repo discussions / PR threads and their event streams. Discussions are keyed by `repo_type:repo_id#num`; events preserve comment and commit payloads. |
+| `scry.huggingface_paper_artifacts` | Derived paper-to-repo link surface over `huggingface_repo_links` joined to repos and hydrated paper pages. |
 | `scry.stackexchange` | Canonical StackExchange substrate. Questions and answers from Stack Overflow and 170+ Stack Exchange sites, keyed by `{site}:{post_id}`. Windowed by time period. |
 | `scry.caselaw` | US legal opinions from CourtListener and Caselaw Access Project. Keyed by `cl:{opinion_id}` or `cap:{case_id}`. Includes court, jurisdiction, citations, opinion text. Windowed by decade. |
 | `scry.gutenberg_books` | Project Gutenberg full-text public domain books. Keyed by `gutenberg:{ebook_number}`. Includes subject, bookshelf, language, download count. |
@@ -111,6 +120,12 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_openlibrary_editions(query_text, mode, limit_n)` | BM25 over Open Library edition `title`, `payload`, `original_author`, and `publish_date`. |
 | `scry.search_openlibrary_works(query_text, mode, limit_n)` | BM25 over Open Library work `title`, `payload`, and `original_author`. |
 | `scry.search_openlibrary_authors(query_text, mode, limit_n)` | BM25 over Open Library author `name`, `payload`, `original_author`, and life-date fields. |
+| `scry.search_huggingface_repositories(query_text, mode, repo_types, owner_handles, limit_n)` | BM25 over Hugging Face repo payloads, titles, descriptions, repo ids, and owner handles. |
+| `scry.search_huggingface_repo_text_artifacts(query_text, mode, repo_types, artifact_kinds, limit_n)` | BM25 over README/model-card/code/config text captured from high-signal Hub files. |
+| `scry.search_huggingface_collections(query_text, mode, owner_handles, limit_n)` | BM25 over collection titles, descriptions, owner handles, and item summaries. |
+| `scry.search_huggingface_papers(query_text, mode, year_from, limit_n)` | BM25 over Hugging Face Paper Page summaries, AI summaries, titles, and author names. |
+| `scry.search_huggingface_discussions(query_text, mode, repo_types, statuses, limit_n)` | BM25 over discussion titles, concatenated thread payloads, repo ids, author display names, and status. |
+| `scry.huggingface_find_paper_artifacts(query_text, year_from, limit_n)` | Traverses paper hits back into linked Hub repos using `huggingface_repo_links`; it prefers direct arXiv/DOI and OpenAlex resolution before falling back to HF paper pages, so paper-to-artifact recovery does not depend on starting inside Hugging Face first. |
 | `scry.openalex_find_works(query, min_year, limit)` | Source-native OpenAlex work lookup over titles and DOIs with dedicated abstract payload link-through. |
 | `scry.search_mailing_list_messages(query_text, mode, list_keys, limit_n)` | BM25 over mailing-list message rows. |
 | `scry.search_stackexchange_questions(query_text, mode, sites, tags, limit_n, window_key)` | BM25 over StackExchange question windows. Default window: `recent`. Use `window_key='all'` to search all periods. |
@@ -377,6 +392,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 | `scry.entity_embeddings` | Canonical entity-level embedding helper (`chunk_index = 0`) for embedded public entities | Yes |
 | `scry.entities_with_embeddings` | Public entity rows joined to `scry.entity_embeddings`; filter `kind` and `source` as needed | Yes |
 | `scry.embedding_coverage` | Source/kind public vs staged vs ready embedding coverage reporting surface | N/A |
+| `scry.hackernews_items_embeddings` / `wikipedia_articles_embeddings` / `pubmed_papers_embeddings` / `repec_records_embeddings` / `kalshi_markets_embeddings` / `nih_reporter_projects_embeddings` / `govinfo_crec_granules_embeddings` / `offshoreleaks_nodes_embeddings` | Source-local chunk embeddings keyed by the canonical table's natural identifier plus `entity_id`; use when you need the exact semantic owner table instead of the cross-source union | Yes |
 
 ### Cross-Source Aggregates
 
