@@ -103,6 +103,8 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    `scry.offshoreleaks`, `scry.openalex`, `scry.bluesky`,
    `scry.huggingface`, `scry.huggingface_papers`,
    `scry.huggingface_collections`, `scry.huggingface_discussions`,
+   `scry.huggingface_accounts`, `scry.huggingface_models`,
+   `scry.huggingface_datasets`, `scry.huggingface_spaces`,
    `scry.huggingface_repo_text_artifacts`,
    `scry.kalshi_markets`, `scry.nih_reporter_projects`,
    `scry.govinfo_crec_granules`, `scry.hackernews_items`,
@@ -113,6 +115,10 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    and `scry.kl3m` when a corpus no longer lives canonically in
    `scry.entities`. Reach for a specific `mv_*` convenience view only when
    `/v1/scry/schema` confirms it is healthy and useful for the task.
+
+   For Hugging Face specifically, prefer `scry.search_huggingface()` when you
+   need one discovery-first entry point across repos, artifacts, papers,
+   collections, discussions, accounts, and paper-artifact hops.
 
 9. **Cross-table composition is normal.** If the best records live in multiple
    source-native tables, combine them in one SQL statement with CTEs,
@@ -385,14 +391,14 @@ instance. Check `/v1/scry/schema` status before using them.
 
 ```sql
 SELECT entity_id, uri, title, original_author, score, original_timestamp
-FROM scry.mv_arxiv_papers
+FROM scry.arxiv_papers
 WHERE original_timestamp >= '2025-01-01'
 ORDER BY original_timestamp DESC
 LIMIT 50
 ```
 
-`score` is NULL for arXiv papers on the public surface. Sort by
-`original_timestamp`, category, or downstream citation proxies instead.
+`score` is not the useful ranking axis for arXiv. Sort by
+`original_timestamp`, `primary_category`, or downstream citation proxies instead.
 
 ### E4. Author activity across sources
 
@@ -458,7 +464,7 @@ skill for creating handles.
 curl -s -X POST https://api.scry.io/v1/scry/estimate \
   -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"sql": "SELECT id, title FROM scry.mv_arxiv_papers LIMIT 1000"}'
+  -d '{"sql": "SELECT arxiv_id, title FROM scry.arxiv_papers LIMIT 1000"}'
 ```
 
 Returns EXPLAIN (FORMAT JSON) output. Use this for expensive queries before committing.

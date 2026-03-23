@@ -62,7 +62,65 @@ ORDER BY original_timestamp DESC
 
 ---
 
-## 2. Reddit Patterns
+## 2. Hugging Face Patterns
+
+### Unified HF discovery when you do not know the right surface yet
+```sql
+SELECT surface, result_id, score, title, uri, repo_type, owner_handle
+FROM scry.search_huggingface(
+  'reward modeling',
+  scopes => ARRAY['paper_artifact','repository','paper'],
+  repo_types => ARRAY['model','dataset'],
+  limit_n => 20
+)
+ORDER BY score DESC NULLS LAST
+```
+
+### Find paper-linked artifacts directly
+```sql
+SELECT paper_id, paper_title, repo_id, repo_type, owner_handle, link_role, repo_uri
+FROM scry.huggingface_find_paper_artifacts('Tool-Augmented Reward Modeling', 2023, 20)
+ORDER BY paper_score DESC NULLS LAST, repo_id
+```
+
+### Search account/org handles, then traverse to owned repos
+```sql
+WITH acct AS (
+  SELECT handle
+  FROM scry.search_huggingface_accounts('openai', limit_n=>5)
+)
+SELECT r.repo_id, r.repo_type, r.title, r.likes, r.downloads, r.last_modified_at
+FROM acct
+JOIN LATERAL scry.huggingface_account_repositories(acct.handle, ARRAY['model','space'], 50) r
+  ON TRUE
+ORDER BY r.likes DESC NULLS LAST, r.downloads DESC NULLS LAST
+```
+
+### Inspect org membership and socials
+```sql
+SELECT *
+FROM scry.huggingface_organization_memberships
+WHERE organization_handle = 'openai'
+ORDER BY member_handle
+LIMIT 200;
+
+SELECT *
+FROM scry.huggingface_account_socials
+WHERE handle = 'Presidentlin';
+```
+
+### Filter directly by repo family
+```sql
+SELECT repo_id, owner_handle, title, pipeline_tag, likes, downloads
+FROM scry.huggingface_models
+WHERE pipeline_tag = 'text-generation'
+ORDER BY likes DESC NULLS LAST
+LIMIT 50;
+```
+
+---
+
+## 3. Reddit Patterns
 
 Reddit data lives in separate windowed tables (not `scry.entities`). Uses TEXT IDs
 (`t1_` comments, `t3_` posts) and does not join to UUID entities.
@@ -225,7 +283,7 @@ LIMIT 24
 ### Recent arXiv papers by category
 ```sql
 SELECT entity_id, uri, title, original_author, original_timestamp
-FROM scry.mv_arxiv_papers
+FROM scry.arxiv_papers
 WHERE original_timestamp >= '2025-01-01'
 ORDER BY original_timestamp DESC
 LIMIT 50
