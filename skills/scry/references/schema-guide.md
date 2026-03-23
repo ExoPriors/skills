@@ -89,6 +89,7 @@ union view over those records.
 | `scry.nih_reporter_projects` | Canonical NIH RePORTER substrate keyed by `appl_id`. Contains fiscal year, award amount, project identifiers, PI lists, and organization metadata. |
 | `scry.govinfo_crec_granules` | Canonical GovInfo Congressional Record substrate keyed by `granule_id`. Contains package/chamber/class metadata and issue/publication dates. |
 | `scry.openalex_works` | Canonical OpenAlex work surface keyed by `work_id`. Joins graph metadata with dedicated abstract payload rows and optional `entity_id` bridge links. |
+| `scry.openalex_work_external_ids` | Source-local OpenAlex alias registry keyed by `work_id`. Use it for carried external identifiers such as PubMed PMIDs that belong to the OpenAlex work rather than the shared ext-id bridge. |
 | `scry.bluesky_posts` | Canonical Bluesky substrate keyed by AT URI. |
 | `scry.twitter_posts` | Canonical Twitter/X substrate keyed by canonical tweet URI. Exposes public provenance tags plus aggregated observation-source tags such as `observation_sources`, `capture_channels`, and `has_extension_observation`. |
 | `scry.twitter_post_observations` | Public-safe provenance rows for the Twitter substrate. Exposes source collection, observation source, capture channel, trust tier, verification status, and metrics without uploader PII. |
