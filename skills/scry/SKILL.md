@@ -87,9 +87,10 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 
 6. **Treat paid queries as budget-bounded.** For paid execution, Scry reserves
    nanodollar credits up front and derives a runtime exposure timeout from the
-   authorized exposure. Use `GET /v1/scry/pricing` plus `/v1/scry/estimate`
-   before heavy queries, and set `X-Scry-Max-Exposure` deliberately when the user
-   wants a hard per-query exposure authorization.
+   authorized exposure. The runtime enforces that envelope with a live-burn
+   watchdog first and a timeout fallback second. Use `GET /v1/scry/pricing` plus
+   `/v1/scry/estimate` before heavy queries, and set `X-Scry-Max-Exposure`
+   deliberately when the user wants a hard per-query exposure authorization.
 
 7. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
    exact terms and named entities. For conceptual intent ("themes", "things like",
@@ -235,7 +236,8 @@ Useful response headers from `POST /v1/scry/query`:
 - `x-scry-admission` / `x-scry-admission-wait-ms`: whether the request started immediately or through a congestion epoch, plus the admission wait
 
 If a paid query runs into its spend envelope, the API returns `402` with
-`query_exposure_exhausted`. The fix is to narrow the query or raise
+`query_exposure_exhausted`. That is enforced by live runtime burn first, with
+the exposure timeout as fallback. The fix is to narrow the query or raise
 `X-Scry-Max-Exposure`, not to keep retrying the same request unchanged.
 
 ## C) Quickstart

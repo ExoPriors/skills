@@ -59,7 +59,7 @@ and run `npx skills update` first.
 | `insufficient_credits` | "Embedding token budget exhausted" | 1.5M token budget used up | Notify user; budget resets with new pass |
 | `subscription_required` | "Active Scry pass required" | Feature requires paid pass | Purchase day/week/month pass at scry.io |
 | `estimate_exceeds_exposure` | "Estimated cost ... exceeds X-Scry-Max-Exposure" | The bid-adjusted estimate is already above the caller's authorized exposure | Run `/v1/scry/estimate`, narrow the query, or raise `X-Scry-Max-Exposure` |
-| `query_exposure_exhausted` | "Query exhausted its authorized exposure" | Runtime spend hit the authorized exposure for this query | Raise `X-Scry-Max-Exposure` or reduce scan scope / LIMIT |
+| `query_exposure_exhausted` | "Query exhausted its authorized exposure" | Live runtime burn hit the authorized exposure for this query (with timeout fallback if needed) | Raise `X-Scry-Max-Exposure` or reduce scan scope / LIMIT |
 
 ### 403 Forbidden
 
@@ -142,8 +142,10 @@ non-Scry work and 10 cores for burst headroom.
 | Absolute min | 20s | 60s | 5 min |
 
 Paid queries can terminate earlier than the load-policy timeout when the
-authorized exposure implies a smaller `exposure_timeout_ms`. Estimate first if
-the user wants a tight authorization.
+live-burn watchdog reaches the authorized exposure. `exposure_timeout_ms`
+remains the fail-safe bound when the query is not producing rows yet or the
+watchdog cannot stop it first. Estimate first if the user wants a tight
+authorization.
 
 ### SQL Constraints
 
