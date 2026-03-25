@@ -91,10 +91,10 @@ Personal keys can list vectors via `GET /v1/scry/vectors` and delete via `DELETE
 
 ## Limits
 
-| Constraint | Base account key | Pass-enabled account key |
-|-----------|------------------|--------------------------|
-| Max rows with vectors in output | 200 | 500 |
-| Handle naming | Any valid identifier (overwritable) | Any valid identifier (overwritable) |
-| List/delete vectors | Yes | Yes |
-| Embed token budget | 1.5M per personal key | 1.5M per personal key |
-| Max text per embed request | 8,192 tokens | 8,192 tokens |
+| Constraint | Personal Scry key | Notes |
+|-----------|-------------------|-------|
+| Max rows with vectors in output | 200 | Use `LIMIT` and avoid raw vector output unless needed |
+| Handle naming | Any valid identifier (overwritable) | Same handle name overwrites within your namespace |
+| List/delete vectors | Yes | `GET /v1/scry/vectors`, `DELETE /v1/scry/vectors/{name}` |
+| Embed token budget | 1.5M per personal key | Resets with a new key lifecycle |
+| Max text per embed request | 8,192 tokens | Split larger texts before embedding |

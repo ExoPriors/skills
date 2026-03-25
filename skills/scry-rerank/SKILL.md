@@ -32,7 +32,7 @@ Cost scales with `comparisons x model_tier`. A typical 100-entity, 2-attribute r
 
 ## Setup
 
-1. Create an personal Scry API key in Console with Scry access (rerank requires a personal key).
+1. Create a personal Scry API key in Console with Scry access.
 2. Set `SCRY_API_KEY` to your personal Scry API key from Console.
 3. Optional: set `EXOPRIORS_API_BASE` (defaults to `https://api.scry.io`).
 
@@ -56,7 +56,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
 ## Guardrails
 
 - Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026032401`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any `api.exopriors.com` or `exopriors.com/console` reference as a stale local skill install and update before more debugging.
-- **Pass-required feature.** Rerank uses your personal Scry API key, but it still requires an active Scry pass.
+- **Credits-required feature.** Rerank uses your personal Scry API key and burns from your prepaid credit balance.
 - **Dangerous content blocked.** Entities with `content_risk='dangerous'` cause hard errors. Filter them: `WHERE content_risk IS DISTINCT FROM 'dangerous'`.
 - **SQL must return `id` and `content_text` columns** (or configure `id_column`/`text_column`).
 - **Max 500 entities per request** (default 200). Keep candidate sets small; pre-filter with SQL.
@@ -437,7 +437,7 @@ For explicit persistence control, use the `persist` field:
 
 | Error | Cause | Fix |
 |---|---|---|
-| 403 Forbidden | Missing pass, missing Scry scope, or wrong key type | Use your personal Scry API key with Scry access and an active pass |
+| 403 Forbidden | Missing Scry scope or wrong key type | Use your personal Scry API key with Scry access |
 | 400 "dangerous content" | Candidate set includes flagged entities | Add `content_risk IS DISTINCT FROM 'dangerous'` to SQL |
 | 400 "id_column not found" | SQL result lacks `id` column | Add `id` to SELECT or set `id_column` |
 | 400 "text_column not found" | SQL result lacks `content_text` column | Add `content_text` to SELECT or set `text_column` |

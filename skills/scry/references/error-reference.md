@@ -51,14 +51,13 @@ and run `npx skills update` first.
 |------|----------------|-------|-----|
 | `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Use your personal Scry API key from `scry.io/console` and ensure it has Scry access |
 | `unauthorized` | "Invalid authorization format" | Authorization header malformed (extra quotes, whitespace, or newline in env var) | Strip CR/LF from key, ensure exact `Authorization: Bearer <key>` |
-| `unauthorized` | "API key expired" | Key past 30-day expiry | Regenerate via `/api/console/scry/regenerate-key` or get new pass |
+| `unauthorized` | "API key expired" | Key past 30-day expiry | Regenerate via `/api/console/scry/regenerate-key` or mint a fresh personal key |
 
 ### 402 Payment Required
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `insufficient_credits` | "Embedding token budget exhausted" | 1.5M token budget used up | Notify user; budget resets with new pass |
-| `subscription_required` | "Active Scry pass required" | Feature requires paid pass | Purchase day/week/month pass at scry.io |
+| `insufficient_credits` | "Embedding token budget exhausted" | 1.5M token budget used up | Notify user; budget resets with a fresh personal key |
 | `estimate_exceeds_exposure` | "Estimated cost ... exceeds X-Scry-Max-Exposure" | The bid-adjusted estimate is already above the caller's authorized exposure | Run `/v1/scry/estimate`, narrow the query, or raise `X-Scry-Max-Exposure` |
 | `query_exposure_exhausted` | "Query exhausted its authorized exposure" | Live runtime burn hit the authorized exposure for this query (with timeout fallback if needed) | Raise `X-Scry-Max-Exposure` or reduce scan scope / LIMIT |
 
@@ -66,7 +65,7 @@ and run `npx skills update` first.
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `forbidden` | "Active Scry pass required" | Feature requires a paid Scry pass (for example rerank or premium queue access) | Upgrade in `scry.io/console` and retry with the same personal Scry API key |
+| `forbidden` | "Missing Scry scope" or feature-specific access denial | The key is missing required scope or is the wrong key type | Use a personal Scry API key with the needed scope |
 | `forbidden` | "Postgres introspection blocked" | Query touched `pg_*` catalogs, `current_setting()`, `version()`, etc. | Use `GET /v1/scry/schema` instead |
 | `forbidden` | "Only the share owner can update" | PATCH on share you don't own | Use the key that created the share |
 
@@ -89,14 +88,11 @@ and run `npx skills update` first.
 |------|----------------|-------|-----|
 | `rate_limited` | "Rate limit exceeded" | Too many queries per minute | Wait `Retry-After` seconds |
 
-**Rate limits by tier:**
+**Default personal-key rate limits:**
 
 | Tier | RPM | Max Concurrent |
 |------|-----|----------------|
-| Base account | 60 | 1 |
-| Day pass | 120 | 1 |
-| Week pass | 240 | 2 |
-| Month pass | 600 | 3 |
+| Personal Scry key | 60 | 1 |
 
 ### 503 Service Unavailable
 
@@ -113,17 +109,13 @@ and run `npx skills update` first.
 
 | Tier | Standard | With Vectors (`?include_vectors=1`) |
 |------|----------|--------------------------------------|
-| Base account | 2,000 | 200 |
-| Pass | higher than base account | higher than base account |
+| Personal Scry key | 2,000 | 200 |
 
 ### Bandwidth Limits (24h Rolling)
 
 | Tier | Daily Cap |
 |------|-----------|
-| Base account | 1 GB |
-| Pass / priority add-on | plan-dependent |
-| Week pass | 2 GB |
-| Month pass | 5 GB |
+| Personal Scry key | 1 GB |
 
 ### Embedding Token Budget
 
@@ -135,8 +127,8 @@ Private keys get 1.5M tokens per 30-day key lifecycle. Tokens are consumed by
 Timeouts are dynamic based on server load. The system reserves 12 cores for
 non-Scry work and 10 cores for burst headroom.
 
-| Condition | Base account | Pass | Priority |
-|-----------|--------------|------|----------|
+| Condition | Personal Scry key | Higher-bid admission | Urgent admission |
+|-----------|-------------------|----------------------|------------------|
 | Idle | up to 30 min | up to 60 min | up to 2 hr |
 | Normal | up to 10 min | up to 30 min | up to 60 min |
 | Overloaded | up to 2 min | up to 10 min | up to 30 min |

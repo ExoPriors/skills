@@ -24,12 +24,12 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 
 ## 3. Tier Limits
 
-| Capability | Base account (personal Scry API key) | Pass / priority add-on (personal Scry API key) |
+| Capability | Personal Scry API key | Notes |
 |---|---|---|
-| Max rows per query | 2,000 | 10,000 |
-| Max rows with vectors | 200 | 500 |
-| Bandwidth | 1 GB/day | plan-dependent |
-| Embedding budget | 1.5M tokens / 30 days | 1.5M tokens / 30 days |
+| Max rows per query | 2,000 | Always include `LIMIT`; higher urgency is handled by `X-Scry-Bid`, not a plan tier |
+| Max rows with vectors | 200 | Use `?include_vectors=1` only when you need raw vector rows in output |
+| Bandwidth | 1 GB/day | Daily rolling budget on the key owner |
+| Embedding budget | 1.5M tokens / 30 days | Applies per personal key lifecycle |
 
 ## 4. Auth
 
@@ -44,10 +44,10 @@ Use `SCRY_API_KEY` as the canonical env var in examples and agent chats.
 
 Server applies load-aware statement timeouts:
 
-| Tier | Range |
+| Path | Range |
 |------|-------|
-| Base account | ~20s (heavy load) to ~1800s (idle). Typical: 60-120s. |
-| Pass / priority add-on | higher timeout ceilings than base account |
+| Personal Scry key | ~20s (heavy load) to ~1800s (idle). Typical: 60-120s. |
+| Higher-bid admission | Can clear into longer ceilings under congestion; use `X-Scry-Bid` only when faster admission or longer runtime is worth the extra burn |
 
 Do not hardcode a single timeout expectation. If a query times out, reduce `LIMIT` and retry.
 
@@ -61,7 +61,7 @@ Do not hardcode a single timeout expectation. If a query times out, reduce `LIMI
 
 | Failure | Response |
 |---------|----------|
-| 403 on private-only feature | Tell the user the feature needs a Scry pass or priority add-on |
+| 403 on restricted feature | Tell the user to use a personal Scry API key with the required scope, not an anonymous bootstrap key |
 | Timeout | Reduce `LIMIT`, simplify query, retry |
 | Bandwidth exceeded (429/413) | Wait or reduce result size |
 | 5xx | Retry once with backoff; surface error to user if persistent |
