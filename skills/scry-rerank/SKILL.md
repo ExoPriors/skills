@@ -14,7 +14,7 @@ description: >
 
 LLM-powered multi-attribute reranking over ExoPriors entity sets. Uses pairwise comparison (not pointwise scoring) to produce calibrated rankings with uncertainty estimates.
 
-**Skill generation**: `2026031604`
+**Skill generation**: `2026032401`
 
 ## Mental model
 
@@ -55,7 +55,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
 
 ## Guardrails
 
-- Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026031604`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any `api.exopriors.com` or `exopriors.com/console` reference as a stale local skill install and update before more debugging.
+- Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026032401`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any `api.exopriors.com` or `exopriors.com/console` reference as a stale local skill install and update before more debugging.
 - **Pass-required feature.** Rerank uses your personal Scry API key, but it still requires an active Scry pass.
 - **Dangerous content blocked.** Entities with `content_risk='dangerous'` cause hard errors. Filter them: `WHERE content_risk IS DISTINCT FROM 'dangerous'`.
 - **SQL must return `id` and `content_text` columns** (or configure `id_column`/`text_column`).

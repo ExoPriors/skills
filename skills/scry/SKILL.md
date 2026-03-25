@@ -24,7 +24,7 @@ Scry gives you read-only SQL access to the ExoPriors public corpus (240M+ entiti
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 
-**Skill generation**: `2026031702`
+**Skill generation**: `2026032401`
 
 ## A) When to use / not use
 
@@ -45,7 +45,7 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026031702`.
+   `GET /v1/scry/context?skill_generation=2026032401`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -84,14 +84,20 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    `/v1/scry/estimate` and/or a tight exploratory query (`LIMIT 20` plus scoped
    source/window filters), then scale only after confirming relevance.
 
-6. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
+6. **Treat paid queries as budget-bounded.** For paid execution, Scry reserves
+   nanodollar credits up front and derives a runtime budget timeout from the
+   authorized max spend. Use `GET /v1/scry/pricing` plus `/v1/scry/estimate`
+   before heavy queries, and set `X-Scry-Max-Cost` deliberately when the user
+   wants a hard spend cap.
+
+7. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
    exact terms and named entities. For conceptual intent ("themes", "things like",
    "similar to"), route to scry-vectors first, then optionally hybridize.
 
-7. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
+8. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
 
-8. **Prefer canonical surfaces with tight filters.** `scry.entities` has 240M+
+9. **Prefer canonical surfaces with tight filters.** `scry.entities` has 240M+
    rows, so do not scan it blindly. Use `scry.search*` for lexical retrieval,
    `scry.chunk_embeddings` for chunk-level semantic retrieval, `scry.entity_embeddings`
    or `scry.entities_with_embeddings` only when you want one entity-level vector
@@ -120,20 +126,20 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
    need one discovery-first entry point across repos, artifacts, papers,
    collections, discussions, accounts, and paper-artifact hops.
 
-9. **Cross-table composition is normal.** If the best records live in multiple
+10. **Cross-table composition is normal.** If the best records live in multiple
    source-native tables, combine them in one SQL statement with CTEs,
    `UNION ALL`, and joins through `scry.source_records`. This is the intended
    contract, not a workaround.
 
-10. **Filter dangerous content.** Always include
+11. **Filter dangerous content.** Always include
    `WHERE content_risk IS DISTINCT FROM 'dangerous'` unless the user explicitly
    asks for unfiltered results. Dangerous content contains adversarial
    prompt-injection content.
 
-11. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
+12. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
    with raw SQL in the body. Not JSON-wrapped SQL.
 
-12. **File rough edges promptly.** If Scry blocks the task, misses an obvious
+13. **File rough edges promptly.** If Scry blocks the task, misses an obvious
    result set, or exposes a rough edge, submit a brief note to
    `POST /v1/feedback?feedback_type=suggestion|bug|other&channel=scry_skill`
    using `Content-Type: text/plain` by default (`text/markdown` also works). Do not silently work
@@ -209,13 +215,34 @@ const resp = await paidFetch('https://api.scry.io/v1/scry/query', {
 });
 ```
 
+### B.1c Query Budgeting
+
+For paid queries, these are the key billing controls:
+
+- `GET /v1/scry/pricing` returns the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, and budget-enforcement contract.
+- `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_max_nanodollars`, `budget_timeout_ms`, and a bid-adjusted `cost_breakdown`.
+- `X-Scry-Max-Cost: <nanodollars>` sets a hard per-query spend ceiling. If the estimate already exceeds it, `/v1/scry/query` fails with `cost_exceeds_ceiling`.
+- `X-Scry-Bid: <multiplier>` expresses urgency under congestion. The accepted bid may promote admission lanes, and the charged bid only activates when the server is busy or overloaded.
+
+Useful response headers from `POST /v1/scry/query`:
+
+- `x-scry-cost`: charged nanodollars for the completed query
+- `x-scry-authorized-max`: the hard spend cap applied to this run
+- `x-scry-reserved`: the reserved/pre-authorized nanodollar amount
+- `x-scry-budget-timeout-ms`: budget-derived runtime cutoff
+- `x-scry-bid-accepted` / `x-scry-bid-charged`: accepted bid vs actually charged multiplier
+
+If a paid query runs into its spend envelope, the API returns `402` with
+`query_budget_exhausted`. The fix is to narrow the query or raise
+`X-Scry-Max-Cost`, not to keep retrying the same request unchanged.
+
 ## C) Quickstart
 
 One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026031702
+GET https://api.scry.io/v1/scry/context?skill_generation=2026032401
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -319,7 +346,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026031702" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032401" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
