@@ -25,7 +25,7 @@ via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` sc
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026032401`
+**Skill generation**: `2026032402`
 
 ## A) When to use / not use
 
@@ -46,7 +46,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026032401`.
+   `GET /v1/scry/context?skill_generation=2026032402`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -86,10 +86,10 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    source/window filters), then scale only after confirming relevance.
 
 6. **Treat paid queries as budget-bounded.** For paid execution, Scry reserves
-   nanodollar credits up front and derives a runtime budget timeout from the
-   authorized max spend. Use `GET /v1/scry/pricing` plus `/v1/scry/estimate`
-   before heavy queries, and set `X-Scry-Max-Cost` deliberately when the user
-   wants a hard spend cap.
+   nanodollar credits up front and derives a runtime exposure timeout from the
+   authorized exposure. Use `GET /v1/scry/pricing` plus `/v1/scry/estimate`
+   before heavy queries, and set `X-Scry-Max-Exposure` deliberately when the user
+   wants a hard per-query exposure authorization.
 
 7. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
    exact terms and named entities. For conceptual intent ("themes", "things like",
@@ -221,21 +221,21 @@ const resp = await paidFetch('https://api.scry.io/v1/scry/query', {
 For paid queries, these are the key billing controls:
 
 - `GET /v1/scry/pricing` returns the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, and budget-enforcement contract.
-- `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_max_nanodollars`, `budget_timeout_ms`, and a bid-adjusted `cost_breakdown`.
-- `X-Scry-Max-Cost: <nanodollars>` sets a hard per-query spend ceiling. If the estimate already exceeds it, `/v1/scry/query` fails with `cost_exceeds_ceiling`.
+- `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted `cost_breakdown`.
+- `X-Scry-Max-Exposure: <nanodollars>` sets a hard per-query exposure authorization. If the estimate already exceeds it, `/v1/scry/query` fails with `estimate_exceeds_exposure`.
 - `X-Scry-Bid: <multiplier>` expresses urgency under congestion. The accepted bid may promote admission lanes, and the charged bid only activates when the server is busy or overloaded.
 
 Useful response headers from `POST /v1/scry/query`:
 
 - `x-scry-cost`: charged nanodollars for the completed query
-- `x-scry-authorized-max`: the hard spend cap applied to this run
+- `x-scry-authorized-exposure`: the hard exposure authorization applied to this run
 - `x-scry-reserved`: the reserved/pre-authorized nanodollar amount
-- `x-scry-budget-timeout-ms`: budget-derived runtime cutoff
+- `x-scry-exposure-timeout-ms`: exposure-derived runtime cutoff
 - `x-scry-bid-accepted` / `x-scry-bid-charged`: accepted bid vs actually charged multiplier
 
 If a paid query runs into its spend envelope, the API returns `402` with
-`query_budget_exhausted`. The fix is to narrow the query or raise
-`X-Scry-Max-Cost`, not to keep retrying the same request unchanged.
+`query_exposure_exhausted`. The fix is to narrow the query or raise
+`X-Scry-Max-Exposure`, not to keep retrying the same request unchanged.
 
 ## C) Quickstart
 
@@ -243,7 +243,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026032401
+GET https://api.scry.io/v1/scry/context?skill_generation=2026032402
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -347,7 +347,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032401" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032402" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 

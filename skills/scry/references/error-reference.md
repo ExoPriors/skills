@@ -58,8 +58,8 @@ and run `npx skills update` first.
 |------|----------------|-------|-----|
 | `insufficient_credits` | "Embedding token budget exhausted" | 1.5M token budget used up | Notify user; budget resets with new pass |
 | `subscription_required` | "Active Scry pass required" | Feature requires paid pass | Purchase day/week/month pass at scry.io |
-| `cost_exceeds_ceiling` | "Estimated cost ... exceeds X-Scry-Max-Cost" | The bid-adjusted estimate is already above the caller's hard spend cap | Run `/v1/scry/estimate`, narrow the query, or raise `X-Scry-Max-Cost` |
-| `query_budget_exhausted` | "Query exhausted its authorized budget" | Runtime spend hit the authorized max for this query | Raise `X-Scry-Max-Cost` or reduce scan scope / LIMIT |
+| `estimate_exceeds_exposure` | "Estimated cost ... exceeds X-Scry-Max-Exposure" | The bid-adjusted estimate is already above the caller's authorized exposure | Run `/v1/scry/estimate`, narrow the query, or raise `X-Scry-Max-Exposure` |
+| `query_exposure_exhausted` | "Query exhausted its authorized exposure" | Runtime spend hit the authorized exposure for this query | Raise `X-Scry-Max-Exposure` or reduce scan scope / LIMIT |
 
 ### 403 Forbidden
 
@@ -142,8 +142,8 @@ non-Scry work and 10 cores for burst headroom.
 | Absolute min | 20s | 60s | 5 min |
 
 Paid queries can terminate earlier than the load-policy timeout when the
-authorized spend cap implies a smaller `budget_timeout_ms`. Estimate first if
-the user wants a tight ceiling.
+authorized exposure implies a smaller `exposure_timeout_ms`. Estimate first if
+the user wants a tight authorization.
 
 ### SQL Constraints
 
@@ -187,8 +187,8 @@ the user wants a tight ceiling.
 3. Add date range filters (`original_timestamp >= '...'`)
 4. Reduce LIMIT
 5. Use `scry.search_ids()` instead of `scry.search()` for cheaper candidate fetch
-6. Run `/v1/scry/estimate` to check plan cost, suggested reserve, and `budget_timeout_ms` before retrying
-7. If the error is `query_budget_exhausted`, raise `X-Scry-Max-Cost` only after confirming the broader query is actually worth paying for
+6. Run `/v1/scry/estimate` to check plan cost, suggested reserve, and `exposure_timeout_ms` before retrying
+7. If the error is `query_exposure_exhausted`, raise `X-Scry-Max-Exposure` only after confirming the broader query is actually worth paying for
 
 If curl prints HTTP `000`, that is usually a client timeout before the server
 responded (for example `--max-time` shorter than server timeout). Increase
