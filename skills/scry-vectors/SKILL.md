@@ -23,7 +23,7 @@ Three layers, each building on the last:
 2. **Search** -- rank corpus documents by cosine distance (`<=>`) to your @handle. Smaller distance = more similar.
 3. **Algebra** -- compose vectors before searching. Mix two concepts, subtract unwanted directions, build contrastive axes. The result is still a vector you can search against.
 
-The key insight: `embedding_voyage4 <=> @concept` is a single SQL expression that does an approximate nearest-neighbor search over hundreds of millions of documents. Vector algebra gives you control over *what direction* that search points.
+The key insight: `embedding_voyage4 <=> @concept` is a single SQL expression that does an approximate nearest-neighbor search over the indexed corpus. Vector algebra gives you control over *what direction* that search points.
 
 ## Guardrails
 

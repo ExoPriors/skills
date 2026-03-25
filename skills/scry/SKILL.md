@@ -1,7 +1,7 @@
 ---
 name: scry
 description: >
-  Query the ExoPriors Scry API -- SQL-over-HTTPS search across 240M+ entities
+  Query the ExoPriors Scry API -- SQL-over-HTTPS search across the public Scry corpus
   spanning forums, papers, social media, government records, legal opinions,
   books, knowledge graphs, and prediction markets.
   Includes cross-platform author identity resolution (actors, people, aliases),
@@ -9,7 +9,7 @@ description: >
   shareable artifacts, and structured agent judgements.
   Use when the task involves: Scry API, ExoPriors, /v1/scry/query, scry.search,
   scry.entities, materialized views, corpus search, epistemic infrastructure,
-  240M entities, lexical search, BM25, structured agent judgements, scry shares,
+  lexical search, BM25, structured agent judgements, scry shares,
   StackExchange, caselaw, Gutenberg, Wikidata, KL3M federal corpus,
   cross-corpus analysis, who is this person, cross-platform identity, OpenAlex,
   citation graph, coauthor graph, academic papers, author lookup.
@@ -20,9 +20,10 @@ description: >
 
 # Scry Skill
 
-Scry gives you read-only SQL access to the ExoPriors public corpus (240M+ entities)
+Scry gives you read-only SQL access to the ExoPriors public corpus
 via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
+Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
 **Skill generation**: `2026032401`
 
@@ -97,8 +98,8 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 8. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
 
-9. **Prefer canonical surfaces with tight filters.** `scry.entities` has 240M+
-   rows, so do not scan it blindly. Use `scry.search*` for lexical retrieval,
+9. **Prefer canonical surfaces with tight filters.** `scry.entities` is large
+   enough that you should not scan it blindly. Use `scry.search*` for lexical retrieval,
    `scry.chunk_embeddings` for chunk-level semantic retrieval, `scry.entity_embeddings`
    or `scry.entities_with_embeddings` only when you want one entity-level vector
    row per entity, `scry.embedding_coverage` to inspect public vs staged vs ready

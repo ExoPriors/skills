@@ -11,7 +11,8 @@ instance.
 
 ### scry.entities
 
-The main content view. 240M+ rows. Filter aggressively.
+The main public content view. Filter aggressively.
+Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus totals.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -483,7 +484,7 @@ Comment equivalents follow the same naming: `scry.mv_reddit_comments_*`.
 
 ### OpenAlex Views
 
-230M+ scholarly works mirrored from the OpenAlex graph. Five node types connected by junction tables:
+Scholarly works mirrored from the OpenAlex graph. Five node types connected by junction tables:
 Authors --[authorships]--> Works --[references]--> Works, with Institutions and Concepts linked via junction tables.
 
 | View | Description |
