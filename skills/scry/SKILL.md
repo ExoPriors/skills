@@ -200,6 +200,14 @@ execution. For public trial use, use `POST /v1/scry/anonymous-key`. For
 schema/context, shares, judgements, feedback, or repeated multi-endpoint usage,
 prefer a personal Scry API key.
 
+The x402 flow is challenge-first. If x402 is enabled and the request has no
+`Authorization` header, the first unsigned `POST /v1/scry/query` returns
+`402 Payment Required` with machine-readable payment requirements. When the
+caller also sends `X-Scry-Max-Exposure`, Scry asks the wallet to fund at least
+that exposure (subject to the configured x402 base quantum). After settlement,
+the paid amount converts into reusable Scry credits on the shared ledger, so
+overpayment remains available for later queries instead of being lost.
+
 If the user wants wallet-native durable identity plus a reusable key, use
 `POST /v1/auth/agent/signup` first. That binds the wallet to a user and returns
 a session token plus API key in one flow.
@@ -222,6 +230,7 @@ const resp = await paidFetch('https://api.scry.io/v1/scry/query', {
 For paid queries, these are the key billing controls:
 
 - `GET /v1/scry/pricing` returns the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
+- `GET /v1/scry/pricing` also exposes the x402 base funding quantum and the fact that x402 funding now scales off `X-Scry-Max-Exposure` when that header is present.
 - `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted upper-bound `cost_breakdown`.
 - `X-Scry-Max-Exposure: <nanodollars>` sets a hard per-query exposure authorization. If the estimate already exceeds it, `/v1/scry/query` fails with `estimate_exceeds_exposure`.
 - `X-Scry-Bid: <multiplier>` is max willingness to pay under congestion. When Scry is busy or overloaded, paid admission batches into short epochs, winners start running, and `x-scry-bid-charged` carries the epoch clearing multiplier.
@@ -541,12 +550,15 @@ curl -s -X POST https://api.scry.io/v1/scry/judgements \
     "payload": {"primary_topic": "mech_interp", "confidence_detail": "title+abstract match"},
     "confidence": 0.88,
     "tags": ["arxiv", "mech_interp"],
-    "privacy_level": "public"
+    "privacy_level": "self"
   }'
 ```
 
 Exactly one target required: `target_entity_id`, `target_actor_id`,
 `target_judgement_id`, or `target_external_ref`.
+Public judgements must target `target_entity_id`, `target_actor_id`, or
+`target_judgement_id`; `target_external_ref` is limited to `self` or `group`
+privacy.
 Judgement-on-judgement: use `target_judgement_id` to chain observations.
 
 ### E10. People / author lookup

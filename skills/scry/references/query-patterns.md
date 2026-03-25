@@ -813,9 +813,13 @@ curl -s -X POST https://api.scry.io/v1/scry/judgements \
     },
     "confidence": 0.91,
     "tags": ["arxiv", "reward_hacking", "rlhf"],
-    "privacy_level": "public"
+    "privacy_level": "self"
   }'
 ```
+
+Public judgements must use `target_entity_id`, `target_actor_id`, or
+`target_judgement_id`. Arbitrary `target_external_ref` anchors are limited to
+`self` or `group` privacy.
 
 ### Judgement on a judgement (meta-judgement)
 ```bash

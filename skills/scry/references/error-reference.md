@@ -41,6 +41,7 @@ and run `npx skills update` first.
 | `invalid_request` | "Cartesian product detected" | Unjoined tables in FROM | Add JOIN conditions |
 | `invalid_request` | "title is required" | Share/judgement missing required field | Provide the field |
 | `invalid_request` | "exactly one target must be set" | Judgement has zero or multiple targets | Set exactly one of: `target_entity_id`, `target_actor_id`, `target_judgement_id`, `target_external_ref` |
+| `invalid_request` | "public judgements must target an entity, actor, or judgement, not external_ref" | Public judgement attempted to use `target_external_ref` | Use `target_entity_id`, `target_actor_id`, or `target_judgement_id` for public scope, or keep `target_external_ref` at `self`/`group` privacy |
 | `invalid_request` | "payload exceeds N bytes" | Share (1MB) or judgement (512KB) payload too large | Trim payload |
 | `invalid_request` | "confidence must be between 0 and 1" | Confidence out of range | Use 0.0 to 1.0 |
 
@@ -177,6 +178,7 @@ authorization.
 - Tags: max 32, each max 64 chars
 - Confidence: 0.0 to 1.0
 - target_external_ref: max 400 chars
+- Public judgements cannot use `target_external_ref`
 
 ---
 
