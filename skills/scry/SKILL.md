@@ -220,10 +220,10 @@ const resp = await paidFetch('https://api.scry.io/v1/scry/query', {
 
 For paid queries, these are the key billing controls:
 
-- `GET /v1/scry/pricing` returns the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, and budget-enforcement contract.
-- `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted `cost_breakdown`.
+- `GET /v1/scry/pricing` returns the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
+- `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted upper-bound `cost_breakdown`.
 - `X-Scry-Max-Exposure: <nanodollars>` sets a hard per-query exposure authorization. If the estimate already exceeds it, `/v1/scry/query` fails with `estimate_exceeds_exposure`.
-- `X-Scry-Bid: <multiplier>` expresses urgency under congestion. The accepted bid may promote admission lanes, and the charged bid only activates when the server is busy or overloaded.
+- `X-Scry-Bid: <multiplier>` is max willingness to pay under congestion. When Scry is busy or overloaded, paid admission batches into short epochs, winners start running, and `x-scry-bid-charged` carries the epoch clearing multiplier.
 
 Useful response headers from `POST /v1/scry/query`:
 
@@ -231,7 +231,8 @@ Useful response headers from `POST /v1/scry/query`:
 - `x-scry-authorized-exposure`: the hard exposure authorization applied to this run
 - `x-scry-reserved`: the reserved/pre-authorized nanodollar amount
 - `x-scry-exposure-timeout-ms`: exposure-derived runtime cutoff
-- `x-scry-bid-accepted` / `x-scry-bid-charged`: accepted bid vs actually charged multiplier
+- `x-scry-bid-accepted` / `x-scry-bid-charged`: submitted max bid vs clearing-price multiplier actually charged
+- `x-scry-admission` / `x-scry-admission-wait-ms`: whether the request started immediately or through a congestion epoch, plus the admission wait
 
 If a paid query runs into its spend envelope, the API returns `402` with
 `query_exposure_exhausted`. The fix is to narrow the query or raise

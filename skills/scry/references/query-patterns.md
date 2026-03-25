@@ -834,6 +834,8 @@ curl -s -X POST https://api.scry.io/v1/scry/judgements \
 ```
 
 ### Query existing judgements
+Requires an authenticated personal Scry API key. Anonymous bootstrap keys do not expose this surface.
+
 ```sql
 SELECT j.id, j.emitter, j.judgement_kind, j.summary,
        j.confidence, j.created_at

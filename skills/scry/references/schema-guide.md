@@ -369,8 +369,8 @@ Common names produce false merges. When `display_name` is generic (e.g., "John S
 
 | View | Description |
 |------|-------------|
-| `scry.agent_judgements` | Structured agent observations (queryable) |
-| `scry.agent_emitters` | Registered agent emitter identities |
+| `scry.agent_judgements` | Structured agent observations (queryable with an authenticated personal-key Scry SQL context) |
+| `scry.agent_emitters` | Aggregated agent emitter stats visible through the authenticated judgement surface |
 
 ---
 
