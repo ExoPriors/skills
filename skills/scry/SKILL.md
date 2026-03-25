@@ -25,7 +25,7 @@ via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` sc
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026032402`
+**Skill generation**: `2026032502`
 
 ## A) When to use / not use
 
@@ -46,12 +46,20 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026032402`.
+   `GET /v1/scry/context?skill_generation=2026032502`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
    Read `offerings.portable_entry` as the canonical `/scry` flow:
    `context -> schema -> route -> query`.
+   Read `offerings.payments` as the payment-role contract: it tells you which
+   protocols are live vs planned, which ones fund the reusable prepaid ledger,
+   and which ones are hot-path query payment vs delegated authorization.
+   Read `offerings.accelerator_families` and
+   `offerings.relation_accelerator_policies` as the accelerator contract:
+   they tell you which relations are canonical defaults versus optional
+   convenience helpers, which tracked objects gate them, and what fallback
+   surfaces to use.
    If you need a concise shareable bootstrap prompt for another agent, use
    `offerings.public_agent_prompt.copy_text` instead of paraphrasing your own.
    If you need deeper docs, use `offerings.canonical_doc_path`, each skill's
@@ -76,6 +84,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 3. **Check operational status when search looks wrong.** If lexical search,
    materialized-view freshness, or corpus behavior seems off, call
    `GET /v1/scry/index-view-status` before assuming the query or schema is wrong.
+   If `/v1/scry/context` marks a relation as `fast_path` or `conditional`, do
+   not rely on it until the required tracked objects are healthy.
 
 4. **Clarify ambiguous intent before heavy queries.** If the request is vague
    ("search Reddit for X", "find things about Y"), ask one short clarification
@@ -91,6 +101,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    watchdog first and a timeout fallback second. Use `GET /v1/scry/pricing` plus
    `/v1/scry/estimate` before heavy queries, and set `X-Scry-Max-Exposure`
    deliberately when the user wants a hard per-query exposure authorization.
+   Use the `payment_surface` block in `/v1/scry/pricing` to distinguish live
+   direct query payment (`x402`) from account-topup or delegated-mandate rails.
 
 7. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
    exact terms and named entities. For conceptual intent ("themes", "things like",
@@ -255,7 +267,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026032402
+GET https://api.scry.io/v1/scry/context?skill_generation=2026032502
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -359,7 +371,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032402" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032502" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 

@@ -245,6 +245,14 @@ Aggregated per-author activity across all time windows.
 
 Top domains shared on Reddit (materialized view).
 
+### Accelerator policy
+
+`GET /v1/scry/context` exposes `offerings.accelerator_families` and
+`offerings.relation_accelerator_policies`. Treat relations advertised as
+`default` as canonical surfaces. Treat relations advertised as `fast_path` or
+`conditional` as optional helpers only after `/v1/scry/index-view-status`
+confirms their required tracked objects are healthy.
+
 ### Thematic Cluster Views
 
 Pre-filtered views for common research topics. Each covers 3-22 curated subreddits:
