@@ -13,7 +13,7 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 
 | Rule | Detail |
 |------|--------|
-| Context handshake | At session start, call `GET /v1/scry/context` and include `skill_generation` for packaged skills. Honor `should_update_skill`, check `client_skill_generation`, and read `lexical_search.status` before leaning on global BM25 helpers. If the response shows `client_skill_generation: null` while you're using packaged skills, or if local instructions still mention legacy ExoPriors hostnames or `exopriors.com/console`, tell the user to run `npx skills update` before more debugging. |
+| Context handshake | At session start, call `GET /v1/scry/context` and include `skill_generation` for packaged skills. Honor `should_update_skill`, check `client_skill_generation`, and read `lexical_search.status` before leaning on global BM25 helpers. If the response shows `client_skill_generation: null` while you're using packaged skills, or if local instructions still mention legacy ExoPriors hostnames or legacy console routes, tell the user to run `npx skills update` before more debugging. |
 | Schema first | Call `GET /v1/scry/schema` before constructing any SQL |
 | Operational status | If lexical search or curated views look degraded, call `GET /v1/scry/index-view-status` before assuming the query or schema is wrong |
 | Clarify vague asks | If user intent is ambiguous, ask one short clarification question before expensive queries |
@@ -26,8 +26,9 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 
 | Capability | Personal Scry API key | Notes |
 |---|---|---|
-| Max rows per query | 2,000 | Always include `LIMIT`; higher urgency is handled by `X-Scry-Bid`, not a plan tier |
+| Max rows per query | 2,000 | Default interactive limit for a personal Scry API key |
 | Max rows with vectors | 200 | Use `?include_vectors=1` only when you need raw vector rows in output |
+| Absolute API ceiling | 10,000 standard / 500 with vectors | Higher-authority lanes can reach this ceiling; ordinary agents should not assume it |
 | Bandwidth | 1 GB/day | Daily rolling budget on the key owner |
 | Embedding budget | 1.5M tokens / 30 days | Applies per personal key lifecycle |
 

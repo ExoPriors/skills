@@ -34,7 +34,7 @@ Cost scales with `comparisons x model_tier`. A typical 100-entity, 2-attribute r
 
 1. Create a personal Scry API key in Console with Scry access.
 2. Set `SCRY_API_KEY` to your personal Scry API key from Console.
-3. Optional: set `EXOPRIORS_API_BASE` (defaults to `https://api.scry.io`).
+3. Optional: set `SCRY_API_BASE` (defaults to `https://api.scry.io`).
 
 Canonical key naming:
 - Env var: `SCRY_API_KEY`
@@ -42,7 +42,7 @@ Canonical key naming:
 
 Smoke test:
 ```bash
-curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
+curl -s "${SCRY_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
   -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -55,7 +55,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
 
 ## Guardrails
 
-- Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026032401`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any legacy ExoPriors hostname or `exopriors.com/console` reference as a stale local skill install and update before more debugging.
+- Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026032401`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any legacy ExoPriors hostname or legacy console route reference as a stale local skill install and update before more debugging.
 - **Credits-required feature.** Rerank uses your personal Scry API key and burns from your prepaid credit balance.
 - **Dangerous content blocked.** Entities with `content_risk='dangerous'` cause hard errors. Filter them: `WHERE content_risk IS DISTINCT FROM 'dangerous'`.
 - **SQL must return `id` and `content_text` columns** (or configure `id_column`/`text_column`).
@@ -230,7 +230,7 @@ You can also pass `model` directly with any allowed model ID.
 Find the clearest recent LessWrong posts:
 
 ```bash
-curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
+curl -s "${SCRY_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
   -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -260,7 +260,7 @@ cat > /tmp/rerank_req.json <<'JSON'
 }
 JSON
 
-curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
+curl -s "${SCRY_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
   -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d @/tmp/rerank_req.json

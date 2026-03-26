@@ -80,7 +80,7 @@ Rerank the cached list with each tier:
 ```bash
 for tier in fast balanced quality; do
   echo "=== $tier ==="
-  curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
+  curl -s "${SCRY_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
     -H "Authorization: Bearer $SCRY_API_KEY" \
     -H "Content-Type: application/json" \
     -d "{
