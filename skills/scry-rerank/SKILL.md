@@ -55,7 +55,7 @@ curl -s "${EXOPRIORS_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
 
 ## Guardrails
 
-- Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026032401`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any `api.exopriors.com` or `exopriors.com/console` reference as a stale local skill install and update before more debugging.
+- Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026032401`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any legacy ExoPriors hostname or `exopriors.com/console` reference as a stale local skill install and update before more debugging.
 - **Credits-required feature.** Rerank uses your personal Scry API key and burns from your prepaid credit balance.
 - **Dangerous content blocked.** Entities with `content_risk='dangerous'` cause hard errors. Filter them: `WHERE content_risk IS DISTINCT FROM 'dangerous'`.
 - **SQL must return `id` and `content_text` columns** (or configure `id_column`/`text_column`).

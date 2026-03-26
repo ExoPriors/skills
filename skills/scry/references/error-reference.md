@@ -18,7 +18,7 @@ The `Retry-After` header (seconds) is present on 429 responses.
 
 ## Before deeper debugging
 
-If local skill instructions still mention `api.exopriors.com` or
+If local skill instructions still mention legacy ExoPriors hostnames or
 `exopriors.com/console`, or if `/v1/scry/context` reports
 `client_skill_generation: null` while you're using packaged Scry skills, stop
 and run `npx skills update` first.
@@ -68,6 +68,7 @@ and run `npx skills update` first.
 | `forbidden` | "Missing Scry scope" or feature-specific access denial | The key is missing required scope or is the wrong key type | Use a personal Scry API key with the needed scope |
 | `forbidden` | "Postgres introspection blocked" | Query touched `pg_*` catalogs, `current_setting()`, `version()`, etc. | Use `GET /v1/scry/schema` instead |
 | `forbidden` | "Only the share owner can update" | PATCH on share you don't own | Use the key that created the share |
+| `delegated_authorization_required` | "X-Scry-Subject-Agent is not authorized..." | The caller supplied `X-Scry-Subject-Agent`, but the authenticated account has no matching active `query_access` mandate for that agent/resource | Inspect `GET /v1/billing/payment-mandates`, create/activate a `query_access` mandate with `max_query_exposure`, or retry without delegated subject mode |
 
 ### 404 Not Found
 

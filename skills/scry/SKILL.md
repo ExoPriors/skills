@@ -25,7 +25,7 @@ via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` sc
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026032503`
+**Skill generation**: `2026032504`
 
 ## A) When to use / not use
 
@@ -46,7 +46,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026032503`.
+   `GET /v1/scry/context?skill_generation=2026032504`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -75,9 +75,9 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    recovers.
    If `should_update_skill=true`, tell the user to run `npx skills update`.
    If the response reports `client_skill_generation: null` while you're using
-   packaged skills, or if local instructions still mention
-   `api.exopriors.com` or `exopriors.com/console`, treat the install as stale
-   and ask the user to run `npx skills update` before more debugging.
+   packaged skills, or if local instructions still mention legacy ExoPriors
+   hostnames or `exopriors.com/console`, treat the install as stale and ask
+   the user to run `npx skills update` before more debugging.
 
 2. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
    Never guess column names or types. The schema endpoint returns live
@@ -103,6 +103,9 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    watchdog first and a timeout fallback second. Use `GET /v1/scry/pricing` plus
    `/v1/scry/estimate` before heavy queries, and set `X-Scry-Max-Exposure`
    deliberately when the user wants a hard per-query exposure authorization.
+   When acting under a stored delegated mandate, also send
+   `X-Scry-Subject-Agent: <agent-id>` so Scry can apply the matching
+   `query_access` mandate cap.
    Use the `payment_surface` block in `/v1/scry/pricing` to distinguish live
    direct query payment (`x402`) from account-topup or delegated-mandate rails.
    When delegated funding or agent authorization matters, inspect
@@ -250,6 +253,7 @@ For paid queries, these are the key billing controls:
 - `GET /v1/scry/pricing` also exposes the x402 base funding quantum and the fact that x402 funding now scales off `X-Scry-Max-Exposure` when that header is present.
 - `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted upper-bound `cost_breakdown`.
 - `X-Scry-Max-Exposure: <nanodollars>` sets a hard per-query exposure authorization. If the estimate already exceeds it, `/v1/scry/query` fails with `estimate_exceeds_exposure`.
+- `X-Scry-Subject-Agent: <agent-id>` activates delegated query policy. If the authenticated account has a matching active `query_access` mandate, Scry applies that mandate's `max_query_exposure` as an additional cap and returns a `delegated_authorization` object. If not, `/v1/scry/query` fails with `delegated_authorization_required`.
 - `X-Scry-Bid: <multiplier>` is max willingness to pay under congestion. When Scry is busy or overloaded, paid admission batches into short epochs, winners start running, and `x-scry-bid-charged` carries the epoch clearing multiplier.
 - Billable bandwidth uses the executor-tracked streamed row payload bytes, not the outer HTTP/JSON envelope. Full response-body size still matters for delivery limits and alerts.
 
@@ -273,7 +277,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026032503
+GET https://api.scry.io/v1/scry/context?skill_generation=2026032504
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -377,7 +381,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032503" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032504" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
@@ -385,8 +389,8 @@ If response includes `"should_update_skill": true`, ask the user to run:
 `npx skills update`.
 If the response shows `"client_skill_generation": null` while the session is
 using packaged Scry skills, or if local instructions still point at
-`api.exopriors.com` / `exopriors.com/console`, stop and ask the user to run
-`npx skills update` before deeper debugging.
+legacy ExoPriors hostnames or `exopriors.com/console`, stop and ask the user
+to run `npx skills update` before deeper debugging.
 If response includes `"lexical_search": {"status": "rebuilding"|"degraded"|"stale"|...}`,
 prefer source-local `scry.*` surfaces or `scry.entities_with_embeddings` and use
 `/v1/scry/index-view-status` for detailed rebuild timing before blaming the query.
