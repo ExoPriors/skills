@@ -246,6 +246,7 @@ For paid queries, these are the key billing controls:
 - `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted upper-bound `cost_breakdown`.
 - `X-Scry-Max-Exposure: <nanodollars>` sets a hard per-query exposure authorization. If the estimate already exceeds it, `/v1/scry/query` fails with `estimate_exceeds_exposure`.
 - `X-Scry-Bid: <multiplier>` is max willingness to pay under congestion. When Scry is busy or overloaded, paid admission batches into short epochs, winners start running, and `x-scry-bid-charged` carries the epoch clearing multiplier.
+- Billable bandwidth uses the executor-tracked streamed row payload bytes, not the outer HTTP/JSON envelope. Full response-body size still matters for delivery limits and alerts.
 
 Useful response headers from `POST /v1/scry/query`:
 
