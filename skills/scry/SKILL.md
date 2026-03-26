@@ -25,7 +25,7 @@ via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` sc
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026032502`
+**Skill generation**: `2026032503`
 
 ## A) When to use / not use
 
@@ -46,7 +46,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026032502`.
+   `GET /v1/scry/context?skill_generation=2026032503`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -54,7 +54,9 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    `context -> schema -> route -> query`.
    Read `offerings.payments` as the payment-role contract: it tells you which
    protocols are live vs planned, which ones fund the reusable prepaid ledger,
-   and which ones are hot-path query payment vs delegated authorization.
+   which ones are hot-path query payment vs delegated authorization, and which
+   authenticated control-plane endpoints expose reusable instruments and stored
+   mandate artifacts.
    Read `offerings.accelerator_families` and
    `offerings.relation_accelerator_policies` as the accelerator contract:
    they tell you which relations are canonical defaults versus optional
@@ -103,6 +105,9 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    deliberately when the user wants a hard per-query exposure authorization.
    Use the `payment_surface` block in `/v1/scry/pricing` to distinguish live
    direct query payment (`x402`) from account-topup or delegated-mandate rails.
+   When delegated funding or agent authorization matters, inspect
+   `GET /v1/billing/payment-instruments` and `GET /v1/billing/payment-mandates`
+   rather than assuming those artifacts are hidden inside the query surface.
 
 7. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
    exact terms and named entities. For conceptual intent ("themes", "things like",
@@ -268,7 +273,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026032502
+GET https://api.scry.io/v1/scry/context?skill_generation=2026032503
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -372,7 +377,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032502" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032503" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
