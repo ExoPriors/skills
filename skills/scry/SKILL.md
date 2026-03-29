@@ -25,7 +25,7 @@ via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` sc
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026032601`
+**Skill generation**: `2026032901`
 
 ## A) When to use / not use
 
@@ -46,7 +46,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026032601`.
+   `GET /v1/scry/context?skill_generation=2026032901`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -83,6 +83,11 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    Never guess column names or types. The schema endpoint returns live
    column metadata and row-count estimates for every view.
 
+   If the task targets publication-first Parquet datasets rather than the live
+   Scry SQL corpus, call `GET /v1/scry/datasets` and
+   `POST /v1/scry/datasets/{id}/resolve` before writing SQL. The resolve
+   response gives you short-lived DuckDB-ready HTTPS URLs and bootstrap SQL.
+
 3. **Check operational status when search looks wrong.** If lexical search,
    materialized-view freshness, or corpus behavior seems off, call
    `GET /v1/scry/index-view-status` before assuming the query or schema is wrong.
@@ -94,25 +99,42 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    question about the goal/output format before running expensive SQL.
 
 5. **Start with a cheap probe.** Before any query likely to run >5s, run
-   `/v1/scry/estimate` and/or a tight exploratory query (`LIMIT 20` plus scoped
-   source/window filters), then scale only after confirming relevance.
+   `GET /v1/scry/price` plus `/v1/scry/estimate` and/or a tight exploratory
+   query (`LIMIT 20` plus scoped source/window filters), then scale only after
+   confirming relevance. Use `GET /v1/scry/price/history` when you need to know
+   whether the current base fee is a spike or the recent norm.
 
 6. **Treat paid queries as budget-bounded.** For paid execution, Scry reserves
-   nanodollar credits up front and derives a runtime exposure timeout from the
-   authorized exposure. The runtime enforces that envelope with a live-burn
-   watchdog first and a timeout fallback second. Use `GET /v1/scry/pricing` plus
-   `/v1/scry/estimate` before heavy queries, and set `X-Scry-Max-Exposure`
-   deliberately when the user wants a hard per-query exposure authorization.
+   nanodollar credits up front and derives a runtime timeout from the authorized
+   spend envelope. The runtime enforces that envelope with a live-burn watchdog
+   first and a timeout fallback second. Lead with the simplified surface:
+   use `X-Scry-Budget` as the primary per-query cost control, `eager` and
+   `patient` as the two execution modes, and `GET /v1/scry/account` as the
+   one-stop status check before or after heavy work. Use `GET /v1/scry/pricing`
+   plus `/v1/scry/estimate` when you need the live cost details behind that
+   surface.
    When acting under a stored delegated mandate, also send
    `X-Scry-Subject-Agent: <agent-id>` so Scry can apply the matching
    `query_access` mandate cap.
+   Under congestion, `eager` mode uses **uniform clearing**: winners pay the
+   epoch clearing price, not their full submitted maximum. The account's stored
+   `max_bid_multiplier` from `GET` / `PATCH /v1/scry/preferences` still caps the
+   effective eager bid before admission. Agents that prefer to wait can switch
+   `pricing_mode` to `patient`, which keeps FIFO ordering and runs at base
+   price when capacity opens.
    Use the `payment_surface` block in `/v1/scry/pricing` to distinguish live
-   direct query payment (`x402`) from account-topup or delegated-mandate rails.
+   direct query payment (`x402`) and live account-funding rails
+   (`stripe_checkout`, `crypto_topup`) from control-plane / future artifacts
+   (`stripe_acp`, `ap2`, `visa_tap`, `mastercard_agent_pay`).
    When delegated funding or agent authorization matters, inspect
    `GET /v1/billing/auto-topup`,
    `GET /v1/billing/payment-instruments`, and
    `GET /v1/billing/payment-mandates` rather than assuming those artifacts are
    hidden inside the query surface.
+   backward-compat note: older clients may still use `X-Scry-Max-Cost`,
+   `X-Scry-Max-Exposure`, `X-Scry-Bid`, or `pricing_mode: "dynamic" | "queue"`,
+   but new integrations should lead with `X-Scry-Budget` and `eager` /
+   `patient`.
 
 7. **Choose lexical vs semantic explicitly.** Use lexical (`scry.search*`) for
    exact terms and named entities. For conceptual intent ("themes", "things like",
@@ -180,6 +202,12 @@ Canonical key naming for this skill:
 - Personal key format: personal Scry API key with Scry access
 - Recommended anonymous client header: `X-Scry-Client-Tag: <short-stable-tag>`
 
+Durable machine bootstrap paths:
+1. **Operator-provisioned** (default for non-wallet agents): a signed-in human operator calls `POST /v1/auth/api-keys`, creates a Scry-scoped key, hands the secret to the agent, and the agent stores it in `SCRY_API_KEY`.
+2. **Wallet-native**: `POST /v1/auth/agent/signup` for agents that already have an EVM wallet; the response returns a session token plus API key.
+
+Both paths end with the same `Authorization: Bearer $SCRY_API_KEY` contract.
+
 ```bash
 printf '%s\n' 'SCRY_API_KEY=<your key>' >> .env
 set -a && source .env && set +a
@@ -217,7 +245,7 @@ npx skills update
 
 `POST /v1/scry/query` still supports standard x402, but it is now an explicit
 paid path rather than the default no-auth bootstrap path. Use x402 when the
-user already has an x402-capable wallet/client and only needs direct paid query
+user already has an x402-capable client or wallet and only wants direct paid query
 execution. For public trial use, use `POST /v1/scry/anonymous-key`. For
 schema/context, shares, judgements, feedback, or repeated multi-endpoint usage,
 prefer a personal Scry API key.
@@ -225,14 +253,16 @@ prefer a personal Scry API key.
 The x402 flow is challenge-first. If x402 is enabled and the request has no
 `Authorization` header, the first unsigned `POST /v1/scry/query` returns
 `402 Payment Required` with machine-readable payment requirements. When the
-caller also sends `X-Scry-Max-Exposure`, Scry asks the wallet to fund at least
-that exposure (subject to the configured x402 base quantum). After settlement,
+caller also sends `X-Scry-Budget`, Scry asks the wallet to fund at least that
+budget (subject to the configured x402 base quantum). After settlement,
 the paid amount converts into reusable Scry credits on the shared ledger, so
 overpayment remains available for later queries instead of being lost.
 
-If the user wants wallet-native durable identity plus a reusable key, use
-`POST /v1/auth/agent/signup` first. That binds the wallet to a user and returns
-a session token plus API key in one flow.
+If the agent already has an EVM wallet and wants wallet-native durable identity
+plus a reusable key, use `POST /v1/auth/agent/signup` first. If it does not
+have a wallet, have a signed-in operator create a Scry-scoped key via
+`POST /v1/auth/api-keys` and hand it to the agent. Both paths end with the same
+Bearer-key contract.
 
 Minimal client shape:
 
@@ -251,28 +281,71 @@ const resp = await paidFetch('https://api.scry.io/v1/scry/query', {
 
 For paid queries, these are the key billing controls:
 
+- `X-Scry-Budget: <nanodollars>` is the primary per-query cost control. Send it
+  on `/v1/scry/estimate` and `/v1/scry/query` when you want one number to bound
+  the estimate check, runtime authorization, and eager-mode bid cap.
+- `GET /v1/scry/account` is the one-stop billing status check. It returns
+  balance, current mode, max budget, today's spend/query count, live base fee,
+  live utilization, and whether auto-topup is enabled.
+- `GET /v1/scry/preferences` returns the caller's persisted
+  `pricing_mode` (`eager` or `patient`) and `max_bid_multiplier`.
+- `PATCH /v1/scry/preferences` updates `pricing_mode` and `max_bid_multiplier`.
+  Use `pricing_mode: "patient"` when the user wants FIFO waiting at base price
+  during congestion instead of bidding into the eager auction.
+- `GET /v1/scry/price` returns the live `base_fee`, `utilization`, `load_stage`,
+  `recommended_max_fee`, and current epoch metadata. Use it right before
+  deciding whether to run now in `eager` mode or wait in `patient`.
+- `GET /v1/scry/price/history` returns sampled `epoch_id` / `timestamp` /
+  `base_fee` / `utilization` history plus sampling metadata for large windows.
+- `GET /v1/scry/price/stream` returns an SSE feed with `price` events at epoch
+  cadence and `ping` keepalives while no new epoch arrives.
+- `GET /v1/scry/spend` returns the authenticated caller's own spend history:
+  `total_credits_spent`, `query_count`, `avg_cost_per_query`, and recent
+  per-query cost breakdowns.
 - `GET /v1/scry/pricing` returns the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
-- `GET /v1/scry/pricing` also exposes the x402 base funding quantum and the fact that x402 funding now scales off `X-Scry-Max-Exposure` when that header is present.
+- `GET /v1/scry/pricing` also exposes the x402 base funding quantum and the fact that x402 funding now scales off `X-Scry-Budget` when that header is present.
 - `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted upper-bound `cost_breakdown`.
-- `X-Scry-Max-Exposure: <nanodollars>` sets a hard per-query exposure authorization. If the estimate already exceeds it, `/v1/scry/query` fails with `estimate_exceeds_exposure`.
+- `POST /v1/scry/query?receipt=summary` or `?receipt=full` returns an optional execution receipt inline with the result. Use `summary` when you only need the stable ID, SQL fingerprint, and main cost/runtime facts; use `full` when you want the estimate, billing, execution, and structured security details in one object.
+- `GET /v1/scry/query-receipts/{id}` re-hydrates the durable query receipt for the authenticated caller from `scry_query_log`. Raw SQL is omitted by default; add `?include_sql=true` when the owner explicitly needs the original statement back.
 - `X-Scry-Subject-Agent: <agent-id>` activates delegated query policy. If the authenticated account has a matching active `query_access` mandate, Scry applies that mandate's `max_query_exposure` as an additional cap and returns a `delegated_authorization` object. If not, `/v1/scry/query` fails with `delegated_authorization_required`.
+  - `POST /v1/billing/setup-payment-method` creates a Stripe Checkout setup session that saves a card without charging it and returns `setup_url`. The operator visits `setup_url` once in a browser. After completion, the card is persisted as a payment instrument and set as the default. This is the entry point for enabling Stripe-backed auto-topup and agent-topup.
+- `POST /v1/billing/agent-topup` charges the default stored payment instrument for a pricing tier amount, granting credits immediately. Designed for agent-initiated funding without browser interaction and requires only a saved payment method.
+- Recurring Stripe rescue is a separate opt-in that requires an active auto_topup mandate via `POST /v1/billing/payment-mandates` plus `PATCH /v1/billing/auto-topup`.
 - `GET /v1/billing/auto-topup` and `PATCH /v1/billing/auto-topup` control Stripe-backed replenishment into the same prepaid ledger. If enabled with a verified default Stripe payment method plus an active `auto_topup` mandate, `/v1/scry/query` gets one off-session topup attempt after an `insufficient_credits` reservation failure and then retries reservation once.
-- `X-Scry-Bid: <multiplier>` is max willingness to pay under congestion. When Scry is busy or overloaded, paid admission batches into short epochs, winners start running, and `x-scry-bid-charged` carries the epoch clearing multiplier.
+- `GET /v1/billing/pricing` returns available credit pricing tiers with id, usd_cents, credits (nanodollars), and display_label.
+- `GET /v1/billing/payment-instruments` lists saved payment methods.
+- Live funding rails are `x402`, Stripe saved-method funding, and crypto topup. `stripe_acp`, `ap2`, `visa_tap`, and `mastercard_agent_pay` are control-plane / future artifact layers, not interchangeable live funding rails.
+- In `eager` mode, uniform clearing means the charged priority fee comes from
+  the lowest winning bid in the epoch, not from every winner's submitted max
+  bid.
+- `max_bid_multiplier` clamps the effective eager bid before the request enters
+  the auction.
 - Billable bandwidth uses the executor-tracked streamed row payload bytes, not the outer HTTP/JSON envelope. Full response-body size still matters for delivery limits and alerts.
+- backward-compat note: legacy clients may still send `X-Scry-Max-Cost`,
+  `X-Scry-Max-Exposure`, `X-Scry-Bid`, or `pricing_mode: "dynamic" | "queue"`.
+  New integrations should lead with `X-Scry-Budget`, `eager`, `patient`, and
+  `GET /v1/scry/account`.
 
 Useful response headers from `POST /v1/scry/query`:
 
 - `x-scry-cost`: charged nanodollars for the completed query
+- `x-scry-receipt-id`: stable execution-receipt id when receipt mode is enabled
 - `x-scry-authorized-exposure`: the hard exposure authorization applied to this run
 - `x-scry-reserved`: the reserved/pre-authorized nanodollar amount
 - `x-scry-exposure-timeout-ms`: exposure-derived runtime cutoff
 - `x-scry-bid-accepted` / `x-scry-bid-charged`: submitted max bid vs clearing-price multiplier actually charged
 - `x-scry-admission` / `x-scry-admission-wait-ms`: whether the request started immediately or through a congestion epoch, plus the admission wait
+- `X-Scry-Base-Fee`: current epoch base-fee multiplier used to price compute
+- `X-Scry-Priority-Fee`: congestion premium implied by the accepted clearing price
+- `X-Scry-Compute-Units`: normalized compute units charged for the query
+- `X-Scry-Utilization`: price-epoch utilization snapshot
+- `X-Scry-Epoch`: current price epoch id
+- `X-Scry-Budget-Remaining`: credits or free-tier budget remaining after settlement
 
 If a paid query runs into its spend envelope, the API returns `402` with
 `query_exposure_exhausted`. That is enforced by live runtime burn first, with
 the exposure timeout as fallback. The fix is to narrow the query or raise
-`X-Scry-Max-Exposure`, not to keep retrying the same request unchanged.
+`X-Scry-Budget`, not to keep retrying the same request unchanged.
 
 ## C) Quickstart
 
@@ -280,7 +353,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026032601
+GET https://api.scry.io/v1/scry/context?skill_generation=2026032901
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -384,7 +457,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032601" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032901" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 

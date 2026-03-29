@@ -457,13 +457,12 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 | `scry.mv_metaculus_questions` | Metaculus questions |
 | `scry.mv_github_documents` | GitHub-sourced documents |
 | `scry.mv_mailing_list_messages` | Mailing list messages |
-### Embedding-Specific Views
+### Cross-Source Semantic Search Substrate
 
-| View | Description |
-|------|-------------|
-| `scry.mv_posts_doc_embeddings` | Legacy post-only entity embedding subset; prefer `scry.entity_embeddings` for canonical coverage |
-| `scry.mv_substantive_doc_embeddings` | Higher-quality doc embeddings (filtered) |
-| `scry.mv_twitter_doc_embeddings` | Twitter thread doc embeddings |
+`scry.chunk_embeddings` is now backed by the materialized `mv_chunk_embeddings` table with
+vchordrq ANN indexes. This means `ORDER BY embedding_voyage4 <=> @vec` queries against
+`scry.chunk_embeddings` and `scry.entity_embeddings` use real ANN instead of sequential
+scanning 20+ source-native embedding tables.
 
 ### Reddit Windowed Views
 
