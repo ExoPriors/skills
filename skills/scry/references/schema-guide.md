@@ -36,6 +36,10 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus totals.
 | author_actor_id | UUID | FK to scry.actors for structured author lookups |
 | parent_entity_id | UUID | Direct parent (for replies/comments) |
 | anchor_entity_id | UUID | Root entity in a thread |
+| scraped_at | TEXT | Ingest-side scrape timestamp when present |
+| extraction_method | TEXT | Extraction or conversion program identifier when recorded |
+| extraction_version | TEXT | Extractor/converter version when recorded |
+| processor | TEXT | Entity-level processor / transform program id |
 
 **Common source values**: `hackernews`, `lesswrong`, `eaforum`, `arxiv`, `pubmed`,
 `twitter`, `bluesky`, `reddit`, `substack`, `manifold`, `metaculus`, `wikipedia`,
@@ -457,6 +461,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 | `scry.mv_metaculus_questions` | Metaculus questions |
 | `scry.mv_github_documents` | GitHub-sourced documents |
 | `scry.mv_mailing_list_messages` | Mailing list messages |
+| `scry.mv_freshness` | Materialized-view freshness and approximate row counts; use it to verify whether a convenience view is populated before relying on it |
 ### Cross-Source Semantic Search Substrate
 
 `scry.chunk_embeddings` is now backed by the materialized `mv_chunk_embeddings` table with
@@ -739,6 +744,12 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
 ---
 
 ## Lexical Search Functions
+
+If the task is fast result discovery rather than SQL composition, use the
+typed search front door first: `POST /v1/scry/search` returns bounded
+provenance-bearing hits plus stable `record_ref` values, and
+`GET /v1/scry/search/records/{record_ref}` hydrates one of those results into
+longer text and metadata.
 
 | Function | Description | Max limit |
 |----------|-------------|-----------|
