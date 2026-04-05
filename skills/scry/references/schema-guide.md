@@ -84,7 +84,7 @@ union view over those records.
 
 | View | Notes |
 |------|-------|
-| `scry.source_records` | Cross-source union of source-native records. Includes `source`, `external_id`, `entity_id`, `kind`, `uri`, `title`, `content_text`, `metadata`, `created_at`, `updated_at`. |
+| `scry.source_records` | Cross-source union of source-native records. Includes `source`, `external_id`, `entity_id`, `kind`, `uri`, `title`, `content_text`, `metadata`, `created_at`, `updated_at`. Some families use prefixed `external_id` values such as `edition:...`, `repository:...`, or `paper_artifact:...`; when a canonical table stores a generic `document` kind, `metadata.logical_kind` carries the typed-search logical kind. |
 | `scry.bluesky` / `hackernews` / `wikipedia` / `pubmed` / `repec` / `kalshi` / `nih_reporter` / `govinfo_crec` / `offshoreleaks` / `openalex` | Clean primary aliases for the major source-native corpora. Prefer these names in new agent/user queries. |
 | `scry.hackernews_items` | Canonical HN substrate keyed by `hn_id`. Contains posts and comments, thread ancestry (`parent_hn_id`, `story_hn_id`), outbound URL, score, full text, and `anchor_entity_id` for joins to crawled webpage entities. |
 | `scry.wikipedia_articles` | Canonical Wikipedia substrate keyed by `page_id`. Contains revisions, categories, article text, and quality metadata. |
@@ -98,7 +98,7 @@ union view over those records.
 | `scry.openalex_work_external_ids` | Source-local OpenAlex alias registry keyed by `work_id`. Use it for carried external identifiers such as PubMed PMIDs that belong to the OpenAlex work rather than the shared ext-id bridge. |
 | `scry.bluesky_posts` | Canonical Bluesky substrate keyed by AT URI. |
 | `scry.twitter_posts` | Canonical Twitter/X substrate keyed by canonical tweet URI. Exposes public provenance tags plus aggregated observation-source tags such as `observation_sources`, `capture_channels`, and `has_extension_observation`. |
-| `scry.twitter_post_observations` | Public-safe provenance rows for the Twitter substrate. Exposes source collection, observation source, capture channel, trust tier, verification status, and metrics without uploader PII. |
+| `scry.twitter_post_observations` | Public-safe provenance rows for the Twitter substrate. Exposes source collection, observation source, capture channel, trust score, verification status, and metrics without uploader PII. |
 | `scry.mailing_list_messages` | Canonical mailing-list message substrate keyed by `message_key`. |
 | `scry.openlibrary_editions` / `works` / `authors` | Canonical Open Library bibliographic substrates. |
 | `scry.moltbook` / `scry.moltbook_items` | Canonical Moltbook substrate keyed by `item_key`. Includes explicit `content_risk` plus mixed post/comment/document grain. |
@@ -131,6 +131,7 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_openlibrary_editions(query_text, mode, limit_n)` | BM25 over Open Library edition `title`, `payload`, `original_author`, and `publish_date`. |
 | `scry.search_openlibrary_works(query_text, mode, limit_n)` | BM25 over Open Library work `title`, `payload`, and `original_author`. |
 | `scry.search_openlibrary_authors(query_text, mode, limit_n)` | BM25 over Open Library author `name`, `payload`, `original_author`, and life-date fields. |
+| `scry.search_federated(query_text, sources, kinds, limit_n, per_source_cap)` | Cross-source lexical shortlist helper behind the typed `/v1/scry/search` front door. It normalizes provenance-bearing results across shared and source-native corpora. |
 | `scry.search_huggingface(query_text, mode, scopes, repo_types, limit_n)` | Unified Hugging Face discovery helper across repos, artifacts, collections, papers, discussions, accounts, and paper-artifact hops. Use this when you do not yet know which HF surface is the right starting point. |
 | `scry.search_huggingface_accounts(query_text, mode, account_types, limit_n)` | BM25 over HF account handles, display names, bios, and plan labels. |
 | `scry.huggingface_account_repositories(owner_handle, repo_types, limit_n)` | Traverses a HF handle into its owned repositories with popularity/freshness ordering. |
@@ -142,6 +143,9 @@ Source-local lexical helpers exist for many of these views:
 | `scry.huggingface_find_paper_artifacts(query_text, year_from, limit_n)` | Traverses paper hits back into linked Hub repos using `huggingface_repo_links`; it prefers direct arXiv/DOI and OpenAlex resolution before falling back to HF paper pages, so paper-to-artifact recovery does not depend on starting inside Hugging Face first. |
 | `scry.openalex_find_works(query, min_year, limit)` | Source-native OpenAlex work lookup over titles and DOIs with dedicated abstract payload link-through. |
 | `scry.search_mailing_list_messages(query_text, mode, list_keys, limit_n)` | BM25 over mailing-list message rows. |
+| `scry.search_forum_posts(query_text, mode, site_keys, limit_n)` | BM25 over canonical forum posts keyed by site-specific `post_key`. Use site keys such as `ethresearch`, `datasecretslox`, or `solana_forum`. |
+| `scry.search_packages(query_text, registries, limit_n)` | Cross-registry package search over npm, PyPI, crates.io, Go modules, NuGet, Maven Central, Hex.pm, Packagist, pub.dev, CocoaPods, conda-forge, JSR, and Homebrew. |
+| `scry.social_search(query_text, limit_n)` | Convenience union over the major social/post surfaces when you want a fast social-only lexical pass. |
 | `scry.search_stackexchange_questions(query_text, mode, sites, tags, limit_n, window_key)` | BM25 over StackExchange question windows. Default window: `recent`. Use `window_key='all'` to search all periods. |
 | `scry.search_stackexchange_answers(query_text, mode, sites, limit_n, window_key)` | BM25 over StackExchange answer windows. |
 | `scry.search_caselaw(query_text, mode, courts, jurisdictions, limit_n, window_key)` | BM25 over US caselaw by decade. Default window: `2020s`. Windows: `2020s`, `2010s`, `2000s`, `1990s`, `1980s`, `pre1980`, `all`. |

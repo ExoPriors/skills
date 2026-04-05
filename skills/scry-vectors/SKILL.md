@@ -36,7 +36,7 @@ The key insight: `embedding_voyage4 <=> @concept` is a single SQL expression tha
 - Use `GET /v1/scry/schema` to confirm column/view names before writing queries.
 - Current public-surface note: treat `debias_removed_fraction` as an overlap diagnostic, not a guaranteed energy fraction. `debias_safe` and `contrast_axis_balanced` may exist in local schema notes but are not reliable public-SQL helpers, so this skill sticks to the helpers confirmed live.
 
-For full tier limits, timeout policies, and degradation strategies, see [Shared Guardrails](../references/guardrails.md).
+For full query limits, timeout policies, and degradation strategies, see [Shared Guardrails](../references/guardrails.md).
 
 ## Setup
 

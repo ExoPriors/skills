@@ -1,20 +1,20 @@
 # Calibration Guide
 
-How to validate rerank quality, compare tiers, and record results as judgements.
+How to validate rerank quality, compare models, and record results as judgements.
 
 ## Why calibrate
 
 Rerank is only as good as the LLM's judgement on your specific attribute and domain. Calibration answers: "does this model, on this attribute, agree with my expert evaluation of these documents?" Without calibration, you are trusting the model blindly.
 
-Calibration also reveals which attributes and tiers are worth paying for. A `fast` tier that agrees with `quality` 90% of the time on your domain saves you 10x in cost.
+Calibration also reveals which attributes and models are worth paying for. If `openai/gpt-5-mini` agrees with `anthropic/claude-opus-4.6` 90% of the time on your domain, that can save real money.
 
 ## The calibration loop
 
 1. **Select a test set.** 20-50 entities from your target domain. Small enough to review manually.
 2. **Establish ground truth.** Rank the test set yourself (or with domain experts) on each attribute. Even a partial ordering (top-5, bottom-5, middle) is valuable.
-3. **Run rerank.** Use the same test set, same attributes, across tiers.
+3. **Run rerank.** Use the same test set, same attributes, across models.
 4. **Compare.** Measure agreement between LLM rankings and your ground truth.
-5. **Iterate.** Adjust attribute prompts, switch tiers, or refine your ground truth.
+5. **Iterate.** Adjust attribute prompts, switch models, or refine your ground truth.
 
 ## Step 1: Select a test set
 
@@ -28,13 +28,13 @@ Good test sets have:
   "sql": "SELECT id, content_text FROM scry.entities WHERE kind='post' AND source='lesswrong' AND content_risk IS DISTINCT FROM 'dangerous' ORDER BY random() LIMIT 30",
   "attributes": [{"id":"clarity","prompt":"clarity","weight":1.0}],
   "topk": {"k": 30},
-  "model_tier": "fast",
+  "model": "openai/gpt-5-mini",
   "cache_results": true,
   "cache_list_name": "calibration-set-clarity-v1"
 }
 ```
 
-Cache the result so you can rerun on the same entities with different tiers.
+Cache the result so you can rerun on the same entities with different models.
 
 ## Step 2: Establish ground truth
 
@@ -73,13 +73,13 @@ Record this in a structured format:
 - entity-uuid-g ranked #25 by model but I thought it was clear. On re-read: the opening is clear but it degrades into jargon in the second half. Model saw the whole text.
 ```
 
-## Step 3: Run across tiers
+## Step 3: Run across models
 
-Rerank the cached list with each tier:
+Rerank the cached list with each model:
 
 ```bash
-for tier in fast balanced quality; do
-  echo "=== $tier ==="
+for model in openai/gpt-5-mini openai/gpt-5.2-chat anthropic/claude-opus-4.6; do
+  echo "=== $model ==="
   curl -s "${SCRY_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
     -H "Authorization: Bearer $SCRY_API_KEY" \
     -H "Content-Type: application/json" \
@@ -87,7 +87,7 @@ for tier in fast balanced quality; do
       \"list_id\": \"CACHED_LIST_ID\",
       \"attributes\": [{\"id\":\"clarity\",\"prompt\":\"clarity\",\"weight\":1.0}],
       \"topk\": {\"k\": 30},
-      \"model_tier\": \"$tier\"
+      \"model\": \"$model\"
     }" | jq '.rerank.entities[:10] | .[] | {id, rank, score: .scores.clarity.score}'
 done
 ```
@@ -111,38 +111,38 @@ Good: >= 0.6 (3/5 overlap). Excellent: >= 0.8 (4/5).
 
 ### Practical shortcut
 
-For most use cases, eyeball the top-10 from each tier and ask:
+For most use cases, eyeball the top-10 from each model and ask:
 1. Are the top-3 items genuinely good on this attribute?
 2. Are any clearly-bad items in the top-10?
 3. Does the ranking make sense relative to your human judgement?
 
-If the answer to all three is "mostly yes," the tier is good enough. If not, try:
-- A different tier.
+If the answer to all three is "mostly yes," the model is good enough. If not, try:
+- A different model.
 - A refined attribute prompt (the most common fix).
 - A different domain filter in the SQL.
 
-## Step 5: Tier comparison matrix
+## Step 5: Model comparison matrix
 
 Build a matrix of tier-vs-tier agreement and tier-vs-human agreement:
 
 ```
-                  human    fast    balanced    quality
-human              --       0.6      0.8        0.9
-fast              0.6       --       0.7        0.7
-balanced          0.8      0.7       --         0.85
-quality           0.9      0.7      0.85        --
+                              human    gpt-5-mini    gpt-5.2-chat    claude-opus-4.6
+human                           --         0.6            0.8               0.9
+gpt-5-mini                     0.6         --             0.7               0.7
+gpt-5.2-chat                   0.8        0.7             --                0.85
+claude-opus-4.6                0.9        0.7            0.85               --
 ```
 
 This tells you:
-- `quality` agrees with your judgement 90% of the time: worth using for final rankings.
-- `balanced` agrees 80%: good enough for most use cases at 1/3 the cost.
-- `fast` agrees 60%: useful for rough filtering but not final decisions.
+- `anthropic/claude-opus-4.6` agrees with your judgement 90% of the time: worth using for final rankings.
+- `openai/gpt-5.2-chat` agrees 80%: good enough for most use cases at materially lower cost.
+- `openai/gpt-5-mini` agrees 60%: useful for rough filtering but not final decisions.
 
 These numbers will vary by domain and attribute. Technical depth on ML papers will calibrate differently than clarity on blog posts.
 
 ## Recording results as judgements
 
-Once you have validated a tier's quality, you can feed your human calibration back into ExoPriors as explicit pairwise comparisons. This improves future warm-start accuracy.
+Once you have validated a model's quality, you can feed your human calibration back into ExoPriors as explicit pairwise comparisons. This improves future warm-start accuracy.
 
 ### Via the persist mechanism
 
@@ -153,7 +153,7 @@ If you have a rater UUID and attribute UUIDs, you can persist comparisons direct
   "list_id": "CACHED_LIST_ID",
   "attributes": [{"id":"clarity","prompt":"clarity","weight":1.0}],
   "topk": {"k": 30},
-  "model_tier": "quality",
+  "model": "anthropic/claude-opus-4.6",
   "persist": {
     "attribute_map": {"clarity": "UUID_OF_CLARITY_ATTRIBUTE"},
     "rater_id": "UUID_OF_YOUR_RATER",
@@ -212,9 +212,9 @@ Rerank is not always the right tool:
 - [ ] Selected 20-50 representative entities as test set
 - [ ] Cached the test set with `cache_results: true`
 - [ ] Established human ground truth (at least top-5 and bottom-5)
-- [ ] Ran rerank with `fast`, `balanced`, and `quality` tiers
-- [ ] Measured top-k overlap between human and each tier
+- [ ] Ran rerank with `openai/gpt-5-mini`, `openai/gpt-5.2-chat`, and `anthropic/claude-opus-4.6`
+- [ ] Measured top-k overlap between human and each model
 - [ ] Identified attribute prompt issues from surprising rankings
 - [ ] Refined prompts and re-ran if needed
-- [ ] Chose a tier that balances accuracy and cost for this use case
+- [ ] Chose a model that balances accuracy and cost for this use case
 - [ ] Recorded validated comparisons via `persist` for warm-start benefit

@@ -18,11 +18,11 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 | Operational status | If lexical search or curated views look degraded, or if the task is recency-critical and the context only shows stale observability, call `GET /v1/scry/index-view-status` with any Scry key before assuming the query or schema is wrong |
 | Clarify vague asks | If user intent is ambiguous, ask one short clarification question before expensive queries |
 | Probe before scale | Run `/v1/scry/estimate` and a small `LIMIT` probe before broad scans |
-| LIMIT required | Every query must include a `LIMIT` clause (max governed by tier) |
+| LIMIT required | Every query must include a `LIMIT` clause (max governed by the current route and key caps) |
 | Content-Type | `text/plain` for `/v1/scry/query`; `application/json` for all other endpoints |
 | No subquery existence | Use `EXISTS (SELECT 1 ... LIMIT 1)` or JOINs, never `id IN (SELECT ...)` |
 
-## 3. Tier Limits
+## 3. Query Limits
 
 | Capability | Personal Scry API key | Notes |
 |---|---|---|

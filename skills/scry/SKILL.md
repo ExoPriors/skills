@@ -94,7 +94,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    column metadata and row-count estimates for every view.
 
    If the task targets publication-first Parquet datasets rather than the live
-   Scry SQL corpus, call `GET /v1/scry/datasets` and
+   Scry SQL corpus, call `GET /v1/scry/datasets`, inspect
+   `GET /v1/scry/datasets/{id}`, and then use
    `POST /v1/scry/datasets/{id}/resolve` before writing SQL. The resolve
    response gives you short-lived DuckDB-ready HTTPS URLs and bootstrap SQL.
 
@@ -105,7 +106,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    `conditional`, do not rely on it until the required tracked objects are
    healthy.
 
-4. **Clarify ambiguous intent before heavy queries.** If the request is vague
+4. **Clarify ambiguous intent before broad or likely-expensive queries.** If the request is vague
    ("search Reddit for X", "find things about Y"), ask one short clarification
    question about the goal/output format before running expensive SQL.
 
@@ -121,7 +122,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    first and a timeout fallback second. Lead with the simplified surface:
    use `X-Scry-Budget` as the primary per-query cost control, `eager` and
    `patient` as the two execution modes, and `GET /v1/scry/account` as the
-   one-stop status check before or after heavy work. Use `GET /v1/scry/pricing`
+   one-stop status check before or after broad or expensive query work. Use `GET /v1/scry/pricing`
    plus `/v1/scry/estimate` when you need the live cost details behind that
    surface.
    When acting under a stored delegated mandate, also send
@@ -173,11 +174,13 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    `scry.hackernews`, `scry.wikipedia`, `scry.pubmed`, `scry.repec`,
    `scry.kalshi`, `scry.nih_reporter`, `scry.govinfo_crec`,
    `scry.offshoreleaks`, `scry.openalex`, `scry.bluesky`,
+   `scry.reddit_posts`, `scry.forum_posts`,
    `scry.huggingface`, `scry.huggingface_papers`,
    `scry.huggingface_collections`, `scry.huggingface_discussions`,
    `scry.huggingface_accounts`, `scry.huggingface_models`,
    `scry.huggingface_datasets`, `scry.huggingface_spaces`,
    `scry.huggingface_repo_text_artifacts`,
+   `scry.huggingface_paper_artifacts`,
    `scry.kalshi_markets`, `scry.nih_reporter_projects`,
    `scry.govinfo_crec_granules`, `scry.hackernews_items`,
    `scry.wikipedia_articles`, `scry.pubmed_papers`, `scry.repec_records`,
@@ -213,7 +216,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    using `Content-Type: text/plain` by default (`text/markdown` also works). Do not silently work
    around it. Logged-in users can review their submissions with `GET /v1/feedback`.
 
-For full tier limits, timeout policies, and degradation strategies, see [Shared Guardrails](../references/guardrails.md).
+For full query limits, timeout policies, and degradation strategies, see [Shared Guardrails](../references/guardrails.md).
 
 ### B.1 API Key Setup (Canonical)
 
@@ -336,7 +339,7 @@ For paid queries, these are the key billing controls:
 - `PATCH /v1/scry/preferences` updates `pricing_mode` and `max_bid_multiplier`.
   Use `pricing_mode: "patient"` when the user wants FIFO waiting at base price
   during congestion instead of bidding into the eager auction.
-- `GET /v1/scry/price` returns the live `base_fee`, `utilization`, `load_stage`,
+- `GET /v1/scry/price` returns the live `base_fee`, `utilization`, `load_pressure`,
   `recommended_max_fee`, and current epoch metadata. Use it right before
   deciding whether to run now in `eager` mode or wait in `patient`.
 - `GET /v1/scry/price/history` returns sampled `epoch_id` / `timestamp` /
@@ -349,6 +352,7 @@ For paid queries, these are the key billing controls:
 - `GET /v1/scry/pricing` returns the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
 - `GET /v1/scry/pricing` also exposes the x402 base funding quantum and the fact that x402 funding now scales off `X-Scry-Budget` when that header is present.
 - `GET /v1/scry/account` returns the authenticated funding summary. Read `funding.card_funding` first when the question is "can this agent use cards right now?" because it makes the current card state explicit (`requires_operator_setup`, `saved_method_ready`, `auto_topup_attention_required`, `auto_topup_active`, or `disabled`) and lists the next endpoints to call.
+- Funding-control endpoints such as `GET /v1/scry/account`, `POST /v1/billing/agent-topup`, `POST /v1/billing/payment-mandates`, and `PATCH /v1/billing/auto-topup` require account or billing scope.
 - `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted upper-bound `cost_breakdown`.
 - `POST /v1/scry/query?receipt=summary` or `?receipt=full` returns an optional execution receipt inline with the result. Use `summary` when you only need the stable ID, SQL fingerprint, and main cost/runtime facts; use `full` when you want the estimate, billing, execution, and structured security details in one object.
 - `GET /v1/scry/query-receipts/{id}` re-hydrates the durable query receipt for the authenticated caller from `scry_query_log`. Raw SQL is omitted by default; add `?include_sql=true` when the owner explicitly needs the original statement back.
@@ -425,6 +429,7 @@ LIMIT 20
 ```
 
 Response shape:
+
 ```json
 {
   "columns": ["uri", "title", "original_author", "original_timestamp", "score"],
