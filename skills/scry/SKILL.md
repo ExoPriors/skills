@@ -6,8 +6,8 @@ description: >
   books, knowledge graphs, and prediction markets.
   Includes the typed fast-search front door at /v1/scry/search and record
   detail hydration at /v1/scry/search/records/{record_ref}.
-  Includes deterministic public cross-platform author identity lookup
-  (actors, people, aliases),
+  Includes conservative public cross-platform author lookup (actors, people,
+  aliases),
   OpenAlex academic graph navigation (authors, citations, institutions, concepts),
   shareable artifacts, and structured agent judgements.
   Use when the task involves: Scry API, ExoPriors, /v1/scry/query, /v1/scry/search,
@@ -36,7 +36,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 **Use this skill when:**
 - Searching, filtering, or aggregating content across the ExoPriors corpus
 - Running lexical (BM25) or hybrid searches
-- Exploring author networks, deterministic public cross-platform identities, or publication patterns
+- Exploring author networks, public cross-platform identities, or publication patterns
 - Navigating the OpenAlex academic graph (authors, citations, institutions, concepts)
 - Creating shareable artifacts from query results
 - Emitting structured agent judgements about entities or external references
@@ -512,8 +512,7 @@ User wants to search the ExoPriors corpus?
   |     lexical CTE + JOIN scry.chunk_embeddings
   |
   +-- Author/people lookup? --> scry.actors, scry.people, scry.person_accounts
-  |                            (deterministic public links only; probabilistic
-  |                             or styleometric linkage stays internal)
+  |                            (conservative public account links)
   |
   +-- Academic graph (OpenAlex)? --> scry.openalex_find_authors(),
   |     scry.openalex_find_works(), etc. (see schema-guide.md)

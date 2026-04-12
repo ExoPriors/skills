@@ -363,16 +363,16 @@ Relationship edges between entities (currently OffshoreLeaks).
 Three layers of author resolution, bottom to top:
 
 1. **`scry.actors`** -- one row per platform account (`source` + `external_id` is unique). Content links here via `author_actor_id`.
-2. **`scry.person_accounts`** -- deterministic public actor-to-person edges. One row per linked public account with confidence, link method, and activity counts.
-3. **`scry.people`** -- one row per real-world person (only those with >= 1 deterministic public actor link), including `actor_count` and `entity_count`.
-4. **`scry.person_aliases`** -- alias helper derived from deterministic public links (`handle` + `display_name` normalized forms). Useful for loose text lookup, not the primary canonical join path.
+2. **`scry.person_accounts`** -- conservative public actor-to-person edges. One row per linked public account with confidence, link method, and activity counts.
+3. **`scry.people`** -- one row per real-world person (only those with >= 1 verified public actor link), including `actor_count` and `entity_count`.
+4. **`scry.person_aliases`** -- alias helper derived from verified public links (`handle` + `display_name` normalized forms). Useful for loose text lookup, not the primary canonical join path.
 
 | View | Description |
 |------|-------------|
 | `scry.actors` | Per-source account records |
-| `scry.people` | Cross-platform merged identities from deterministic public links, with public counts |
-| `scry.person_accounts` | Canonical deterministic public person-account edges (columns: `person_id`, `actor_id`, `source`, `external_id`, `handle`, `display_name`, `profile_url`, `link_method`, `confidence`, `entity_count`, `post_count`, `comment_count`, `first_activity`, `last_activity`) |
-| `scry.person_aliases` | Alias forms derived from deterministic public person-account links |
+| `scry.people` | Cross-platform merged identities from verified public links, with public counts |
+| `scry.person_accounts` | Canonical public person-account edges (columns: `person_id`, `actor_id`, `source`, `external_id`, `handle`, `display_name`, `profile_url`, `link_method`, `confidence`, `entity_count`, `post_count`, `comment_count`, `first_activity`, `last_activity`) |
+| `scry.person_aliases` | Alias forms derived from verified public person-account links |
 | `scry.mv_author_profiles` | Per-source author stats aggregated from entity rows (threshold: >= 3 entities) |
 | `scry.mv_author_stats` | Author post counts and score aggregates |
 | `scry.github_people` | GitHub-specific maintainer aggregates (stars, repos, comments) |
@@ -383,10 +383,10 @@ Three layers of author resolution, bottom to top:
 | Probability | Meaning |
 |-------------|---------|
 | >= 0.98 | Manual verification or self-declared link |
-| 0.90 - 0.98 | Deterministic public evidence such as canonical-id or profile-link confirmation |
+| 0.90 - 0.98 | Verified public evidence such as canonical-id or profile-link confirmation |
 | < 0.90 | Below Scry threshold -- not surfaced in views |
 
-Public identity views are deterministic-only. Probabilistic/styleometric linkage remains internal and does not surface through `scry.people`, `scry.person_accounts`, `scry.person_aliases`, or `scry.entities.author_person_id`.
+Public identity views contain the conservative verified-public link layer used for cross-source author lookup.
 
 Common names produce false merges. When `display_name` is generic (e.g., "John Smith"), verify with secondary evidence (same bio, cross-linked profiles, overlapping topics).
 
