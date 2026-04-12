@@ -4,14 +4,11 @@ description: >
   Query the ExoPriors Scry API -- SQL-over-HTTPS search across the public Scry corpus
   spanning forums, papers, social media, government records, legal opinions,
   books, knowledge graphs, and prediction markets.
-  Includes the typed fast-search front door at /v1/scry/search and record
-  detail hydration at /v1/scry/search/records/{record_ref}.
   Includes conservative public cross-platform author lookup (actors, people,
   aliases),
   OpenAlex academic graph navigation (authors, citations, institutions, concepts),
   shareable artifacts, and structured agent judgements.
-  Use when the task involves: Scry API, ExoPriors, /v1/scry/query, /v1/scry/search,
-  /v1/scry/search/records/{record_ref}, scry.search,
+  Use when the task involves: Scry API, ExoPriors, /v1/scry/query, scry.search,
   scry.entities, materialized views, corpus search, epistemic infrastructure,
   lexical search, BM25, structured agent judgements, scry shares,
   StackExchange, caselaw, Gutenberg, Wikidata, KL3M federal corpus,
@@ -29,7 +26,7 @@ via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` sc
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026032902`
+**Skill generation**: `2026041201`
 
 ## A) When to use / not use
 
@@ -50,15 +47,12 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026032902`.
+   `GET /v1/scry/context?skill_generation=2026041201`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
    Read `offerings.portable_entry` as the canonical `/scry` flow:
    `context -> schema -> route -> query`.
-   Read `offerings.search` as the typed first-pass search contract:
-   browser `/search`, `POST /v1/scry/search`, and
-   `GET /v1/scry/search/records/{record_ref}`.
    Read `offerings.payments` as the payment-role contract: it tells you which
    protocols are live vs planned, which ones fund the reusable prepaid ledger,
    which ones are hot-path query payment vs delegated authorization, and which
@@ -166,14 +160,12 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    but new integrations should lead with `X-Scry-Budget` and `eager` /
    `patient`.
 
-7. **Choose typed search vs SQL vs semantic explicitly.** Use
-   `POST /v1/scry/search` when the user wants fast provenance-bearing first
-   results without writing SQL; follow returned identities with
-   `GET /v1/scry/search/records/{record_ref}` for richer detail hydration.
-   Use lexical SQL (`scry.search*`) for exact terms and named entities when you
-   need joins, aggregation, or full control over filters. For conceptual intent
-   ("themes", "things like", "similar to"), route to scry-vectors first, then
-   optionally hybridize.
+7. **Choose lexical SQL vs semantic explicitly.** Use
+   `scry.search_federated(...)`, source-native `scry.search_*` helpers, or
+   other lexical SQL when the user wants fast provenance-bearing first results.
+   Widen into broader SQL when you need joins, aggregation, or full control
+   over filters. For conceptual intent ("themes", "things like", "similar
+   to"), route to scry-vectors first, then optionally hybridize.
 
 8. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
@@ -288,27 +280,21 @@ npx skills add exopriors/skills
 npx skills update
 ```
 
-### B.1a Fast typed search (non-SQL front door)
+### B.1a Lexical SQL quickstart
 
-Use the typed search surface when the user wants fast first-pass discovery,
-provenance-bearing result cards, or record-detail hydration without writing
-SQL first.
-
-```bash
-curl -s https://api.scry.io/v1/scry/search \
-  -H "Content-Type: application/json" \
-  -d '{"query":"mechanistic interpretability","phase":"blink","limit":5}'
-```
-
-That response returns stable `record_ref` values plus provenance fields,
-timings, and optional focus metadata. Hydrate one result with:
+Use lexical SQL helpers when the user wants fast first-pass discovery without
+building a larger query first.
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/search/records/arxiv:2301.12345v2"
+curl -s https://api.scry.io/v1/scry/query \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
+  -H "Content-Type: text/plain" \
+  --data "SELECT * FROM scry.search_federated('mechanistic interpretability', NULL, NULL, 5, 2) LIMIT 5"
 ```
 
-Use `/v1/scry/search` for quick discovery and `/search` handoff; switch to
-`/v1/scry/query` when you need joins, aggregation, or exact SQL control.
+Use `scry.search_federated(...)` or a source-native `scry.search_*` helper for
+quick lexical discovery, then widen into broader SQL when you need joins,
+aggregation, or exact control.
 
 ### B.1b x402 Query-Only Access
 
@@ -428,7 +414,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026032902
+GET https://api.scry.io/v1/scry/context?skill_generation=2026041201
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -534,7 +520,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026032902" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026041201" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 

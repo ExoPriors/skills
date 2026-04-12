@@ -142,7 +142,7 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_openlibrary_editions(query_text, mode, limit_n)` | BM25 over Open Library edition `title`, `payload`, `original_author`, and `publish_date`. |
 | `scry.search_openlibrary_works(query_text, mode, limit_n)` | BM25 over Open Library work `title`, `payload`, and `original_author`. |
 | `scry.search_openlibrary_authors(query_text, mode, limit_n)` | BM25 over Open Library author `name`, `payload`, `original_author`, and life-date fields. |
-| `scry.search_federated(query_text, sources, kinds, limit_n, per_source_cap)` | Cross-source lexical shortlist helper behind the typed `/v1/scry/search` front door. It normalizes provenance-bearing results across shared and source-native corpora. |
+| `scry.search_federated(query_text, sources, kinds, limit_n, per_source_cap)` | Cross-source lexical shortlist helper across shared and source-native corpora. It normalizes provenance-bearing results for first-pass discovery. |
 | `scry.search_huggingface(query_text, mode, scopes, repo_types, limit_n)` | Unified Hugging Face discovery helper across repos, artifacts, collections, papers, discussions, accounts, and paper-artifact hops. Use this when you do not yet know which HF surface is the right starting point. |
 | `scry.search_huggingface_accounts(query_text, mode, account_types, limit_n)` | BM25 over HF account handles, display names, bios, and plan labels. |
 | `scry.huggingface_account_repositories(owner_handle, repo_types, limit_n)` | Traverses a HF handle into its owned repositories with popularity/freshness ordering. |
@@ -764,11 +764,9 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
 
 ## Lexical Search Functions
 
-If the task is fast result discovery rather than SQL composition, use the
-typed search front door first: `POST /v1/scry/search` returns bounded
-provenance-bearing hits plus stable `record_ref` values, and
-`GET /v1/scry/search/records/{record_ref}` hydrates one of those results into
-longer text and metadata.
+If the task is fast result discovery rather than broader SQL composition, use
+`scry.search_federated(...)` or a source-local `scry.search_*` helper first,
+then widen into richer SQL once you know the right corpus and filters.
 
 | Function | Description | Max limit |
 |----------|-------------|-----------|
