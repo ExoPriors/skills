@@ -6,7 +6,8 @@ description: >
   books, knowledge graphs, and prediction markets.
   Includes the typed fast-search front door at /v1/scry/search and record
   detail hydration at /v1/scry/search/records/{record_ref}.
-  Includes cross-platform author identity resolution (actors, people, aliases),
+  Includes deterministic public cross-platform author identity lookup
+  (actors, people, aliases),
   OpenAlex academic graph navigation (authors, citations, institutions, concepts),
   shareable artifacts, and structured agent judgements.
   Use when the task involves: Scry API, ExoPriors, /v1/scry/query, /v1/scry/search,
@@ -35,7 +36,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 **Use this skill when:**
 - Searching, filtering, or aggregating content across the ExoPriors corpus
 - Running lexical (BM25) or hybrid searches
-- Exploring author networks, cross-platform identities, or publication patterns
+- Exploring author networks, deterministic public cross-platform identities, or publication patterns
 - Navigating the OpenAlex academic graph (authors, citations, institutions, concepts)
 - Creating shareable artifacts from query results
 - Emitting structured agent judgements about entities or external references
@@ -83,6 +84,17 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    semantic retrieval when the confirmed status is `rebuilding`, `degraded`,
    or `unavailable`, or when a stale snapshot's last known status is not
    healthy.
+   If you are validating deploy/runtime conformance from this repo rather than
+   just using the surface, run the canonical proof command:
+
+   ```bash
+   cd src/api
+   SCRY_API_KEY=... cargo run --features cli --bin scry-contract-audit -- --output json
+   ```
+
+   This proof is strict by default: any non-pass manifest drift or bounded
+   probe failure exits non-zero. The default `agent-experience-e2e` run now
+   includes the same manifest conformance audit after signed-in continuity.
    If `should_update_skill=true`, tell the user to run `npx skills update`.
    If the response reports `client_skill_generation: null` while you're using
    packaged skills, or if local instructions still mention legacy ExoPriors
@@ -114,7 +126,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    `GET /v1/scry/price` plus `/v1/scry/estimate` and/or a tight exploratory
    query (`LIMIT 20` plus scoped source/window filters), then scale only after
    confirming relevance. Use `GET /v1/scry/price/history` when you need to know
-   whether the current base fee is a spike or the recent norm.
+   whether the current base fee is a spike or the recent norm; it defaults to
+   the trailing 6 hours and rejects windows wider than 24 hours.
 
 6. **Treat paid queries as budget-bounded.** For paid execution, Scry reserves
    nanodollar credits up front and derives a runtime timeout from the authorized
@@ -194,6 +207,14 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    For Hugging Face specifically, prefer `scry.search_huggingface()` when you
    need one discovery-first entry point across repos, artifacts, papers,
    collections, discussions, accounts, and paper-artifact hops.
+
+   For package registry search, use `scry.search_packages(query, registries, limit_n)`
+   for cross-registry discovery across npm, PyPI, crates.io, RubyGems, Go modules,
+   NuGet, Maven, Hex.pm, Packagist, pub.dev, CocoaPods, conda-forge, JSR, and
+   Homebrew. Individual per-registry functions are also available (see schema guide).
+
+   For cross-platform social search, use `scry.social_search(query, mode, limit_n)`
+   which searches Twitter, Bluesky, StackExchange, and mailing lists in one call.
 
 10. **Cross-table composition is normal.** If the best records live in multiple
    source-native tables, combine them in one SQL statement with CTEs,
@@ -344,6 +365,8 @@ For paid queries, these are the key billing controls:
   deciding whether to run now in `eager` mode or wait in `patient`.
 - `GET /v1/scry/price/history` returns sampled `epoch_id` / `timestamp` /
   `base_fee` / `utilization` history plus sampling metadata for large windows.
+  If no bounds are provided it returns the trailing 6 hours, and requests wider
+  than 24 hours are rejected.
 - `GET /v1/scry/price/stream` returns an SSE feed with `price` events at epoch
   cadence and `ping` keepalives while no new epoch arrives.
 - `GET /v1/scry/spend` returns the authenticated caller's own spend history:
@@ -489,6 +512,8 @@ User wants to search the ExoPriors corpus?
   |     lexical CTE + JOIN scry.chunk_embeddings
   |
   +-- Author/people lookup? --> scry.actors, scry.people, scry.person_accounts
+  |                            (deterministic public links only; probabilistic
+  |                             or styleometric linkage stays internal)
   |
   +-- Academic graph (OpenAlex)? --> scry.openalex_find_authors(),
   |     scry.openalex_find_works(), etc. (see schema-guide.md)

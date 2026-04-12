@@ -346,6 +346,7 @@ LIMIT 50
 
 ### Cross-platform identity lookup
 ```sql
+-- Public identity views expose deterministic links only.
 SELECT p.id, p.display_name, p.entity_count,
        pa.source::text, pa.handle, pa.profile_url, pa.confidence
 FROM scry.people p

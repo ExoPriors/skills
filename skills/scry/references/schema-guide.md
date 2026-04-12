@@ -5,7 +5,11 @@ Reference guide for the documented `scry.*` surface. Treat
 live view/function availability and live column metadata. This guide provides
 context and query patterns that the schema endpoint alone cannot convey, but it
 may mention repo-defined surfaces that are not yet deployed on every public
-instance.
+instance. When you need repo-side conformance proof instead of usage guidance,
+run `cd src/api && SCRY_API_KEY=... cargo run --features cli --bin scry-contract-audit -- --output json`;
+it checks that `/v1/scry/context` and `/v1/scry/schema` expose the same
+`truth_manifest` as the versioned content manifest and fails on non-pass drift
+by default.
 
 ## Core Views
 
@@ -98,18 +102,24 @@ union view over those records.
 | `scry.openalex_work_external_ids` | Source-local OpenAlex alias registry keyed by `work_id`. Use it for carried external identifiers such as PubMed PMIDs that belong to the OpenAlex work rather than the shared ext-id bridge. |
 | `scry.bluesky_posts` | Canonical Bluesky substrate keyed by AT URI. |
 | `scry.twitter_posts` | Canonical Twitter/X substrate keyed by canonical tweet URI. Exposes public provenance tags plus aggregated observation-source tags such as `observation_sources`, `capture_channels`, and `has_extension_observation`. |
+| `scry.twitter_threads` | Canonical Twitter thread-root substrate keyed by `thread:{root_tweet_id}`. Includes root payload, author/timestamp, aggregate tweet counts, and total likes/retweets for thread-level retrieval. |
 | `scry.twitter_post_observations` | Public-safe provenance rows for the Twitter substrate. Exposes source collection, observation source, capture channel, trust score, verification status, and metrics without uploader PII. |
-| `scry.mailing_list_messages` | Canonical mailing-list message substrate keyed by `message_key`. |
-| `scry.openlibrary_editions` / `works` / `authors` | Canonical Open Library bibliographic substrates. |
+| `scry.mailing_lists` / `scry.mailing_list_messages` | Canonical mailing-list list metadata plus per-message substrate keyed by `list_key` / `message_key`. |
+| `scry.forum_sites` / `scry.forum_threads` / `scry.forum_posts` | Canonical forum substrate split into site metadata, thread headers, and post rows. Covers Discourse- and Forem-style archives keyed by `site_key` / `thread_key` / `post_key`. |
+| `scry.discussion_messages` | Normalized union over mailing-list messages and forum posts with shared `source_class`, `collection_key`, `thread_key`, `message_key`, and `archive_url` columns. |
+| `scry.openlibrary_editions` / `scry.openlibrary_works` / `scry.openlibrary_authors` | Canonical Open Library bibliographic substrates. |
+| `scry.gdelt_articles` | Canonical GDELT news-article substrate keyed by URL / GKG record pairs. Includes themes, tone, entity extraction, and publication time. |
+| `scry.who_iris_publications` | Canonical WHO IRIS publication substrate keyed by `handle`. Includes document type, authors, subjects, languages, publishers, and identifiers. |
 | `scry.moltbook` / `scry.moltbook_items` | Canonical Moltbook substrate keyed by `item_key`. Includes explicit `content_risk` plus mixed post/comment/document grain. |
-| `scry.huggingface` / `huggingface_repositories` | Canonical Hugging Face repository substrate keyed by `repo_id` (`owner/name`). Includes repo type (`model`/`dataset`/`space`), owner handle, card metadata, tags, likes/downloads, and synthesized repo payload text. |
-| `scry.huggingface_models` / `datasets` / `spaces` | Repo-type filtered Hugging Face aliases for common traversal without repeating `WHERE repo_type = ...`. |
-| `scry.huggingface_accounts` / `huggingface_organizations` | Canonical Hugging Face account substrate keyed by handle. Includes user/org typing, bio, follower counts, plan/pro flags, and profile metadata. |
-| `scry.huggingface_account_socials` / `huggingface_organization_memberships` | Account graph edges. Social handles keyed by `(handle, platform)` plus org→member memberships keyed by `(organization_handle, member_handle)`. |
+| `scry.huggingface` / `scry.huggingface_repositories` | Canonical Hugging Face repository substrate keyed by `repo_id` (`owner/name`). Includes repo type (`model`/`dataset`/`space`), owner handle, card metadata, tags, likes/downloads, and synthesized repo payload text. |
+| `scry.huggingface_models` / `scry.huggingface_datasets` / `scry.huggingface_spaces` | Repo-type filtered Hugging Face aliases for common traversal without repeating `WHERE repo_type = ...`. |
+| `scry.huggingface_accounts` / `scry.huggingface_organizations` | Canonical Hugging Face account substrate keyed by handle. Includes user/org typing, bio, follower counts, plan/pro flags, and profile metadata. |
+| `scry.huggingface_account_socials` / `scry.huggingface_organization_memberships` | Account graph edges. Social handles keyed by `(handle, platform)` plus org→member memberships keyed by `(organization_handle, member_handle)`. |
 | `scry.huggingface_repo_text_artifacts` | Selected high-signal repo text files keyed by `artifact_key`. Includes README/model-card text, Space `app.py`, config files, citations, licenses, and requirements. |
 | `scry.huggingface_papers` | Hugging Face Paper Pages keyed by paper id (typically arXiv id). Includes summary, AI summary, authors, upvotes, and discussion id. |
-| `scry.huggingface_collections` / `huggingface_collection_items` | Hugging Face collections and their ordered items (models, datasets, spaces, papers, nested collections). |
-| `scry.huggingface_discussions` / `huggingface_discussion_events` | Repo discussions / PR threads and their event streams. Discussions are keyed by `repo_type:repo_id#num`; events preserve comment and commit payloads. |
+| `scry.huggingface_collections` / `scry.huggingface_collection_items` | Hugging Face collections and their ordered items (models, datasets, spaces, papers, nested collections). |
+| `scry.huggingface_discussions` / `scry.huggingface_discussion_events` | Repo discussions / PR threads and their event streams. Discussions are keyed by `repo_type:repo_id#num`; events preserve comment and commit payloads. |
+| `scry.huggingface_repo_links` | Explicit repository link graph keyed by repo and target identity. Use it to traverse repos to papers, datasets, collections, mirrored repos, and external references. |
 | `scry.huggingface_paper_artifacts` | Derived paper-to-repo link surface over `huggingface_repo_links` joined to repos and hydrated paper pages. |
 | `scry.stackexchange` | Canonical StackExchange substrate. Questions and answers from Stack Overflow and 170+ Stack Exchange sites, keyed by `{site}:{post_id}`. Windowed by time period. |
 | `scry.caselaw` | US legal opinions from CourtListener and Caselaw Access Project. Keyed by `cl:{opinion_id}` or `cap:{case_id}`. Includes court, jurisdiction, citations, opinion text. Windowed by decade. |
@@ -117,6 +127,7 @@ union view over those records.
 | `scry.wikidata_items` | Wikidata structured knowledge graph items and properties. Keyed by QID (e.g., `Q42`). Includes labels, descriptions, aliases, instance_of, subclass_of. |
 | `scry.wikidata_claims` | Wikidata structured claims (property-value assertions). Subject QID → property → value. Join to `scry.wikidata_items` on `subject_qid`. |
 | `scry.kl3m` | KL3M federal corpus from PleIAs. Government documents, regulations, and .gov web pages. Partitioned by collection family (govinfo, dotgov, courtlistener). Windowed for lexical search. |
+| `scry.epstein_artifacts` / `scry.epstein_units` | Serving Epstein document artifacts plus retrieval units. Artifacts expose release/provenance metadata; units expose page/anchor-level text slices and grounding metadata for search. |
 
 Source-local lexical helpers exist for many of these views:
 
@@ -144,14 +155,16 @@ Source-local lexical helpers exist for many of these views:
 | `scry.openalex_find_works(query, min_year, limit)` | Source-native OpenAlex work lookup over titles and DOIs with dedicated abstract payload link-through. |
 | `scry.search_mailing_list_messages(query_text, mode, list_keys, limit_n)` | BM25 over mailing-list message rows. |
 | `scry.search_forum_posts(query_text, mode, site_keys, limit_n)` | BM25 over canonical forum posts keyed by site-specific `post_key`. Use site keys such as `ethresearch`, `datasecretslox`, or `solana_forum`. |
+| `scry.search_discussions(query_text, mode, limit_n)` | Merges mailing-list and forum lexical hits into a normalized discussion result surface with shared collection/thread/message keys. |
 | `scry.search_packages(query_text, registries, limit_n)` | Cross-registry package search over npm, PyPI, crates.io, Go modules, NuGet, Maven Central, Hex.pm, Packagist, pub.dev, CocoaPods, conda-forge, JSR, and Homebrew. |
-| `scry.social_search(query_text, limit_n)` | Convenience union over the major social/post surfaces when you want a fast social-only lexical pass. |
+| `scry.social_search(query_text, mode, limit_n)` | Convenience union over the major social/post surfaces when you want a fast social-only lexical pass. |
 | `scry.search_stackexchange_questions(query_text, mode, sites, tags, limit_n, window_key)` | BM25 over StackExchange question windows. Default window: `recent`. Use `window_key='all'` to search all periods. |
 | `scry.search_stackexchange_answers(query_text, mode, sites, limit_n, window_key)` | BM25 over StackExchange answer windows. |
 | `scry.search_caselaw(query_text, mode, courts, jurisdictions, limit_n, window_key)` | BM25 over US caselaw by decade. Default window: `2020s`. Windows: `2020s`, `2010s`, `2000s`, `1990s`, `1980s`, `pre1980`, `all`. |
 | `scry.search_gutenberg(query_text, mode, languages, subjects, limit_n)` | BM25 over Project Gutenberg full-text books. Filter by language (`en`, `fr`, etc.) and/or subject. |
 | `scry.search_wikidata(query_text, mode, entity_types, limit_n)` | BM25 over Wikidata items. `entity_types` defaults to `['item', 'property']`. |
 | `scry.search_kl3m(query_text, mode, collections, agencies, limit_n, window_key)` | BM25 over KL3M federal corpus. `agencies` filters by regulatory body. `collections` filters by collection name (e.g., `govinfo-fr`, `dotgov-*`). Windows: `govinfo_recent`, `govinfo_2010s`, `govinfo_2000s`, `govinfo_pre2000`, `dotgov_recent`, `dotgov_2010s`, `dotgov_pre2010`, `govinfo_all`, `dotgov_all`, `all`. |
+| `scry.search_epstein_units(query_text, release_families, artifact_kinds, unit_kinds, date_from, date_to, limit_n)` | BM25 over serving Epstein units with filters for release family, artifact kind, unit kind, and retrieved-at date. |
 
 It is normal to combine multiple source-native helpers in one statement:
 
@@ -350,16 +363,16 @@ Relationship edges between entities (currently OffshoreLeaks).
 Three layers of author resolution, bottom to top:
 
 1. **`scry.actors`** -- one row per platform account (`source` + `external_id` is unique). Content links here via `author_actor_id`.
-2. **`scry.person_accounts`** -- accepted public actor-to-person edges. One row per linked public account with confidence, link method, and activity counts.
-3. **`scry.people`** -- one row per real-world person (only those with >= 1 high-confidence actor link), including `actor_count` and `entity_count`.
-4. **`scry.person_aliases`** -- alias helper derived from accepted links (`handle` + `display_name` normalized forms). Useful for loose text lookup, not the primary canonical join path.
+2. **`scry.person_accounts`** -- deterministic public actor-to-person edges. One row per linked public account with confidence, link method, and activity counts.
+3. **`scry.people`** -- one row per real-world person (only those with >= 1 deterministic public actor link), including `actor_count` and `entity_count`.
+4. **`scry.person_aliases`** -- alias helper derived from deterministic public links (`handle` + `display_name` normalized forms). Useful for loose text lookup, not the primary canonical join path.
 
 | View | Description |
 |------|-------------|
 | `scry.actors` | Per-source account records |
-| `scry.people` | Cross-platform merged identities (high confidence) with public counts |
-| `scry.person_accounts` | Canonical public person-account edges (columns: `person_id`, `actor_id`, `source`, `external_id`, `handle`, `display_name`, `profile_url`, `link_method`, `confidence`, `entity_count`, `post_count`, `comment_count`, `first_activity`, `last_activity`) |
-| `scry.person_aliases` | Alias forms derived from accepted person-account links |
+| `scry.people` | Cross-platform merged identities from deterministic public links, with public counts |
+| `scry.person_accounts` | Canonical deterministic public person-account edges (columns: `person_id`, `actor_id`, `source`, `external_id`, `handle`, `display_name`, `profile_url`, `link_method`, `confidence`, `entity_count`, `post_count`, `comment_count`, `first_activity`, `last_activity`) |
+| `scry.person_aliases` | Alias forms derived from deterministic public person-account links |
 | `scry.mv_author_profiles` | Per-source author stats aggregated from entity rows (threshold: >= 3 entities) |
 | `scry.mv_author_stats` | Author post counts and score aggregates |
 | `scry.github_people` | GitHub-specific maintainer aggregates (stars, repos, comments) |
@@ -370,8 +383,10 @@ Three layers of author resolution, bottom to top:
 | Probability | Meaning |
 |-------------|---------|
 | >= 0.98 | Manual verification or self-declared link |
-| 0.90 - 0.98 | Strong automated evidence (handle match + profile link) |
+| 0.90 - 0.98 | Deterministic public evidence such as canonical-id or profile-link confirmation |
 | < 0.90 | Below Scry threshold -- not surfaced in views |
+
+Public identity views are deterministic-only. Probabilistic/styleometric linkage remains internal and does not surface through `scry.people`, `scry.person_accounts`, `scry.person_aliases`, or `scry.entities.author_person_id`.
 
 Common names produce false merges. When `display_name` is generic (e.g., "John Smith"), verify with secondary evidence (same bio, cross-linked profiles, overlapping topics).
 
@@ -542,7 +557,7 @@ sites. Windowed by time period, mirroring the Reddit pattern.
 | `scry.mv_stackexchange_questions_2014_2017` | 2014-2017 questions |
 | `scry.mv_stackexchange_questions_2010_2013` | 2010-2013 questions |
 | `scry.mv_stackexchange_questions_2008_2009` | 2008-2009 questions |
-| `scry.mv_stackexchange_answers_recent` through `_2008_2009` | Matching answer windows |
+| `scry.mv_stackexchange_answers_*` | Matching answer windows (`recent`, `2022_2023`, `2020_2021`, `2018_2019`, `2014_2017`, `2010_2013`, `2008_2009`) |
 
 Key columns: `id` (`{site}:{post_id}`), `site`, `site_group`, `post_type`
 (`question`/`answer`), `parent_id`, `title` (questions only), `payload`, `tags`
@@ -778,6 +793,43 @@ use them as the normal path.
 `scry.search*` call fails, also inspect `/v1/scry/index-view-status` and the
 object `status` fields in `/v1/scry/schema`.
 
+### Package Registry Search Functions
+
+Unified cross-registry package search across 14 registries. Use
+`scry.search_packages()` for cross-registry discovery, or individual
+registry functions for targeted lookups.
+
+| Function | Description |
+|----------|-------------|
+| `scry.search_packages(query_text, registries, limit_n)` | Unified cross-registry search. `registries` is a text array filter (e.g., `ARRAY['npm','pypi']`); NULL searches all. Returns `registry`, `package_name`, `description`, `original_author`, `latest_version`, `downloads_total`, `license`, `repository_url`, `score`. |
+| `scry.search_npm_packages(query_text, mode, limit_n)` | npm packages |
+| `scry.search_pypi_packages(query_text, mode, limit_n)` | PyPI packages |
+| `scry.search_crates_io_packages(query_text, mode, limit_n)` | crates.io (Rust) |
+| `scry.search_rubygems_packages(query_text, mode, limit_n)` | RubyGems |
+| `scry.search_go_module_packages(query_text, mode, limit_n)` | Go modules |
+| `scry.search_nuget_packages(query_text, mode, limit_n)` | NuGet (.NET) |
+| `scry.search_maven_central_packages(query_text, mode, limit_n)` | Maven Central (Java) |
+| `scry.search_hex_pm_packages(query_text, mode, limit_n)` | Hex.pm (Elixir/Erlang) |
+| `scry.search_packagist_packages(query_text, mode, limit_n)` | Packagist (PHP) |
+| `scry.search_pub_dev_packages(query_text, mode, limit_n)` | pub.dev (Dart/Flutter) |
+| `scry.search_cocoapods_packages(query_text, mode, limit_n)` | CocoaPods (iOS/macOS) |
+| `scry.search_conda_forge_packages(query_text, mode, limit_n)` | conda-forge |
+| `scry.search_jsr_packages(query_text, mode, limit_n)` | JSR (Deno/Node) |
+| `scry.search_homebrew_formulae(query_text, mode, limit_n)` | Homebrew formulae |
+
+### Social and Twitter Search Functions
+
+| Function | Description |
+|----------|-------------|
+| `scry.social_search(query_text, mode, limit_n)` | Cross-platform social search (Twitter, Bluesky, StackExchange, mailing lists). Returns unified rows with `source`, `platform`, `uri`, `snippet`, `score`. |
+| `scry.search_twitter_threads(query_text, mode, limit_n)` | BM25 over Twitter thread root tweets. Returns thread-level aggregates (`tweet_count`, `total_likes`, `total_retweets`). |
+
+### Diagnostic Views
+
+| View | Notes |
+|------|-------|
+| `scry.mv_freshness` | Materialized view health: populated status, approx row counts, last analyze timestamp. Useful for diagnosing stale search results. |
+
 ### OpenAlex Helper Functions
 
 | Function | Description |
@@ -791,6 +843,14 @@ object `status` fields in `/v1/scry/schema`.
 | `scry.openalex_concept_authors(concept_id, min_year, limit)` | Authors by concept |
 | `scry.openalex_author_coauthors(author_id, min_year, limit)` | Coauthor network |
 | `scry.openalex_author_citation_neighbors(author_id, min_year, limit)` | Citation neighbors |
+
+### Inspection And Long-Text Helpers
+
+| Function | Description |
+|----------|-------------|
+| `scry.table_sample(surface_name, sample_n)` | Returns JSON row samples for quick shape inspection before writing more complex queries. |
+| `scry.entity_content_text_slice(entity_id, start, max_chars)` | Retrieves deeper public `content_text` slices beyond the 50K preview cap. Use `start` and `max_chars` to page through long entities. |
+| `scry.sporc_transcript_slice(entity_id, start, max_chars)` | Same as `entity_content_text_slice`, but isolates the transcript portion of SPORC pages before slicing. |
 
 ### Vector Algebra Functions
 

@@ -166,6 +166,7 @@ Cache a list from a previous SQL rerank by setting `"cache_results": true` in th
 | Model | Cost | Use when |
 |---|---|---|
 | `openai/gpt-5-mini` | lowest | Large candidate sets (100+), rough ranking, iteration |
+| `openai/gpt-5-mini-2025-08-07` | lowest | Pinned snapshot of `gpt-5-mini` when you need repeatable behavior across runs |
 | `openai/gpt-5.2-chat` | medium | Default. Good accuracy/cost tradeoff for final rankings |
 | `anthropic/claude-opus-4.6` | highest | Small candidate sets (<50), high-stakes decisions |
 | `moonshotai/kimi-k2-0905` | medium | Alternative model, long-context strength |
