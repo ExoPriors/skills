@@ -129,10 +129,11 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    whether the current base fee is a spike or the recent norm; it defaults to
    the trailing 6 hours and rejects windows wider than 24 hours.
 
-6. **Treat paid queries as budget-bounded.** For paid execution, Scry reserves
-   nanodollar credits up front and derives a runtime timeout from the authorized
-   spend envelope. The runtime enforces that envelope with a live-burn watchdog
-   first and a timeout fallback second. Lead with the simplified surface:
+6. **Treat congested queries as budget-bounded.** Scry queries are free unless
+   there is congestion. When there is congestion, Scry reserves nanodollar
+   credits up front and derives a runtime timeout from the authorized spend
+   envelope. The runtime enforces that envelope with a live-burn watchdog first
+   and a timeout fallback second. Lead with the simplified surface:
    use `X-Scry-Budget` as the primary per-query cost control, `eager` and
    `patient` as the two execution modes, and `GET /v1/scry/account` as the
    one-stop status check before or after broad or expensive query work. Use `GET /v1/scry/pricing`
@@ -347,7 +348,7 @@ const resp = await paidFetch('https://api.scry.io/v1/scry/query', {
 
 ### B.1c Query Budgeting
 
-For paid queries, these are the key billing controls:
+When there is congestion, these are the key billing controls:
 
 - `X-Scry-Budget: <nanodollars>` is the primary per-query cost control. Send it
   on `/v1/scry/estimate` and `/v1/scry/query` when you want one number to bound
@@ -372,7 +373,7 @@ For paid queries, these are the key billing controls:
 - `GET /v1/scry/spend` returns the authenticated caller's own spend history:
   `total_credits_spent`, `query_count`, `avg_cost_per_query`, and recent
   per-query cost breakdowns.
-- `GET /v1/scry/pricing` returns the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
+- `GET /v1/scry/pricing` returns the live query access contract (`free_unless_congested`), whether congestion pricing is currently active, the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
 - `GET /v1/scry/pricing` also exposes the x402 base funding quantum and the fact that x402 funding now scales off `X-Scry-Budget` when that header is present.
 - `GET /v1/scry/account` returns the authenticated funding summary. Read `funding.card_funding` first when the question is "can this agent use cards right now?" because it makes the current card state explicit (`requires_operator_setup`, `saved_method_ready`, `auto_topup_attention_required`, `auto_topup_active`, or `disabled`) and lists the next endpoints to call.
 - Funding-control endpoints such as `GET /v1/scry/account`, `POST /v1/billing/agent-topup`, `POST /v1/billing/payment-mandates`, and `PATCH /v1/billing/auto-topup` require account or billing scope.
@@ -402,7 +403,7 @@ For paid queries, these are the key billing controls:
 
 Useful response headers from `POST /v1/scry/query`:
 
-- `x-scry-cost`: charged nanodollars for the completed query
+- `x-scry-cost`: charged nanodollars for the completed query when congestion pricing applies
 - `x-scry-receipt-id`: stable execution-receipt id when receipt mode is enabled
 - `x-scry-authorized-exposure`: the hard exposure authorization applied to this run
 - `x-scry-reserved`: the reserved/pre-authorized nanodollar amount
@@ -414,12 +415,12 @@ Useful response headers from `POST /v1/scry/query`:
 - `X-Scry-Compute-Units`: normalized compute units charged for the query
 - `X-Scry-Utilization`: price-epoch utilization snapshot
 - `X-Scry-Epoch`: current price epoch id
-- `X-Scry-Budget-Remaining`: credits or free-tier budget remaining after settlement
+- `X-Scry-Budget-Remaining`: credits or free-tier budget remaining after a congestion-priced settlement
 
-If a paid query runs into its spend envelope, the API returns `402` with
-`query_exposure_exhausted`. That is enforced by live runtime burn first, with
-the exposure timeout as fallback. The fix is to narrow the query or raise
-`X-Scry-Budget`, not to keep retrying the same request unchanged.
+If a congestion-priced query runs into its spend envelope, the API returns
+`402` with `query_exposure_exhausted`. That is enforced by live runtime burn
+first, with the exposure timeout as fallback. The fix is to narrow the query
+or raise `X-Scry-Budget`, not to keep retrying the same request unchanged.
 
 ## C) Quickstart
 
