@@ -168,7 +168,7 @@ Cache a list from a previous SQL rerank by setting `"cache_results": true` in th
 | `openai/gpt-5-mini` | lowest | Large candidate sets (100+), rough ranking, iteration |
 | `openai/gpt-5-mini-2025-08-07` | lowest | Pinned snapshot of `gpt-5-mini` when you need repeatable behavior across runs |
 | `openai/gpt-5.2-chat` | medium | Default. Good accuracy/cost tradeoff for final rankings |
-| `anthropic/claude-opus-4.6` | highest | Small candidate sets (<50), high-stakes decisions |
+| `anthropic/claude-opus-4.7` | highest | Small candidate sets (<50), high-stakes decisions |
 | `moonshotai/kimi-k2-0905` | medium | Alternative model, long-context strength |
 
 #### Response
@@ -307,7 +307,7 @@ Second pass: precise ranking of the cached top-50 with a higher-quality model.
     {"id":"insight","prompt":"insight","weight":1.5}
   ],
   "topk": {"k": 10},
-  "model": "anthropic/claude-opus-4.6"
+  "model": "anthropic/claude-opus-4.7"
 }
 ```
 
@@ -342,7 +342,7 @@ The comparison budget defaults to `4 * n_entities * n_attributes`. For 100 entit
 Rough cost per comparison by model:
 - `openai/gpt-5-mini`: ~$0.00004 (40 nanodollars * 1000)
 - `openai/gpt-5.2-chat`: ~$0.00015
-- `anthropic/claude-opus-4.6`: ~$0.0005
+- `anthropic/claude-opus-4.7`: ~$0.0005
 
 With 20% markup applied. To cap spend, set `comparison_budget` explicitly:
 
@@ -371,10 +371,10 @@ Decision tree:
 
 1. **Iterating or exploring?** Use `openai/gpt-5-mini`. Cheap enough to run many times.
 2. **Final ranking for a deliverable?** Use `openai/gpt-5.2-chat`. Good accuracy at reasonable cost.
-3. **High-stakes, small set (<50)?** Use `anthropic/claude-opus-4.6`. Best judgement, worth the cost.
+3. **High-stakes, small set (<50)?** Use `anthropic/claude-opus-4.7`. Best judgement, worth the cost.
 4. **Long documents (>3000 chars)?** Consider `moonshotai/kimi-k2-0905` for long-context strength.
 
-You can also do model escalation: run `openai/gpt-5-mini` first to narrow candidates, then `anthropic/claude-opus-4.6` on the shortlist.
+You can also do model escalation: run `openai/gpt-5-mini` first to narrow candidates, then `anthropic/claude-opus-4.7` on the shortlist.
 
 ## Choosing TopK parameters
 

@@ -413,8 +413,8 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 
 | View | Description | Has embedding_voyage4? |
 |------|-------------|----------------------|
-| `scry.mv_lesswrong_posts` | LessWrong posts with scores, AF flag | Yes |
-| `scry.mv_eaforum_posts` | EA Forum posts with scores | Yes |
+| `scry.mv_lesswrong_posts` | LessWrong posts with scores, AF flag. Source-native (forum_posts). Columns include `post_key` — join `scry.forum_posts` on `post_key` for full content. | Yes |
+| `scry.mv_eaforum_posts` | EA Forum posts with scores. Source-native (forum_posts). Columns include `post_key`. | Yes |
 | `scry.mv_unjournal_posts` | Unjournal evaluations | Yes |
 | `scry.mv_hackernews_posts` | HN posts with scores | Yes |
 | `scry.mv_substack_posts` | Substack articles | Yes |
@@ -448,8 +448,8 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 
 | View | Description | Has embedding_voyage4? |
 |------|-------------|----------------------|
-| `scry.mv_lesswrong_comments` | LW comments | Yes |
-| `scry.mv_eaforum_comments` | EA Forum comments | Yes |
+| `scry.mv_lesswrong_comments` | LW comments. Source-native (forum_posts). Columns include `post_key`. | Yes |
+| `scry.mv_eaforum_comments` | EA Forum comments. Source-native (forum_posts). Columns include `post_key`. | Yes |
 | `scry.mv_high_karma_comments` | High-karma comments across forums | Yes |
 | `scry.mv_substack_comments` | Substack comments | Yes |
 
