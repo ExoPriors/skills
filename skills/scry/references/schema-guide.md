@@ -122,12 +122,19 @@ union view over those records.
 | `scry.huggingface_repo_links` | Explicit repository link graph keyed by repo and target identity. Use it to traverse repos to papers, datasets, collections, mirrored repos, and external references. |
 | `scry.huggingface_paper_artifacts` | Derived paper-to-repo link surface over `huggingface_repo_links` joined to repos and hydrated paper pages. |
 | `scry.stackexchange` | Canonical StackExchange substrate. Questions and answers from Stack Overflow and 170+ Stack Exchange sites, keyed by `{site}:{post_id}`. Windowed by time period. |
+| `scry.stackexchange_site_status` | Site-level StackExchange closure/accounting surface. Use it to inspect per-site import/reconciliation status before assuming a site is complete. |
 | `scry.caselaw` | US legal opinions from CourtListener and Caselaw Access Project. Keyed by `cl:{opinion_id}` or `cap:{case_id}`. Includes court, jurisdiction, citations, opinion text. Windowed by decade. |
 | `scry.gutenberg_books` | Project Gutenberg full-text public domain books. Keyed by `gutenberg:{ebook_number}`. Includes subject, bookshelf, language, download count. |
 | `scry.wikidata_items` | Wikidata structured knowledge graph items and properties. Keyed by QID (e.g., `Q42`). Includes labels, descriptions, aliases, instance_of, subclass_of. |
 | `scry.wikidata_claims` | Wikidata structured claims (property-value assertions). Subject QID → property → value. Join to `scry.wikidata_items` on `subject_qid`. |
 | `scry.kl3m` | KL3M federal corpus from PleIAs. Government documents, regulations, and .gov web pages. Partitioned by collection family (govinfo, dotgov, courtlistener). Windowed for lexical search. |
 | `scry.epstein_artifacts` / `scry.epstein_units` | Serving Epstein document artifacts plus retrieval units. Artifacts expose release/provenance metadata; units expose page/anchor-level text slices and grounding metadata for search. |
+| `scry.europepmc` / `scry.europepmc_articles` | Europe PMC source-native article surface keyed by `epmc_id`. Includes PMID/PMCID/DOI identifiers, journal, publication year/date, citation/open-access flags, terms, and article payload text. |
+| `scry.sec_edgar` / `scry.sec_edgar_filings` | SEC EDGAR filing surface keyed by accession number. Includes CIK/company/form metadata, filing/report dates, accession URL, and filing text payload. |
+| `scry.sec_edgar_denominator_targets` / `scry.sec_edgar_company_coverage` / `scry.sec_edgar_year_form_coverage` / `scry.sec_edgar_ingest_overview` | SEC EDGAR denominator/accounting views for company/form/year coverage and current metadata-stage queue totals. Use these before claiming SEC coverage completeness. |
+| `scry.sec_edgar_fulltext_queue` / `scry.sec_edgar_xbrl_queue` / `scry.sec_edgar_queue_summary` | SEC EDGAR work-queue/readiness views for full-text and XBRL followthrough. |
+| `scry.sec_edgar_material_filings` | SEC EDGAR material subset for periodic reports, current reports, registration/prospectus filings, governance/ownership filings, and insider-ownership forms, with `material_class` for triage. |
+| `scry.polymarket_profiles` / `scry.polymarket_markets_embeddings` | Polymarket profile and embedding-support surfaces for prediction-market discovery. |
 
 Source-local lexical helpers exist for many of these views:
 
@@ -165,6 +172,9 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_wikidata(query_text, mode, entity_types, limit_n)` | BM25 over Wikidata items. `entity_types` defaults to `['item', 'property']`. |
 | `scry.search_kl3m(query_text, mode, collections, agencies, limit_n, window_key)` | BM25 over KL3M federal corpus. `agencies` filters by regulatory body. `collections` filters by collection name (e.g., `govinfo-fr`, `dotgov-*`). Windows: `govinfo_recent`, `govinfo_2010s`, `govinfo_2000s`, `govinfo_pre2000`, `dotgov_recent`, `dotgov_2010s`, `dotgov_pre2010`, `govinfo_all`, `dotgov_all`, `all`. |
 | `scry.search_epstein_units(query_text, release_families, artifact_kinds, unit_kinds, date_from, date_to, limit_n)` | BM25 over serving Epstein units with filters for release family, artifact kind, unit kind, and retrieved-at date. |
+| `scry.search_europepmc_articles(query_text, mode, limit_n)` | BM25 over Europe PMC article titles, abstracts/payloads, authors, journal, DOI/PMID/PMCID, and terms. |
+| `scry.search_sec_edgar_filings(query_text, forms, ciks, limit_n)` | BM25 over SEC EDGAR filing payloads with optional form and CIK filters. |
+| `scry.sec_edgar_company_filings(cik_or_ticker, forms, limit_n)` | Bounded SEC filing lookup by ticker or CIK, newest first, returning queue/content-stage fields for one company. |
 
 It is normal to combine multiple source-native helpers in one statement:
 
@@ -433,7 +443,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 | `scry.entity_embeddings` | Canonical entity-level embedding helper (`chunk_index = 0`) for embedded public entities | Yes |
 | `scry.entities_with_embeddings` | Public entity rows joined to `scry.entity_embeddings`; filter `kind` and `source` as needed | Yes |
 | `scry.embedding_coverage` | Source/kind public vs staged vs ready embedding coverage reporting surface | N/A |
-| `scry.arxiv_papers_embeddings` / `scry.twitter_posts_embeddings` / `scry.moltbook_items_embeddings` / `scry.hackernews_items_embeddings` / `scry.wikipedia_articles_embeddings` / `scry.pubmed_papers_embeddings` / `scry.repec_records_embeddings` / `scry.kalshi_markets_embeddings` / `scry.nih_reporter_projects_embeddings` / `scry.govinfo_crec_granules_embeddings` / `scry.offshoreleaks_nodes_embeddings` | Source-local chunk embeddings keyed by the canonical table's natural identifier plus `entity_id`; use when you need the exact semantic owner table instead of the cross-source union | Yes |
+| `scry.arxiv_papers_embeddings` / `scry.twitter_posts_embeddings` / `scry.forum_posts_embeddings` / `scry.moltbook_items_embeddings` / `scry.hackernews_items_embeddings` / `scry.wikipedia_articles_embeddings` / `scry.pubmed_papers_embeddings` / `scry.repec_records_embeddings` / `scry.kalshi_markets_embeddings` / `scry.nih_reporter_projects_embeddings` / `scry.govinfo_crec_granules_embeddings` / `scry.offshoreleaks_nodes_embeddings` | Source-local chunk embeddings keyed by the canonical table's natural identifier plus `entity_id`; use when you need the exact semantic owner table instead of the cross-source union | Yes |
 
 ### Cross-Source Aggregates
 
@@ -478,6 +488,16 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 | `scry.mv_prediction_markets` | Manifold, Metaculus, Polymarket, Kalshi |
 | `scry.mv_manifold_markets` | Manifold markets specifically |
 | `scry.mv_metaculus_questions` | Metaculus questions |
+| `scry.polymarket` / `scry.polymarket_markets` | Polymarket markets (source-native table) |
+| `scry.polymarket_events` | Polymarket event groups |
+| `scry.polymarket_market_outcomes` | Outcome rows and CLOB token IDs for each Polymarket market |
+| `scry.polymarket_comments` | Polymarket comments linked to markets and events |
+| `scry.polymarket_trades` | Polymarket trades |
+| `scry.polymarket_activity` | Public on-chain activity for Polymarket wallets |
+| `scry.polymarket_market_holders` / `scry.polymarket_market_positions` | Holder and position data for each market |
+| `scry.polymarket_orderbooks` | Polymarket orderbook snapshot summaries |
+| `scry.polymarket_price_snapshots` / `scry.polymarket_price_history` | Polymarket token price snapshots and history |
+| `scry.polymarket_tags` / `scry.polymarket_series` / `scry.polymarket_rewards` / `scry.polymarket_sports` | Polymarket tags, series, rewards, and sports catalogs |
 | `scry.mv_github_documents` | GitHub-sourced documents |
 | `scry.mv_mailing_list_messages` | Mailing list messages |
 | `scry.mv_freshness` | Materialized-view freshness and approximate row counts; use it to verify whether a convenience view is populated before relying on it |
@@ -550,6 +570,7 @@ sites. Windowed by time period, mirroring the Reddit pattern.
 | View | Description |
 |------|-------------|
 | `scry.stackexchange` | Base view over all StackExchange posts |
+| `scry.stackexchange_site_status` | Site-level denominator/freshness/accounting status (`post_count`, question/answer splits, verification/execution state, skip counters) |
 | `scry.mv_stackexchange_questions_recent` | Recent questions |
 | `scry.mv_stackexchange_questions_2022_2023` | 2022-2023 questions |
 | `scry.mv_stackexchange_questions_2020_2021` | 2020-2021 questions |
@@ -567,6 +588,8 @@ Key columns: `id` (`{site}:{post_id}`), `site`, `site_group`, `post_type`
 
 Filter by `site` (e.g., `stackoverflow`, `serverfault`, `math.stackexchange`) and
 `tags` (e.g., `'rust' = ANY(tags)`).
+Use `scry.stackexchange_site_status` for cheap coverage/freshness checks before
+running broad StackExchange lexical scans.
 
 ### Caselaw Views
 
@@ -686,8 +709,8 @@ These sources live in `scry.entities` (not in dedicated tables). Query with
 | `zenodo` | `paper`/`post` | `doi`, `resource_type` (object: `type`, `subtype`), `access_right`, `communities`, `keywords`, `license`, `creator_orcids` |
 | `datacite` | `paper`/`document` | `doi`, `resource_type`, `resource_type_general`, `publisher`, `publication_year`, `subjects`, `citation_count` |
 
-These are all queryable through `scry.search()` / `scry.search_ids()` with
-`kinds` filtering, or through direct `scry.entities` queries with `source` filter.
+These are queryable through `scry.search_federated(...)`, source-native helpers
+where available, or direct `scry.entities` queries with `source` filters.
 
 ### Patent Views
 
@@ -712,11 +735,20 @@ empty query.
 | `scry.books` | Book entities |
 | `scry.github_repo_audit` | GitHub repository audit data |
 | `scry.npm_package_audit` | npm package audit data |
+| `scry.nyt_archive_articles` | NYT Archive API article corpus |
+| `scry.nyt_article_search_articles` | NYT Article Search API corpus |
+| `scry.nyt_books_items` | NYT Books API items and list entries |
+| `scry.nyt_rss_items` | NYT RSS feed items |
+| `scry.nyt_times_wire_items` | NYT Times Wire items |
+| `scry.nyt_top_stories_items` | NYT Top Stories items |
+| `scry.nyt_most_popular_items` | NYT Most Popular items |
 | `scry.offshoreleaks_nodes` | OffshoreLeaks nodes (flattened) |
 | `scry.offshoreleaks_edges` | OffshoreLeaks edges (flattened) |
 | `scry.sporc_episodes` | Podcast episodes |
 | `scry.sporc_turns` | Podcast transcript turns |
 | `scry.entities_private` | Private entities (authenticated only) |
+| `scry.private_twitter_bookmarks` | Private Twitter bookmark rows (authenticated only) |
+| `scry.private_twitter_bookmark_authors` | Private bookmark rows resolved to linked authors when a public Twitter actor match exists (authenticated only) |
 | `scry.chunk_embeddings_private` | Private chunk embeddings (authenticated only) |
 | `scry.entities_all` | Union of public + private (authenticated only) |
 
@@ -770,8 +802,9 @@ then widen into richer SQL once you know the right corpus and filters.
 
 | Function | Description | Max limit |
 |----------|-------------|-----------|
-| `scry.search(query_text, mode, kinds, limit_n)` | BM25 lexical search over canonical `content_text` | 100 |
-| `scry.search_ids(query, mode, kinds, limit_n)` | Lightweight lexical search (returns ids only; join to `scry.entities` for fields) | 2000 |
+| `scry.search_federated(query_text, sources, kinds, limit_n, per_source_cap)` | Canonical source-aware lexical shortlist helper across shared and source-native corpora | 200 |
+| `scry.search(query_text, mode, kinds, limit_n)` | Shared BM25 diagnostic helper over `content_text`; prefer `scry.search_federated(...)` | 100 |
+| `scry.search_ids(query, mode, kinds, limit_n)` | Shared BM25 diagnostic id helper over `content_text`; prefer `scry.search_federated(...)` | 2000 |
 | `scry.search_reddit_posts(query, subreddits, limit_n, window_key)` | Reddit post search | 50 per window |
 | `scry.search_reddit_comments(query, subreddits, limit_n, window_key)` | Reddit comment search | 50 per window |
 | `scry.search_reddit_posts_semantic(query_embedding, subreddits, limit_n, min_upvotes, min_timestamp)` | Reddit semantic search over embedding-covered subset | 200 |
@@ -780,6 +813,8 @@ then widen into richer SQL once you know the right corpus and filters.
 | `scry.author_topics(author_pattern, topics)` | Per-author topic hit counts | -- |
 | `scry.preview_text(input, max_chars)` | Safe content-text prefix helper | -- |
 | `scry.preview_text_safe(input, max_chars)` | Exception-safe content-text prefix helper | -- |
+| `scry.search_private_twitter_bookmarks(query_text, mode, limit_n)` | Private Twitter bookmark lexical search (authenticated only) | 200 |
+| `scry.private_bookmarked_author_affinity(limit_n)` | Person-level affinity rollup from private Twitter bookmarks through accepted internal identity links (authenticated only) | 200 |
 
 Default kinds for omitted `kinds`: `post`, `paper`, `document`, `webpage`, `twitter_thread`, `grant`.
 
@@ -787,9 +822,9 @@ Default kinds for omitted `kinds`: `post`, `paper`, `document`, `webpage`, `twit
 appear in live schema, but if the schema response marks them `degraded`, do not
 use them as the normal path.
 `scry.search()` broadens once to `comment` if that default returns 0 rows.
-`/v1/scry/estimate` checks planner cost, not BM25 helper health. If a
-`scry.search*` call fails, also inspect `/v1/scry/index-view-status` and the
-object `status` fields in `/v1/scry/schema`.
+If a `scry.search*` call fails, switch to `scry.search_federated(...)` or a
+source-native helper. `/v1/scry/index-view-status` and the `status` fields in
+`/v1/scry/schema` show live object health.
 
 ### Package Registry Search Functions
 

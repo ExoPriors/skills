@@ -21,9 +21,12 @@ description: >
 
 # Scry Skill
 
-Scry gives you read-only SQL access to the ExoPriors public corpus
-via a single HTTP endpoint. You write Postgres SQL against a curated `scry.*` schema
+Scry's canonical substrate is read-only SQL over the ExoPriors public corpus.
+Most agents should reach that substrate through the hosted Scry HTTP surface and Scry tools,
+not raw database credentials. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
+When SQL is unnecessary, the portable typed-search front door is `POST /v1/scry/search`,
+and `GET /v1/scry/search/records/{record_ref}` hydrates record details.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
 **Skill generation**: `2026041201`
@@ -70,14 +73,10 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    docs live.
    If you cache descriptive bootstrap context across turns or sessions, also
    track `surface_context_generation` and refresh when it changes.
-   Read `lexical_search.status`, `lexical_search.status_basis`, and
-   `lexical_search.last_known_status` as well. If `status_basis` is
-   `observability_lag` and `last_known_status` is `healthy`, global
-   `scry.search*` is still the default unless the task is recency-critical or
-   results look wrong. Pivot to source-local `scry.*` / `mv_*` surfaces or
-   semantic retrieval when the confirmed status is `rebuilding`, `degraded`,
-   or `unavailable`, or when a stale snapshot's last known status is not
-   healthy.
+   Use typed search, `scry.search_federated(...)`, or source-native
+   `scry.search_*` helpers for lexical work. Pivot to source-local `scry.*`
+   surfaces or semantic retrieval when those helpers do not fit the task. The
+   `lexical_search` block reports health for the shared BM25 diagnostic path.
    If you are validating deploy/runtime conformance from this repo rather than
    just using the surface, run the canonical proof command:
 
@@ -97,7 +96,11 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 
 2. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
    Never guess column names or types. The schema endpoint returns live
-   column metadata and row-count estimates for every view.
+   column metadata and row-count estimates for every view. For semantic SQL,
+   also read each embedding-capable relation's `vector_indexed` field and
+   prefer `true` surfaces first; `false` means the relation is exposed but not
+   ANN-index-backed on the public path, so similarity ordering may degrade into
+   seq-scan behavior that will not fit the sync envelope.
 
    If the task targets publication-first Parquet datasets rather than the live
    Scry SQL corpus, call `GET /v1/scry/datasets`, inspect
@@ -116,12 +119,15 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    ("search Reddit for X", "find things about Y"), ask one short clarification
    question about the goal/output format before running expensive SQL.
 
-5. **Start with a cheap probe.** Before any query likely to run >5s, run
-   `GET /v1/scry/price` plus `/v1/scry/estimate` and/or a tight exploratory
-   query (`LIMIT 20` plus scoped source/window filters), then scale only after
-   confirming relevance. Use `GET /v1/scry/price/history` when you need to know
-   whether the current base fee is a spike or the recent norm; it defaults to
-   the trailing 6 hours and rejects windows wider than 24 hours.
+5. **Start with a cheap probe.** Before any query likely to run >5s, read
+   `GET /v1/scry/pricing` plus `/v1/scry/estimate` and/or run a tight
+   exploratory query (`LIMIT 20` plus scoped source/window filters), then scale
+   only after confirming relevance. Use `GET /v1/scry/price` when you
+   specifically want the lightweight current epoch oracle (`base_fee`,
+   `utilization`, `load_pressure`, `recommended_max_fee`, `epoch`). Use
+   `GET /v1/scry/price/history` when you need to know whether the current base
+   fee is a spike or the recent norm; it defaults to the trailing 6 hours and
+   rejects windows wider than 24 hours.
 
 6. **Treat congested queries as budget-bounded.** Scry queries are free unless
    there is congestion. When there is congestion, Scry reserves nanodollar
@@ -163,15 +169,18 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 7. **Choose lexical SQL vs semantic explicitly.** Use
    `scry.search_federated(...)`, source-native `scry.search_*` helpers, or
    other lexical SQL when the user wants fast provenance-bearing first results.
-   Widen into broader SQL when you need joins, aggregation, or full control
-   over filters. For conceptual intent ("themes", "things like", "similar
-   to"), route to scry-vectors first, then optionally hybridize.
+   Use the shared BM25 diagnostic helpers only when a task explicitly needs that
+   path. Widen into broader SQL when you need joins,
+   aggregation, or full control over filters. For conceptual intent ("themes",
+   "things like", "similar to"), route to scry-vectors first, then optionally
+   hybridize.
 
 8. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
 
 9. **Prefer canonical surfaces with tight filters.** `scry.entities` is large
-   enough that you should not scan it blindly. Use `scry.search*` for lexical retrieval,
+   enough that you should not scan it blindly. Use `scry.search_federated(...)`,
+   typed search, or source-native `scry.search_*` helpers for lexical retrieval,
    `scry.chunk_embeddings` for chunk-level semantic retrieval, `scry.entity_embeddings`
    or `scry.entities_with_embeddings` only when you want one entity-level vector
    row per entity, `scry.embedding_coverage` to inspect public vs staged vs ready
@@ -195,7 +204,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    `scry.gutenberg_books`, `scry.wikidata_items`, `scry.wikidata_claims`,
    and `scry.kl3m` when a corpus no longer lives canonically in
    `scry.entities`. Reach for a specific `mv_*` convenience view only when
-   `/v1/scry/schema` confirms it is healthy and useful for the task.
+   `/v1/scry/schema` confirms it is healthy and useful for the task, and do
+   not treat it as corpus-complete truth when completeness matters.
 
    For Hugging Face specifically, prefer `scry.search_huggingface()` when you
    need one discovery-first entry point across repos, artifacts, papers,
@@ -348,8 +358,9 @@ When there is congestion, these are the key billing controls:
   Use `pricing_mode: "patient"` when the user wants FIFO waiting at base price
   during congestion instead of bidding into the eager auction.
 - `GET /v1/scry/price` returns the live `base_fee`, `utilization`, `load_pressure`,
-  `recommended_max_fee`, and current epoch metadata. Use it right before
-  deciding whether to run now in `eager` mode or wait in `patient`.
+  `recommended_max_fee`, and current epoch metadata. It is the lightweight
+  current epoch oracle; use it right before deciding whether to run now in
+  `eager` mode or wait in `patient`.
 - `GET /v1/scry/price/history` returns sampled `epoch_id` / `timestamp` /
   `base_fee` / `utilization` history plus sampling metadata for large windows.
   If no bounds are provided it returns the trailing 6 hours, and requests wider
@@ -359,7 +370,7 @@ When there is congestion, these are the key billing controls:
 - `GET /v1/scry/spend` returns the authenticated caller's own spend history:
   `total_credits_spent`, `query_count`, `avg_cost_per_query`, and recent
   per-query cost breakdowns.
-- `GET /v1/scry/pricing` returns the live query access contract (`free_unless_congested`), whether congestion pricing is currently active, the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
+- `GET /v1/scry/pricing` returns the live billing/market authority: the live query access contract (`free_unless_congested`), whether congestion pricing is currently active, the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
 - `GET /v1/scry/pricing` also exposes the x402 base funding quantum and the fact that x402 funding now scales off `X-Scry-Budget` when that header is present.
 - `GET /v1/scry/account` returns the authenticated funding summary. Read `funding.card_funding` first when the question is "can this agent use cards right now?" because it makes the current card state explicit (`requires_operator_setup`, `saved_method_ready`, `auto_topup_attention_required`, `auto_topup_active`, or `disabled`) and lists the next endpoints to call.
 - Funding-control endpoints such as `GET /v1/scry/account`, `POST /v1/billing/agent-topup`, `POST /v1/billing/payment-mandates`, and `PATCH /v1/billing/auto-topup` require account or billing scope.
@@ -427,12 +438,14 @@ Authorization: Bearer $SCRY_API_KEY
 Content-Type: text/plain
 
 WITH hits AS (
-  SELECT id FROM scry.search('RLHF reinforcement learning human feedback',
-    kinds=>ARRAY['post'], limit_n=>100)
+  SELECT entity_id
+  FROM scry.search_federated('RLHF reinforcement learning human feedback',
+    ARRAY['lesswrong'], ARRAY['post'], 100, 100)
+  WHERE entity_id IS NOT NULL
 )
 SELECT e.uri, e.title, e.original_author, e.original_timestamp, e.score
 FROM hits h
-JOIN scry.entities e ON e.id = h.id
+JOIN scry.entities e ON e.id = h.entity_id
 WHERE e.source = 'lesswrong'
 ORDER BY e.score DESC NULLS LAST, e.original_timestamp DESC
 LIMIT 20
@@ -483,13 +496,13 @@ User wants to search the ExoPriors corpus?
   +-- Ambiguous / conceptual ask? --> Clarify intent first, then use
   |     scry-vectors for semantic search (optionally hybridize with lexical)
   |
-  +-- By keywords/phrases? --> scry.search() (BM25 lexical over canonical content_text)
-  |     +-- Specific forum?  --> join/filter `source` explicitly (or use a healthy source-local view if schema confirms it)
+  +-- By keywords/phrases? --> typed search, scry.search_federated(...), or source-native search helpers
+  |     +-- Specific source? --> pass `sources` explicitly or use the source-native helper/table
   |     +-- Reddit?          --> START with scry.reddit_subreddit_stats /
   |                              scry.reddit_clusters() / scry.reddit_embeddings
   |                              and trust /v1/scry/schema status before
   |                              using direct retrieval helpers
-  |     +-- Large result?    --> scry.search_ids() (up to 2000 lexical IDs; join for fields)
+  |     +-- Large result?    --> use tight source/kind/date filters and scale only after a small probe
   |
   +-- By structured filters (source, date, author)? --> Direct SQL on MVs
   |
@@ -531,14 +544,10 @@ using packaged Scry skills, or if local instructions still point at
 legacy ExoPriors hostnames or legacy console routes, stop and ask the user
 to run `npx skills update` before deeper debugging.
 If response includes `"lexical_search": {...}`, read `status`, `status_basis`,
-and `last_known_status` together. When `status = "stale"` and
-`status_basis = "observability_lag"` with `last_known_status = "healthy"`,
-global lexical search is still the default unless the task is recency-critical
-or the results look wrong. Prefer source-local `scry.*` surfaces or
-`scry.entities_with_embeddings` when the confirmed status is `rebuilding`,
-`degraded`, or `unavailable`, or when a stale snapshot's last known status is
-not healthy. Use `/v1/scry/index-view-status` for detailed live timing before
-blaming the query.
+and `last_known_status` as health for the shared BM25 diagnostic path. Prefer
+typed search, `scry.search_federated(...)`, source-native `scry.search_*`
+helpers, or `scry.entities_with_embeddings` depending on the task. Use
+`/v1/scry/index-view-status` for detailed live timing before blaming the query.
 
 ### E0b. Submit feedback when Scry blocks the task
 
@@ -557,23 +566,24 @@ curl -s "https://api.scry.io/v1/feedback?limit=10" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
-### E1. Lexical search (BM25)
+### E1. Source-aware lexical search
 
 ```sql
 WITH c AS (
-  SELECT id FROM scry.search('your query here',
-    kinds=>ARRAY['post'], limit_n=>100)
+  SELECT entity_id
+  FROM scry.search_federated('your query here',
+    NULL, ARRAY['post'], 100, 10)
+  WHERE entity_id IS NOT NULL
 )
 SELECT e.uri, e.title, e.original_author, e.original_timestamp
-FROM c JOIN scry.entities e ON e.id = c.id
+FROM c JOIN scry.entities e ON e.id = c.entity_id
 WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 LIMIT 50
 ```
 
-Default `kinds` if omitted: `['post','paper','document','webpage','twitter_thread','grant']`.
-`scry.search()` broadens once to `kinds=>ARRAY['comment']` if that default returns 0 rows.
-Pass explicit `kinds` for strict scope (for example comment-only or tweet-only).
-For source scoping, join back to `scry.entities` and filter `source` explicitly.
+Use `sources` and `kinds` arrays for strict scope. `NULL` searches across
+available source-aware arms, while `per_source_cap` keeps one noisy source from
+dominating first-pass results.
 Healthy source-specific MVs can still be useful for source-native score fields
 such as `base_score`, but they are optional convenience slices rather than the default path.
 
@@ -649,14 +659,16 @@ the question.
 
 ```sql
 WITH c AS (
-  SELECT id FROM scry.search('deceptive alignment',
-    kinds=>ARRAY['post'], limit_n=>200)
+  SELECT entity_id
+  FROM scry.search_federated('deceptive alignment',
+    NULL, ARRAY['post'], 200, 10)
+  WHERE entity_id IS NOT NULL
 )
 SELECT e.uri, e.title, e.original_author,
        emb.embedding_voyage4 <=> @p_deadbeef_topic AS distance
 FROM c
-JOIN scry.entities e ON e.id = c.id
-JOIN scry.chunk_embeddings emb ON emb.entity_id = c.id AND emb.chunk_index = 0
+JOIN scry.entities e ON e.id = c.entity_id
+JOIN scry.chunk_embeddings emb ON emb.entity_id = c.entity_id AND emb.chunk_index = 0
 WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY distance
 LIMIT 50

@@ -184,7 +184,7 @@ authorization.
 2. Add `WHERE source = '...'` to narrow scope
 3. Add date range filters (`original_timestamp >= '...'`)
 4. Reduce LIMIT
-5. Use `scry.search_ids()` instead of `scry.search()` for cheaper candidate fetch
+5. Use `scry.search_federated(...)` or a source-native helper for a cheaper candidate fetch
 6. Run `/v1/scry/estimate` to check plan cost, suggested reserve, and `exposure_timeout_ms` before retrying
 7. If the error is `query_exposure_exhausted`, raise `X-Scry-Max-Exposure` only after confirming the broader query is actually worth paying for
 

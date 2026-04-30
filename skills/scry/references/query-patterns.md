@@ -7,14 +7,16 @@ Scry API. All patterns assume you have already called `GET /v1/scry/schema`.
 
 ## 1. Lexical Search Patterns
 
-### Basic BM25 search
+### Basic source-aware lexical search
 ```sql
 WITH c AS (
-  SELECT id FROM scry.search('mechanistic interpretability',
-    kinds=>ARRAY['post','paper'], limit_n=>100)
+  SELECT entity_id
+  FROM scry.search_federated('mechanistic interpretability',
+    NULL, ARRAY['post','paper'], 100, 10)
+  WHERE entity_id IS NOT NULL
 )
 SELECT e.uri, e.title, e.original_author, e.original_timestamp, e.source::text
-FROM c JOIN scry.entities e ON e.id = c.id
+FROM c JOIN scry.entities e ON e.id = c.entity_id
 WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY e.original_timestamp DESC
 LIMIT 50
@@ -23,15 +25,47 @@ LIMIT 50
 ### Scoped to a specific forum
 ```sql
 WITH c AS (
-  SELECT id FROM scry.search('corrigibility',
-    kinds=>ARRAY['post'], limit_n=>100)
+  SELECT entity_id
+  FROM scry.search_federated('corrigibility',
+    ARRAY['lesswrong'], ARRAY['post'], 100, 100)
+  WHERE entity_id IS NOT NULL
 )
 SELECT e.uri, e.title, e.score, e.original_timestamp
 FROM c
-JOIN scry.entities e ON e.id = c.id
+JOIN scry.entities e ON e.id = c.entity_id
 WHERE e.source = 'lesswrong'
 ORDER BY e.score DESC NULLS LAST, e.original_timestamp DESC
 LIMIT 30
+```
+
+### Authenticated private liked-author rollup from Twitter bookmarks
+```sql
+SELECT
+  person_id,
+  display_name,
+  bookmark_count,
+  probabilistic_bookmark_count,
+  linked_platforms,
+  linked_accounts,
+  twitter_handles
+FROM scry.private_bookmarked_author_affinity(25)
+ORDER BY bookmark_count DESC, latest_bookmarked_at DESC;
+```
+
+### Inspect which bookmarked tweets resolved to which linked author
+```sql
+SELECT
+  bookmark_id,
+  tweet_id,
+  twitter_author_handle,
+  author_person_display_name,
+  author_person_confidence_tier,
+  author_person_link_confidence,
+  public_entity_id
+FROM scry.private_twitter_bookmark_authors
+WHERE author_person_id IS NOT NULL
+ORDER BY bookmarked_at DESC NULLS LAST
+LIMIT 50;
 ```
 
 When a source-specific MV exists, join that MV and use its native score field
@@ -58,6 +92,21 @@ SELECT id, uri, title, snippet, original_timestamp
 FROM scry.search_exhaustive('alignment tax',
   kinds=>ARRAY['post'], limit_n=>200, offset_n=>0)
 ORDER BY original_timestamp DESC
+```
+
+
+### SEC EDGAR: company filing trail and material filings
+```sql
+-- Latest Apple 10-K/10-Q rows, including queue status for followthrough
+SELECT accession_number, form_type, report_date, title, full_text_queue_status, xbrl_queue_status, uri
+FROM scry.sec_edgar_company_filings('AAPL', forms => ARRAY['10-K','10-Q'], limit_n => 20);
+
+-- Material filings across the SEC substrate
+SELECT cik, ticker, form_type, material_class, report_date, title, uri
+FROM scry.sec_edgar_material_filings
+WHERE material_class IN ('periodic_report', 'current_report')
+ORDER BY report_date DESC NULLS LAST
+LIMIT 50;
 ```
 
 ---
@@ -307,11 +356,13 @@ LIMIT 50
 ### Cross-source paper search
 ```sql
 WITH hits AS (
-  SELECT id FROM scry.search('RLHF reward hacking',
-    kinds=>ARRAY['paper'], limit_n=>200)
+  SELECT entity_id
+  FROM scry.search_federated('RLHF reward hacking',
+    NULL, ARRAY['paper'], 200, 10)
+  WHERE entity_id IS NOT NULL
 )
 SELECT e.uri, e.title, e.source::text, e.original_timestamp
-FROM hits h JOIN scry.entities e ON e.id = h.id
+FROM hits h JOIN scry.entities e ON e.id = h.entity_id
 WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY e.original_timestamp DESC
 LIMIT 50
@@ -411,17 +462,19 @@ LIMIT 20
 
 ## 5. Hybrid Search (Lexical + Semantic)
 
-### BM25 candidates, semantic rerank via embedding
+### Lexical candidates, semantic rerank via embedding
 ```sql
 WITH c AS (
-  SELECT id FROM scry.search('deceptive alignment mesa-optimizer',
-    kinds=>ARRAY['post'], limit_n=>200)
+  SELECT entity_id
+  FROM scry.search_federated('deceptive alignment mesa-optimizer',
+    NULL, ARRAY['post'], 200, 10)
+  WHERE entity_id IS NOT NULL
 )
 SELECT e.uri, e.title, e.original_author,
        emb.embedding_voyage4 <=> @p_deadbeef_deceptive_alignment AS distance
 FROM c
-JOIN scry.entities e ON e.id = c.id
-JOIN scry.chunk_embeddings emb ON emb.entity_id = c.id AND emb.chunk_index = 0
+JOIN scry.entities e ON e.id = c.entity_id
+JOIN scry.chunk_embeddings emb ON emb.entity_id = c.entity_id AND emb.chunk_index = 0
 WHERE e.content_risk IS DISTINCT FROM 'dangerous'
 ORDER BY distance
 LIMIT 50
@@ -858,13 +911,14 @@ LIMIT 50
    pre-filtered and often have indexes that scry.entities does not.
 
 2. **Avoid `content_text ILIKE '%...'`** on scry.entities. This detoasts every row.
-   Use `scry.search()` for text search instead.
+   Use typed search, `scry.search_federated(...)`, or source-native helpers for text search instead.
 
 3. **Avoid `COUNT(*)` on large tables.** Use `/v1/scry/schema` row estimates or
    `pg_class.reltuples` (authenticated keys only).
 
-4. **Use `scry.search_ids()` over `scry.search()`** when you only need id/uri/kind
-   for further filtering. It returns `(id, uri, kind)` and avoids detoasting content_text/snippet.
+4. **Prefer source-aware shortlist helpers** (`scry.search_federated(...)`,
+   source-native `scry.search_*`) for further filtering. They cap any single
+   source's contribution and return provenance fields ready for join.
 
 5. **Filter `embedding_voyage4 IS NOT NULL`** when joining `scry.chunk_embeddings`.
    Not all entities have embeddings.
