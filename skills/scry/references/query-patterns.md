@@ -158,6 +158,15 @@ FROM scry.huggingface_account_socials
 WHERE handle = 'Presidentlin';
 ```
 
+### Inspect public profile hardware declarations
+```sql
+SELECT handle, display_name, hardware_kind, vendor, sku_name, memory_gb, quantity
+FROM scry.huggingface_account_hardware
+WHERE hardware_kind = 'GPU'
+ORDER BY quantity DESC, memory_gb DESC NULLS LAST
+LIMIT 50;
+```
+
 ### Filter directly by repo family
 ```sql
 SELECT repo_id, owner_handle, title, pipeline_tag, likes, downloads

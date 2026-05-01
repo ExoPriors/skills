@@ -115,6 +115,7 @@ union view over those records.
 | `scry.huggingface_models` / `scry.huggingface_datasets` / `scry.huggingface_spaces` | Repo-type filtered Hugging Face aliases for common traversal without repeating `WHERE repo_type = ...`. |
 | `scry.huggingface_accounts` / `scry.huggingface_organizations` | Canonical Hugging Face account substrate keyed by handle. Includes user/org typing, bio, follower counts, plan/pro flags, and profile metadata. |
 | `scry.huggingface_account_socials` / `scry.huggingface_organization_memberships` | Account graph edges. Social handles keyed by `(handle, platform)` plus org→member memberships keyed by `(organization_handle, member_handle)`. |
+| `scry.huggingface_account_hardware` | Public profile hardware declarations from HF Local Apps and Hardware. One row per declared hardware item with handle, account display fields, hardware kind, vendor, SKU path/name, memory GB, quantity, and raw metadata. |
 | `scry.huggingface_repo_text_artifacts` | Selected high-signal repo text files keyed by `artifact_key`. Includes README/model-card text, Space `app.py`, config files, citations, licenses, and requirements. |
 | `scry.huggingface_papers` | Hugging Face Paper Pages keyed by paper id (typically arXiv id). Includes summary, AI summary, authors, upvotes, and discussion id. |
 | `scry.huggingface_collections` / `scry.huggingface_collection_items` | Hugging Face collections and their ordered items (models, datasets, spaces, papers, nested collections). |

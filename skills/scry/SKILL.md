@@ -194,6 +194,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    `scry.huggingface_collections`, `scry.huggingface_discussions`,
    `scry.huggingface_accounts`, `scry.huggingface_models`,
    `scry.huggingface_datasets`, `scry.huggingface_spaces`,
+   `scry.huggingface_account_hardware`,
    `scry.huggingface_repo_text_artifacts`,
    `scry.huggingface_paper_artifacts`,
    `scry.kalshi_markets`, `scry.nih_reporter_projects`,
