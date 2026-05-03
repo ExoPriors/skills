@@ -104,6 +104,7 @@ union view over those records.
 | `scry.twitter_posts` | Canonical Twitter/X substrate keyed by canonical tweet URI. Exposes public provenance tags plus aggregated observation-source tags such as `observation_sources`, `capture_channels`, and `has_extension_observation`. |
 | `scry.twitter_threads` | Canonical Twitter thread-root substrate keyed by `thread:{root_tweet_id}`. Includes root payload, author/timestamp, aggregate tweet counts, and total likes/retweets for thread-level retrieval. |
 | `scry.twitter_post_observations` | Public-safe provenance rows for the Twitter substrate. Exposes source collection, observation source, capture channel, trust score, verification status, and metrics without uploader PII. |
+| `scry.twitter_follow_edges` | Public Twitter/X follow-edge substrate keyed by follower and followee IDs. Exposes handles, followee profile counts when present, and public provenance tags for graph traversal. |
 | `scry.mailing_lists` / `scry.mailing_list_messages` | Canonical mailing-list list metadata plus per-message substrate keyed by `list_key` / `message_key`. |
 | `scry.forum_sites` / `scry.forum_threads` / `scry.forum_posts` | Canonical forum substrate split into site metadata, thread headers, and post rows. Covers Discourse- and Forem-style archives keyed by `site_key` / `thread_key` / `post_key`. |
 | `scry.discussion_messages` | Normalized union over mailing-list messages and forum posts with shared `source_class`, `collection_key`, `thread_key`, `message_key`, and `archive_url` columns. |
