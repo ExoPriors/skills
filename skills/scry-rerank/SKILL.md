@@ -437,7 +437,7 @@ For explicit persistence control, use the `persist` field:
 | 400 "dangerous content" | Candidate set includes flagged entities | Add `content_risk IS DISTINCT FROM 'dangerous'` to SQL |
 | 400 "id_column not found" | SQL result lacks `id` column | Add `id` to SELECT or set `id_column` |
 | 400 "text_column not found" | SQL result lacks `content_text` column | Add `content_text` to SELECT or set `text_column` |
-| 402 Insufficient credits | Account balance too low | Top up credits at scry.io/console |
+| 402 Insufficient credits | Account balance too low | Top up credits at scry.io/#billing |
 | 429 Rate limited | Too many concurrent requests | Back off and retry |
 | 503 LLM service not configured | Server-side config issue | Contact support |
 

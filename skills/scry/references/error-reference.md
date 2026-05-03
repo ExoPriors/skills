@@ -49,7 +49,7 @@ and run `npx skills update` first.
 
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
-| `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Use your personal Scry API key from `scry.io/console` and ensure it has Scry access |
+| `unauthorized` | "Missing or invalid API key" | No `Authorization: Bearer` header or key not recognized | Use your personal Scry API key from `scry.io/#console` and ensure it has Scry access |
 | `unauthorized` | "Invalid authorization format" | Authorization header malformed (extra quotes, whitespace, or newline in env var) | Strip CR/LF from key, ensure exact `Authorization: Bearer <key>` |
 | `unauthorized` | "API key expired" | Key past 30-day expiry | Regenerate via `/api/console/scry/regenerate-key` or mint a fresh personal key |
 
