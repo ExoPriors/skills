@@ -621,6 +621,25 @@ bounded multi-window path. Keep `scry.reddit_posts`, `scry.reddit_comments`,
 `scry.mv_reddit_*`, `scry.search_reddit_posts(...)`, and
 `scry.search_reddit_comments(...)` for lower-level or explicit-window work.
 
+For `r/gabagoodness`, `r/pregabalin`, and `r/gabapentin`, use the accelerated
+Reddit path directly:
+
+```sql
+SELECT id, kind, subreddit, title, snippet, original_timestamp, score
+FROM scry.search_reddit(
+  'pregabalin phenomenology experience r/gabagoodness r/pregabalin r/gabapentin',
+  'auto',
+  NULL,
+  ARRAY['post', 'comment'],
+  50,
+  'auto'
+)
+ORDER BY score DESC NULLS LAST
+```
+
+Do not use `scry.search(...)` for this Reddit slice; it is the shared BM25
+diagnostic path, not the source-native Reddit search path.
+
 For semantic search over the embedding-covered subset, prefer:
 
 ```sql

@@ -278,14 +278,20 @@ For `r/gabagoodness`, `r/pregabalin`, and `r/gabapentin`, use the hot-subreddit
 helper when you want posts and comments from that slice:
 
 ```sql
-SELECT id, kind, subreddit, title, original_timestamp, score
-FROM scry.search_reddit_hot_subreddits(
-  'pregabalin',
-  subreddits=>ARRAY['gabagoodness','pregabalin','gabapentin'],
-  limit_n=>50
+SELECT id, kind, subreddit, title, snippet, original_timestamp, score
+FROM scry.search_reddit(
+  'pregabalin phenomenology experience r/gabagoodness r/pregabalin r/gabapentin',
+  'auto',
+  NULL,
+  ARRAY['post', 'comment'],
+  50,
+  'auto'
 )
 ORDER BY score DESC NULLS LAST
 ```
+
+This path uses the accelerated Reddit materialized view. Do not use
+`scry.search(...)` for this slice.
 
 ### Fast subreddit discovery from lexical hits
 ```sql
