@@ -598,12 +598,47 @@ ORDER BY total_count DESC
 ```
 
 For semantic Reddit retrieval over the embedding-covered subset, use
-`scry.reddit_embeddings` or `scry.search_reddit_posts_semantic(...)`.
+`scry.reddit_embeddings` or `scry.search_reddit_semantic(...)`.
 
-Direct retrieval helpers (`scry.reddit_posts`, `scry.reddit_comments`,
-`scry.mv_reddit_*`, `scry.search_reddit_posts(...)`,
-`scry.search_reddit_comments(...)`) are currently degraded on the public
-instance. Check `/v1/scry/schema` status before using them.
+For public lexical retrieval, prefer:
+
+```sql
+SELECT *
+FROM scry.search_reddit(
+  'transformer circuits r/LocalLLaMA',
+  'auto',
+  NULL,
+  ARRAY['post', 'comment'],
+  20,
+  'auto'
+)
+LIMIT 20
+```
+
+`scry.search_reddit(...)` merges posts/comments, normalizes subreddit casing,
+accepts inline `r/...`, `subreddit:...`, and `cluster:...` scopes, and uses the
+bounded multi-window path. Keep `scry.reddit_posts`, `scry.reddit_comments`,
+`scry.mv_reddit_*`, `scry.search_reddit_posts(...)`, and
+`scry.search_reddit_comments(...)` for lower-level or explicit-window work.
+
+For semantic search over the embedding-covered subset, prefer:
+
+```sql
+SELECT *
+FROM scry.search_reddit_semantic(
+  @mech_interp,
+  ARRAY['LocalLLaMA'],
+  ARRAY['post', 'comment'],
+  20,
+  NULL,
+  NULL
+)
+LIMIT 20
+```
+
+Use `scry.search_reddit_posts_semantic(...)` or
+`scry.search_reddit_comments_semantic(...)` only when you already know you want
+one kind.
 
 ### E3. Source-filtered materialized view query
 

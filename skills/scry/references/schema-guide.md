@@ -228,9 +228,11 @@ live schema, but performance is not reliable enough to treat them as the normal
 happy path.
 
 Use these only if `/v1/scry/schema` marks them healthy again. For default
-Reddit work today, start with `scry.reddit_subreddit_stats`,
+Reddit lexical work, use `scry.search_reddit(...)`,
+`scry.search_reddit_posts(...)`, or `scry.search_reddit_hot_subreddits(...)`
+when its subreddit slice matches the task. Use `scry.reddit_subreddit_stats`,
 `scry.reddit_subreddit_stats_monthly`, `scry.reddit_clusters()`, and
-`scry.reddit_embeddings`.
+`scry.reddit_embeddings` for discovery and coverage checks.
 
 | Column | Type | Notes |
 |--------|------|-------|
@@ -792,9 +794,9 @@ Metadata is JSONB. Access with `metadata->>'field_name'`.
   `original_author` may be NULL; prefer `metadata->>'username'`.
 - **arXiv**: `title` often in metadata. `score` is always NULL.
 - **Bluesky**: embeddings still ramping. No score field.
-- **Reddit**: `upvotes` can be negative. On the public instance, direct retrieval
-  and BM25 helper surfaces are currently degraded; trust `/v1/scry/schema`
-  status before using them.
+- **Reddit**: `upvotes` can be negative. Prefer `scry.search_reddit(...)` for
+  lexical retrieval and `scry.search_reddit_semantic(...)` for semantic
+  retrieval over the embedding-covered subset.
 
 ---
 
@@ -809,9 +811,12 @@ then widen into richer SQL once you know the right corpus and filters.
 | `scry.search_federated(query_text, sources, kinds, limit_n, per_source_cap)` | Canonical source-aware lexical shortlist helper across shared and source-native corpora | 200 |
 | `scry.search(query_text, mode, kinds, limit_n)` | Shared BM25 diagnostic helper over `content_text`; prefer `scry.search_federated(...)` | 100 |
 | `scry.search_ids(query, mode, kinds, limit_n)` | Shared BM25 diagnostic id helper over `content_text`; prefer `scry.search_federated(...)` | 2000 |
+| `scry.search_reddit(query_text, mode, subreddits, kinds, limit_n, window_key)` | Ergonomic Reddit lexical search across posts/comments | 100 |
 | `scry.search_reddit_posts(query, subreddits, limit_n, window_key)` | Reddit post search | 50 per window |
 | `scry.search_reddit_comments(query, subreddits, limit_n, window_key)` | Reddit comment search | 50 per window |
+| `scry.search_reddit_semantic(query_embedding, subreddits, kinds, limit_n, min_upvotes, min_timestamp)` | Ergonomic Reddit semantic search across the embedding-covered post/comment subset | 200 |
 | `scry.search_reddit_posts_semantic(query_embedding, subreddits, limit_n, min_upvotes, min_timestamp)` | Reddit semantic search over embedding-covered subset | 200 |
+| `scry.search_reddit_comments_semantic(query_embedding, subreddits, limit_n, min_upvotes, min_timestamp)` | Reddit comment semantic search over embedding-covered subset | 200 |
 | `scry.search_exhaustive(query_text, mode, kinds, limit_n, offset_n)` | Higher-cap paginated search | 1000 |
 | `scry.hybrid_search(query, query_vector, kinds, limit_n)` | Lexical + semantic rerank | 100 |
 | `scry.author_topics(author_pattern, topics)` | Per-author topic hit counts | -- |
@@ -822,9 +827,8 @@ then widen into richer SQL once you know the right corpus and filters.
 
 Default kinds for omitted `kinds`: `post`, `paper`, `document`, `webpage`, `twitter_thread`, `grant`.
 
-`scry.search_reddit_posts(...)` and `scry.search_reddit_comments(...)` may still
-appear in live schema, but if the schema response marks them `degraded`, do not
-use them as the normal path.
+Use `scry.search_reddit(...)` as the normal lexical path and
+`scry.search_reddit_semantic(...)` as the normal semantic path for Reddit.
 `scry.search()` broadens once to `comment` if that default returns 0 rows.
 If a `scry.search*` call fails, switch to `scry.search_federated(...)` or a
 source-native helper. `/v1/scry/index-view-status` and the `status` fields in

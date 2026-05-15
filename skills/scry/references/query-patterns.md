@@ -187,14 +187,14 @@ Reddit data lives in separate windowed tables (not `scry.entities`). Uses TEXT I
 - `scry.reddit_subreddit_stats` / `scry.reddit_subreddit_stats_monthly` — reliable discovery and counting
 - `scry.reddit_clusters()` plus the thematic cluster views — reliable starting points
 - `scry.reddit_embeddings` — semantic subset with explicit partial-coverage semantics
+- `scry.search_reddit(...)` and `scry.search_reddit_posts(...)` — source-native lexical search helpers
+- `scry.search_reddit_hot_subreddits(...)` — fast post/comment helper for the hot-subreddit slice
 
-**Currently degraded on the public instance**:
+**Direct table/view surfaces to treat as diagnostic unless schema marks them healthy**:
 - `scry.reddit_posts`
 - `scry.reddit_comments`
 - `scry.reddit`
 - `scry.mv_reddit_*`
-- `scry.search_reddit_posts(...)`
-- `scry.search_reddit_comments(...)`
 
 Trust `/v1/scry/schema` status. If a Reddit retrieval surface is marked
 `degraded`, do not treat it as the happy path.
@@ -226,7 +226,7 @@ SELECT * FROM scry.reddit_subreddits('%machine%learn%')
 SELECT * FROM scry.reddit_subreddits(min_total=>1000000, limit_n=>20)
 ```
 
-### Direct query — posts by subreddit (degraded on the public instance)
+### Direct view query — posts by subreddit
 ```sql
 SELECT id, uri, title, upvotes, comment_count, original_timestamp
 FROM scry.reddit_posts
@@ -236,7 +236,7 @@ ORDER BY original_timestamp DESC
 LIMIT 50
 ```
 
-### Direct query — comments by subreddit (degraded on the public instance)
+### Direct view query — comments by subreddit
 ```sql
 SELECT id, uri, original_author, upvotes, original_timestamp,
        LEFT(content_text, 200) AS preview
@@ -247,7 +247,7 @@ ORDER BY upvotes DESC NULLS LAST
 LIMIT 50
 ```
 
-### BM25 search — posts (degraded on the public instance)
+### BM25 search — posts
 ```sql
 SELECT id, uri, subreddit, title, original_author, original_timestamp, score
 FROM scry.search_reddit_posts(
@@ -262,7 +262,7 @@ ORDER BY score DESC NULLS LAST
 Window keys: `recent`, `2022_2023`, `2020_2021`, `2018_2019`, `2014_2017`,
 `2010_2013`, `2005_2009`, `all`.
 
-### BM25 search — comments (degraded on the public instance)
+### BM25 search — comments
 ```sql
 SELECT id, uri, subreddit, original_author, original_timestamp
 FROM scry.search_reddit_comments(
@@ -274,14 +274,28 @@ FROM scry.search_reddit_comments(
 ORDER BY score DESC NULLS LAST
 ```
 
+For `r/gabagoodness`, `r/pregabalin`, and `r/gabapentin`, use the hot-subreddit
+helper when you want posts and comments from that slice:
+
+```sql
+SELECT id, kind, subreddit, title, original_timestamp, score
+FROM scry.search_reddit_hot_subreddits(
+  'pregabalin',
+  subreddits=>ARRAY['gabagoodness','pregabalin','gabapentin'],
+  limit_n=>50
+)
+ORDER BY score DESC NULLS LAST
+```
+
 ### Fast subreddit discovery from lexical hits
 ```sql
 WITH hits AS (
   SELECT subreddit
-  FROM scry.search_reddit_posts(
+  FROM scry.search_reddit(
     'mechanistic interpretability',
+    subreddits=>ARRAY['cluster:ai'],
     limit_n=>500,
-    window_key=>'all'
+    window_key=>'recent'
   )
 )
 SELECT subreddit, COUNT(*) AS hits
@@ -294,10 +308,11 @@ LIMIT 30
 ### Semantic search over embedded Reddit subset
 ```sql
 -- $1 is a halfvec embedding from your client-side embed call
-SELECT id, distance, subreddit, title, upvotes, original_timestamp
-FROM scry.search_reddit_posts_semantic(
+SELECT id, kind, distance, subreddit, title, upvotes, original_timestamp
+FROM scry.search_reddit_semantic(
   query_embedding => $1,
   subreddits => ARRAY['MachineLearning','LocalLLaMA'],
+  kinds => ARRAY['post', 'comment'],
   limit_n => 50,
   min_upvotes => 20
 )
