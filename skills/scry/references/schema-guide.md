@@ -104,7 +104,9 @@ union view over those records.
 | `scry.twitter_posts` | Canonical Twitter/X substrate keyed by canonical tweet URI. Exposes public provenance tags plus aggregated observation-source tags such as `observation_sources`, `capture_channels`, and `has_extension_observation`. |
 | `scry.twitter_threads` | Canonical Twitter thread-root substrate keyed by `thread:{root_tweet_id}`. Includes root payload, author/timestamp, aggregate tweet counts, and total likes/retweets for thread-level retrieval. |
 | `scry.twitter_post_observations` | Public-safe provenance rows for the Twitter substrate. Exposes source collection, observation source, capture channel, trust score, verification status, and metrics without uploader PII. |
-| `scry.twitter_follow_edges` | Public Twitter/X follow-edge substrate keyed by follower and followee IDs. Exposes handles, followee profile counts when present, and public provenance tags for graph traversal. |
+| `scry.twitter_bucket_snapshots` | Scry Tweets bucket pull audit surface. Exposes snapshot-object progress, expected records, committed line coverage, and quality status for the `scry-tweets` Argus snapshot lane. |
+| `scry.twitter_follow_edges` | Public Twitter/X follow-edge substrate keyed by follower and followee IDs. Exposes handles, followee profile counts when present, public provenance tags, `coverage_status`, and `graph_coverage_note`; `partial_not_exhaustive` means observed follower/followee counts are lower bounds and missing edges are not evidence of non-following. |
+| `scry.twitter_follow_accounts` / `scry.twitter_followees(...)` / `scry.twitter_followers(...)` / `scry.twitter_mutual_followees(...)` / `scry.twitter_followee_overlap(...)` / `scry.twitter_follow_account_summary(...)` | Ergonomic Twitter/X graph traversal helpers. Use these before hand-writing joins when asking for followees, followers, overlap, mutuals, or observed account graph summaries. All returned counts are observed-only unless `coverage_status` states otherwise. |
 | `scry.mailing_lists` / `scry.mailing_list_messages` | Canonical mailing-list list metadata plus per-message substrate keyed by `list_key` / `message_key`. |
 | `scry.forum_sites` / `scry.forum_threads` / `scry.forum_posts` | Canonical forum substrate split into site metadata, thread headers, and post rows. Covers Discourse- and Forem-style archives keyed by `site_key` / `thread_key` / `post_key`. |
 | `scry.discussion_messages` | Normalized union over mailing-list messages and forum posts with shared `source_class`, `collection_key`, `thread_key`, `message_key`, and `archive_url` columns. |
@@ -143,7 +145,7 @@ Source-local lexical helpers exist for many of these views:
 | Function | Notes |
 |----------|-------|
 | `scry.search_bluesky_posts(query_text, mode, limit_n)` | BM25 over Bluesky `payload` plus DID / handle / display-name fields. |
-| `scry.search_twitter_posts(query_text, mode, limit_n)` | BM25 over canonical Twitter `payload` plus handle / display-name / tweet-id fields. Returns canonical URI plus public provenance-tag arrays. |
+| `scry.search_twitter_posts(query_text, mode, limit_n)` | BM25 over source-native Twitter/X tweet rows. Use for individual tweet identity, canonical URI, author fields, timestamps, and public observation provenance arrays. |
 | `scry.search_hackernews_items(query_text, mode, kinds, limit_n)` | BM25 over HN `title`, `payload`, and `original_author`. |
 | `scry.search_wikipedia_articles(query_text, mode, limit_n)` | BM25 over Wikipedia `title`, `payload`, and `original_author`. |
 | `scry.search_pubmed_papers(query_text, mode, limit_n)` | BM25 over PubMed `title`, `payload`, `original_author`, and `journal`. |
@@ -469,7 +471,7 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 
 | View | Description | Has embedding_voyage4? |
 |------|-------------|----------------------|
-| `scry.mv_twitter_threads` | Twitter threads | Yes |
+| `scry.mv_twitter_threads` | Twitter/X thread aggregate fast path; prefer `scry.twitter_posts` / `scry.search_twitter_posts` when the question needs individual tweet identity or observation provenance. | Yes |
 | `scry.mv_bluesky_posts` | Bluesky posts | No (ramping) |
 
 ### Academic Papers
@@ -856,8 +858,9 @@ registry functions for targeted lookups.
 
 | Function | Description |
 |----------|-------------|
-| `scry.social_search(query_text, mode, limit_n)` | Cross-platform social search (Twitter, Bluesky, StackExchange, mailing lists). Returns unified rows with `source`, `platform`, `uri`, `snippet`, `score`. |
-| `scry.search_twitter_threads(query_text, mode, limit_n)` | BM25 over Twitter thread root tweets. Returns thread-level aggregates (`tweet_count`, `total_likes`, `total_retweets`). |
+| `scry.social_search(query_text, mode, limit_n)` | Cross-platform social search (Twitter/X, Reddit, StackExchange, mailing lists). Returns unified rows with `source`, `platform`, `uri`, `snippet`, `score`; use source-native helpers when source-specific provenance matters. |
+| `scry.search_twitter_posts(query_text, mode, limit_n)` | BM25 over individual source-native Twitter/X tweet rows. Returns `tweet_id`, `canonical_uri`, author/timestamp fields, and observation provenance arrays. |
+| `scry.search_twitter_threads(query_text, mode, limit_n)` | BM25 over Twitter/X thread root tweets. Returns thread-level aggregates (`tweet_count`, `total_likes`, `total_retweets`); do not use as the canonical tweet identity surface. |
 
 ### Diagnostic Views
 
