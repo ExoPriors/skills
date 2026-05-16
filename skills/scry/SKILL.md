@@ -655,6 +655,11 @@ FROM scry.search_reddit_semantic(
 LIMIT 20
 ```
 
+Voyage-4-lite Reddit coverage now includes `r/gabagoodness`, `r/pregabalin`,
+`r/gabapentin`, and a focused phenomenology/consciousness philosophy frontier.
+Keep explicit subreddit filters because Reddit semantic search is subset
+coverage, not global Reddit coverage.
+
 Use `scry.search_reddit_posts_semantic(...)` or
 `scry.search_reddit_comments_semantic(...)` only when you already know you want
 one kind.
