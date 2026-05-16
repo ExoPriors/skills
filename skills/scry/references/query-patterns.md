@@ -187,8 +187,10 @@ Reddit data lives in separate windowed tables (not `scry.entities`). Uses TEXT I
 - `scry.reddit_subreddit_stats` / `scry.reddit_subreddit_stats_monthly` — reliable discovery and counting
 - `scry.reddit_clusters()` plus the thematic cluster views — reliable starting points
 - `scry.reddit_embeddings` — semantic subset with explicit partial-coverage semantics
+- `scry.mv_reddit_interest_docs` — indexed lexical materialized view for the pregabalin/GABA and phenomenology frontier
+- `scry.mv_reddit_interest_embeddings` — indexed Voyage-4-lite semantic materialized view for that frontier
 - `scry.search_reddit(...)` and `scry.search_reddit_posts(...)` — source-native lexical search helpers
-- `scry.search_reddit_hot_subreddits(...)` — fast post/comment helper for the hot-subreddit slice
+- `scry.search_reddit(...)` — public-safe fast post/comment helper for the pregabalin/GABA and phenomenology frontier when you include explicit `r/...` scopes
 
 **Direct table/view surfaces to treat as diagnostic unless schema marks them healthy**:
 - `scry.reddit_posts`
@@ -274,13 +276,13 @@ FROM scry.search_reddit_comments(
 ORDER BY score DESC NULLS LAST
 ```
 
-For `r/gabagoodness`, `r/pregabalin`, and `r/gabapentin`, use the hot-subreddit
-helper when you want posts and comments from that slice:
+For the pregabalin/GABA and phenomenology frontier, use `scry.search_reddit(...)`
+with explicit `r/...` scopes when you want posts and comments from that slice:
 
 ```sql
 SELECT id, kind, subreddit, title, snippet, original_timestamp, score
 FROM scry.search_reddit(
-  'pregabalin phenomenology experience r/gabagoodness r/pregabalin r/gabapentin',
+  'pregabalin phenomenology experience r/gabagoodness r/pregabalin r/gabapentin r/Phenomenology r/consciousness',
   'auto',
   NULL,
   ARRAY['post', 'comment'],
@@ -290,7 +292,7 @@ FROM scry.search_reddit(
 ORDER BY score DESC NULLS LAST
 ```
 
-This path uses the accelerated Reddit materialized view. Do not use
+This path uses the accelerated Reddit interest-frontier materialized view. Do not use
 `scry.search(...)` for this slice.
 
 ### Fast subreddit discovery from lexical hits
