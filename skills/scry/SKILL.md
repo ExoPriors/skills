@@ -25,11 +25,13 @@ Scry's canonical substrate is read-only SQL over the ExoPriors public corpus.
 Most agents should reach that substrate through the hosted Scry HTTP surface and Scry tools,
 not raw database credentials. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
-When SQL is unnecessary, the portable typed-search front door is `POST /v1/scry/search`,
-and `GET /v1/scry/search/records/{record_ref}` hydrates record details.
+When SQL is unnecessary, the portable typed-search front door is `POST /v1/scry/search`.
+Typed search uses `method = lexical | hybrid | rerank`, may return a reusable
+`candidate_set.receipt`, and `GET /v1/scry/search/records/{record_ref}` hydrates
+record details.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026051501`
+**Skill generation**: `2026051502`
 
 ## A) When to use / not use
 
@@ -50,7 +52,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026051501`.
+   `GET /v1/scry/context?skill_generation=2026051502`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -73,10 +75,13 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    docs live.
    If you cache descriptive bootstrap context across turns or sessions, also
    track `surface_context_generation` and refresh when it changes.
-   Use typed search, `scry.search_federated(...)`, or source-native
-   `scry.search_*` helpers for lexical work. Pivot to source-local `scry.*`
-   surfaces or semantic retrieval when those helpers do not fit the task. The
-   `lexical_search` block reports health for the shared BM25 diagnostic path.
+   Use typed search for bounded discovery and candidate reuse, and use
+   `scry.search_federated(...)` or source-native `scry.search_*` helpers for
+   custom lexical SQL. Typed-search `method` is `lexical`, `hybrid`, or
+   `rerank`; `candidate_receipt` reruns refinement over the same lexical
+   shortlist. Pivot to source-local `scry.*` surfaces or semantic retrieval
+   when those helpers do not fit the task. The `lexical_search` block reports
+   health for the shared BM25 diagnostic path.
    If you are validating deploy/runtime conformance from this repo rather than
    just using the surface, run the canonical proof command:
 
@@ -426,7 +431,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026051501
+GET https://api.scry.io/v1/scry/context?skill_generation=2026051502
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -534,7 +539,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026051501" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026051502" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
