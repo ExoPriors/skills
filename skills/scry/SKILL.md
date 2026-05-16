@@ -80,8 +80,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    custom lexical SQL. Typed-search `method` is `lexical`, `hybrid`, or
    `rerank`; `candidate_receipt` reruns refinement over the same lexical
    shortlist. Pivot to source-local `scry.*` surfaces or semantic retrieval
-   when those helpers do not fit the task. The `lexical_search` block reports
-   health for the shared BM25 diagnostic path.
+   when those helpers do not fit the task. The `lexical_search` block describes
+   the old shared BM25 diagnostic path, not the canonical lexical-serving path.
    If you are validating deploy/runtime conformance from this repo rather than
    just using the surface, run the canonical proof command:
 
@@ -555,7 +555,8 @@ using packaged Scry skills, or if local instructions still point at
 legacy ExoPriors hostnames or legacy console routes, stop and ask the user
 to run `npx skills update` before deeper debugging.
 If response includes `"lexical_search": {...}`, read `status`, `status_basis`,
-and `last_known_status` as health for the shared BM25 diagnostic path. Prefer
+and `last_known_status` as metadata for the old shared BM25 diagnostic path, not
+as the Scry lexical-serving contract. Prefer
 typed search, `scry.search_federated(...)`, source-native `scry.search_*`
 helpers, or `scry.entities_with_embeddings` depending on the task. Use
 `/v1/scry/index-view-status` for detailed live timing before blaming the query.
@@ -761,9 +762,9 @@ curl -s -X POST https://api.scry.io/v1/scry/estimate \
 Returns EXPLAIN (FORMAT JSON) output. Use this for expensive queries before committing.
 It does not prove BM25 helper health: if `scry.search*` fails, check
 `/v1/scry/index-view-status` and `/v1/scry/schema` status as well.
-The `/v1/scry/context` handshake now also exposes `lexical_search.status`,
-`status_basis`, and `last_known_status` so you can distinguish stale
-observability from confirmed lexical trouble before issuing fallbacks.
+The `/v1/scry/context` handshake also exposes `lexical_search.status`,
+`status_basis`, and `last_known_status` so you can distinguish the old diagnostic
+snapshot from canonical lexical-serving paths before issuing fallbacks.
 
 ### E8. Create a shareable artifact
 
