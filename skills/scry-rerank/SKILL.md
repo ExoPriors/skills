@@ -165,10 +165,10 @@ Cache a list from a previous SQL rerank by setting `"cache_results": true` in th
 
 | Model | Cost | Use when |
 |---|---|---|
-| `gpt-5.4-nano` | lowest | Default direct OpenAI rerank model |
-| `openai/gpt-5.4-nano` | lowest | Provider-prefixed alias for the default model |
-| `gpt-5.4-mini` | medium | Larger direct OpenAI judgement model |
-| `openai/gpt-5.4-mini` | medium | Provider-prefixed alias for the larger judgement model |
+| `gpt-5.4-nano` | lowest | Default. Fast iteration, large candidate sets, shortlisting. |
+| `gpt-5.4-mini` | medium | Final rankings, smaller candidate sets, harder judgement calls. |
+
+Both models also accept the `openai/` prefix (`openai/gpt-5.4-nano`, `openai/gpt-5.4-mini`).
 
 #### Response
 
@@ -367,10 +367,10 @@ For domain-specific needs, write custom attribute prompts. See `references/attri
 
 Decision tree:
 
-1. **Default path?** Use `gpt-5.4-nano`. It is the default direct OpenAI rerank model.
-2. **Need a larger judgement model?** Use `gpt-5.4-mini`.
+1. **Iterating or shortlisting large candidate sets?** Use `gpt-5.4-nano`.
+2. **Final ranking or harder judgement calls?** Use `gpt-5.4-mini`.
 
-You can also do model escalation: run `gpt-5.4-nano` first to narrow candidates, then `gpt-5.4-mini` on the shortlist.
+For best cost/quality, escalate: rank with `gpt-5.4-nano`, then rerank the cached shortlist with `gpt-5.4-mini`.
 
 ## Choosing TopK parameters
 

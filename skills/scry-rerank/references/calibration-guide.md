@@ -126,15 +126,15 @@ If the answer to all three is "mostly yes," the model is good enough. If not, tr
 Build a matrix of tier-vs-tier agreement and tier-vs-human agreement:
 
 ```
-                              human    gpt-5-mini    gpt-5.2-chat    claude-opus-4.7
+                              human    gpt-5.4-nano    gpt-5.4-mini
 human                           --         0.8            0.9
 gpt-5.4-nano                   0.8         --             0.85
 gpt-5.4-mini                   0.9        0.85            --
 ```
 
 This tells you:
-- `gpt-5.4-mini` agrees with your judgement 90% of the time.
-- `gpt-5.4-nano` agrees 80%: good enough for many iteration and shortlist workflows.
+- `gpt-5.4-mini` agrees with your judgement 90% of the time on this set, so it is a good fit for final rankings.
+- `gpt-5.4-nano` agrees 80%, which is usually enough for iteration and shortlist passes.
 
 These numbers will vary by domain and attribute. Technical depth on ML papers will calibrate differently than clarity on blog posts.
 
