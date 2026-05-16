@@ -14,7 +14,7 @@ description: >
 
 LLM-powered multi-attribute reranking over ExoPriors entity sets. Uses pairwise comparison (not pointwise scoring) to produce calibrated rankings with uncertainty estimates.
 
-**Skill generation**: `2026032401`
+**Skill generation**: `2026051501`
 
 ## Mental model
 
@@ -28,7 +28,7 @@ Key properties:
 - **Algebraically composable**: comparisons are stored as log-ratios in `public_binary_ratio_comparisons`, composable with the full ExoPriors rating engine.
 - **Adaptive**: the TopK algorithm focuses comparisons on items near the decision boundary, not wasting budget on obvious winners or losers.
 
-Cost scales with `comparisons x chosen_model`. A typical 100-entity, 2-attribute rerank with `openai/gpt-5.2-chat` costs roughly $0.05-0.15.
+Cost scales with `comparisons x chosen_model`. A typical 100-entity, 2-attribute rerank with `gpt-5.4-nano` costs roughly $0.03-0.10.
 
 ## Setup
 
@@ -49,13 +49,13 @@ curl -s "${SCRY_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
     "sql": "SELECT id, content_text FROM scry.entities WHERE kind='\''post'\'' AND source='\''lesswrong'\'' ORDER BY created_at DESC LIMIT 10",
     "attributes": [{"id":"clarity","prompt":"clarity","weight":1.0}],
     "topk": {"k": 3},
-    "model": "openai/gpt-5-mini"
+    "model": "gpt-5.4-nano"
   }'
 ```
 
 ## Guardrails
 
-- Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026032401`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any legacy ExoPriors hostname or legacy console route reference as a stale local skill install and update before more debugging.
+- Context handshake first. At session start, call `GET /v1/scry/context?skill_generation=2026051501`. If `should_update_skill=true`, or if `client_skill_generation` comes back `null` while you're using packaged skills, tell the user to run `npx skills update`. Treat any legacy ExoPriors hostname or legacy console route reference as a stale local skill install and update before more debugging.
 - **Credits-required feature.** Rerank uses your personal Scry API key and burns from your prepaid credit balance.
 - **Dangerous content blocked.** Entities with `content_risk='dangerous'` cause hard errors. Filter them: `WHERE content_risk IS DISTINCT FROM 'dangerous'`.
 - **SQL must return `id` and `content_text` columns** (or configure `id_column`/`text_column`).
@@ -85,7 +85,7 @@ Two input modes: SQL or cached list.
     {"id": "insight", "prompt": "How novel and non-obvious are the contributions?", "weight": 0.5}
   ],
   "topk": {"k": 10, "weight_exponent": 1.3, "tolerated_error": 0.1, "band_size": 5},
-  "model": "openai/gpt-5.2-chat"
+  "model": "gpt-5.4-nano"
 }
 ```
 
@@ -98,7 +98,7 @@ Two input modes: SQL or cached list.
     {"id": "clarity", "prompt": "clarity", "weight": 1.0}
   ],
   "topk": {"k": 10},
-  "model": "openai/gpt-5-mini"
+  "model": "gpt-5.4-nano"
 }
 ```
 
@@ -165,11 +165,10 @@ Cache a list from a previous SQL rerank by setting `"cache_results": true` in th
 
 | Model | Cost | Use when |
 |---|---|---|
-| `openai/gpt-5-mini` | lowest | Large candidate sets (100+), rough ranking, iteration |
-| `openai/gpt-5-mini-2025-08-07` | lowest | Pinned snapshot of `gpt-5-mini` when you need repeatable behavior across runs |
-| `openai/gpt-5.2-chat` | medium | Default. Good accuracy/cost tradeoff for final rankings |
-| `anthropic/claude-opus-4.7` | highest | Small candidate sets (<50), high-stakes decisions |
-| `moonshotai/kimi-k2-0905` | medium | Alternative model, long-context strength |
+| `gpt-5.4-nano` | lowest | Default direct OpenAI rerank model |
+| `openai/gpt-5.4-nano` | lowest | Provider-prefixed alias for the default model |
+| `gpt-5.4-mini` | medium | Larger direct OpenAI judgement model |
+| `openai/gpt-5.4-mini` | medium | Provider-prefixed alias for the larger judgement model |
 
 #### Response
 
@@ -233,7 +232,7 @@ curl -s "${SCRY_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
     "sql": "SELECT id, content_text FROM scry.entities WHERE kind='\''post'\'' AND source='\''lesswrong'\'' AND original_timestamp > now() - interval '\''30 days'\'' AND content_risk IS DISTINCT FROM '\''dangerous'\'' ORDER BY score DESC NULLS LAST LIMIT 50",
     "attributes": [{"id":"clarity","prompt":"clarity","weight":1.0}],
     "topk": {"k": 10},
-    "model": "openai/gpt-5-mini"
+    "model": "gpt-5.4-nano"
   }'
 ```
 
@@ -250,7 +249,7 @@ cat > /tmp/rerank_req.json <<'JSON'
     {"id": "insight", "prompt": "insight", "weight": 1.5}
   ],
   "topk": {"k": 15, "weight_exponent": 1.3},
-  "model": "openai/gpt-5.2-chat",
+  "model": "gpt-5.4-nano",
   "cache_results": true,
   "cache_list_name": "alignment-insight-ranking-v1"
 }
@@ -276,7 +275,7 @@ curl -s "${SCRY_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
     {"id": "technical_depth", "prompt": "technical depth", "weight": 1.0}
   ],
   "topk": {"k": 10},
-  "model": "openai/gpt-5.2-chat"
+  "model": "gpt-5.4-nano"
 }
 ```
 
@@ -291,7 +290,7 @@ First pass: broad ranking with a cheap model.
   "sql": "SELECT id, content_text FROM scry.entities WHERE kind='post' AND content_risk IS DISTINCT FROM 'dangerous' ORDER BY score DESC NULLS LAST LIMIT 200",
   "attributes": [{"id":"clarity","prompt":"clarity","weight":1.0}],
   "topk": {"k": 50},
-  "model": "openai/gpt-5-mini",
+  "model": "gpt-5.4-nano",
   "cache_results": true,
   "cache_list_name": "broad-clarity-pass"
 }
@@ -307,7 +306,7 @@ Second pass: precise ranking of the cached top-50 with a higher-quality model.
     {"id":"insight","prompt":"insight","weight":1.5}
   ],
   "topk": {"k": 10},
-  "model": "anthropic/claude-opus-4.7"
+  "model": "gpt-5.4-mini"
 }
 ```
 
@@ -331,7 +330,7 @@ Gates are binary pass/fail checks applied before ranking. Entities that fail a g
     }
   ],
   "topk": {"k": 15},
-  "model": "openai/gpt-5-mini"
+  "model": "gpt-5.4-nano"
 }
 ```
 
@@ -340,16 +339,15 @@ Gates are binary pass/fail checks applied before ranking. Entities that fail a g
 The comparison budget defaults to `4 * n_entities * n_attributes`. For 100 entities and 3 attributes, that is 1200 comparisons max. Actual usage is usually 30-60% of budget.
 
 Rough cost per comparison by model:
-- `openai/gpt-5-mini`: ~$0.00004 (40 nanodollars * 1000)
-- `openai/gpt-5.2-chat`: ~$0.00015
-- `anthropic/claude-opus-4.7`: ~$0.0005
+- `gpt-5.4-nano`: ~$0.00004
+- `gpt-5.4-mini`: ~$0.00012
 
 With 20% markup applied. To cap spend, set `comparison_budget` explicitly:
 
 ```json
 {
   "comparison_budget": 200,
-  "model": "openai/gpt-5-mini"
+  "model": "gpt-5.4-nano"
 }
 ```
 
@@ -369,12 +367,10 @@ For domain-specific needs, write custom attribute prompts. See `references/attri
 
 Decision tree:
 
-1. **Iterating or exploring?** Use `openai/gpt-5-mini`. Cheap enough to run many times.
-2. **Final ranking for a deliverable?** Use `openai/gpt-5.2-chat`. Good accuracy at reasonable cost.
-3. **High-stakes, small set (<50)?** Use `anthropic/claude-opus-4.7`. Best judgement, worth the cost.
-4. **Long documents (>3000 chars)?** Consider `moonshotai/kimi-k2-0905` for long-context strength.
+1. **Default path?** Use `gpt-5.4-nano`. It is the default direct OpenAI rerank model.
+2. **Need a larger judgement model?** Use `gpt-5.4-mini`.
 
-You can also do model escalation: run `openai/gpt-5-mini` first to narrow candidates, then `anthropic/claude-opus-4.7` on the shortlist.
+You can also do model escalation: run `gpt-5.4-nano` first to narrow candidates, then `gpt-5.4-mini` on the shortlist.
 
 ## Choosing TopK parameters
 

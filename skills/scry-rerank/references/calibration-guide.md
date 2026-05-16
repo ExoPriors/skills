@@ -6,7 +6,7 @@ How to validate rerank quality, compare models, and record results as judgements
 
 Rerank is only as good as the LLM's judgement on your specific attribute and domain. Calibration answers: "does this model, on this attribute, agree with my expert evaluation of these documents?" Without calibration, you are trusting the model blindly.
 
-Calibration also reveals which attributes and models are worth paying for. If `openai/gpt-5-mini` agrees with `anthropic/claude-opus-4.7` 90% of the time on your domain, that can save real money.
+Calibration also reveals which attributes and models are worth paying for. If `gpt-5.4-nano` agrees with `gpt-5.4-mini` on your domain, use the smaller model for that workflow.
 
 ## The calibration loop
 
@@ -28,7 +28,7 @@ Good test sets have:
   "sql": "SELECT id, content_text FROM scry.entities WHERE kind='post' AND source='lesswrong' AND content_risk IS DISTINCT FROM 'dangerous' ORDER BY random() LIMIT 30",
   "attributes": [{"id":"clarity","prompt":"clarity","weight":1.0}],
   "topk": {"k": 30},
-  "model": "openai/gpt-5-mini",
+  "model": "gpt-5.4-nano",
   "cache_results": true,
   "cache_list_name": "calibration-set-clarity-v1"
 }
@@ -78,7 +78,7 @@ Record this in a structured format:
 Rerank the cached list with each model:
 
 ```bash
-for model in openai/gpt-5-mini openai/gpt-5.2-chat anthropic/claude-opus-4.7; do
+for model in gpt-5.4-nano gpt-5.4-mini; do
   echo "=== $model ==="
   curl -s "${SCRY_API_BASE:-https://api.scry.io}/v1/scry/rerank" \
     -H "Authorization: Bearer $SCRY_API_KEY" \
@@ -127,16 +127,14 @@ Build a matrix of tier-vs-tier agreement and tier-vs-human agreement:
 
 ```
                               human    gpt-5-mini    gpt-5.2-chat    claude-opus-4.7
-human                           --         0.6            0.8               0.9
-gpt-5-mini                     0.6         --             0.7               0.7
-gpt-5.2-chat                   0.8        0.7             --                0.85
-claude-opus-4.7                0.9        0.7            0.85               --
+human                           --         0.8            0.9
+gpt-5.4-nano                   0.8         --             0.85
+gpt-5.4-mini                   0.9        0.85            --
 ```
 
 This tells you:
-- `anthropic/claude-opus-4.7` agrees with your judgement 90% of the time: worth using for final rankings.
-- `openai/gpt-5.2-chat` agrees 80%: good enough for most use cases at materially lower cost.
-- `openai/gpt-5-mini` agrees 60%: useful for rough filtering but not final decisions.
+- `gpt-5.4-mini` agrees with your judgement 90% of the time.
+- `gpt-5.4-nano` agrees 80%: good enough for many iteration and shortlist workflows.
 
 These numbers will vary by domain and attribute. Technical depth on ML papers will calibrate differently than clarity on blog posts.
 
@@ -153,7 +151,7 @@ If you have a rater UUID and attribute UUIDs, you can persist comparisons direct
   "list_id": "CACHED_LIST_ID",
   "attributes": [{"id":"clarity","prompt":"clarity","weight":1.0}],
   "topk": {"k": 30},
-  "model": "anthropic/claude-opus-4.7",
+  "model": "gpt-5.4-mini",
   "persist": {
     "attribute_map": {"clarity": "UUID_OF_CLARITY_ATTRIBUTE"},
     "rater_id": "UUID_OF_YOUR_RATER",
@@ -212,7 +210,7 @@ Rerank is not always the right tool:
 - [ ] Selected 20-50 representative entities as test set
 - [ ] Cached the test set with `cache_results: true`
 - [ ] Established human ground truth (at least top-5 and bottom-5)
-- [ ] Ran rerank with `openai/gpt-5-mini`, `openai/gpt-5.2-chat`, and `anthropic/claude-opus-4.7`
+- [ ] Ran rerank with `gpt-5.4-nano` and `gpt-5.4-mini`
 - [ ] Measured top-k overlap between human and each model
 - [ ] Identified attribute prompt issues from surprising rankings
 - [ ] Refined prompts and re-ran if needed
