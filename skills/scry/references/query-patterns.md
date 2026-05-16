@@ -185,11 +185,12 @@ Reddit data lives in separate windowed tables (not `scry.entities`). Uses TEXT I
 
 **Current default surfaces**:
 - `scry.reddit_subreddit_stats` / `scry.reddit_subreddit_stats_monthly` — reliable discovery and counting
+- `scry.reddit_search_contract` / `scry.reddit_search_window_status` — Reddit freshness and per-window BM25 health checks
 - `scry.reddit_clusters()` plus the thematic cluster views — reliable starting points
 - `scry.reddit_embeddings` — semantic subset with explicit partial-coverage semantics
 - `scry.mv_reddit_interest_docs` — indexed lexical materialized view for the pregabalin/GABA and phenomenology frontier
 - `scry.mv_reddit_interest_embeddings` — indexed Voyage-4-lite semantic materialized view for that frontier
-- `scry.search_reddit(...)` and `scry.search_reddit_posts(...)` — source-native lexical search helpers
+- `scry.search_reddit(...)` and `scry.search_reddit_posts(...)` — bounded source-native lexical search helpers
 - `scry.search_reddit(...)` — public-safe fast post/comment helper for the pregabalin/GABA and phenomenology frontier when you include explicit `r/...` scopes
 
 **Direct table/view surfaces to treat as diagnostic unless schema marks them healthy**:
@@ -198,8 +199,8 @@ Reddit data lives in separate windowed tables (not `scry.entities`). Uses TEXT I
 - `scry.reddit`
 - `scry.mv_reddit_*`
 
-Trust `/v1/scry/schema` status. If a Reddit retrieval surface is marked
-`degraded`, do not treat it as the happy path.
+Trust `/v1/scry/schema` status plus `scry.reddit_search_window_status`. If a
+Reddit retrieval surface is marked `degraded`, do not treat it as the happy path.
 
 ### Thematic cluster views (best starting point)
 ```sql

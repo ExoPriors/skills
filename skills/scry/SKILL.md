@@ -31,7 +31,7 @@ Typed search uses `method = lexical | hybrid | rerank`, may return a reusable
 record details.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026051502`
+**Skill generation**: `2026051601`
 
 ## A) When to use / not use
 
@@ -52,7 +52,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026051502`.
+   `GET /v1/scry/context?skill_generation=2026051601`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and specialized skill catalog.
@@ -194,6 +194,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    `scry.hackernews`, `scry.wikipedia`, `scry.pubmed`, `scry.repec`,
    `scry.kalshi`, `scry.nih_reporter`, `scry.govinfo_crec`,
    `scry.offshoreleaks`, `scry.openalex`, `scry.bluesky`,
+   `scry.vc_accounts`, `scry.vc_tweets`, `scry.vc_embedding_coverage`,
+   `scry.vc_embedding_gaps`,
    `scry.reddit_posts`, `scry.forum_posts`,
    `scry.huggingface`, `scry.huggingface_papers`,
    `scry.huggingface_collections`, `scry.huggingface_discussions`,
@@ -431,7 +433,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026051502
+GET https://api.scry.io/v1/scry/context?skill_generation=2026051601
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -527,6 +529,9 @@ User wants to search the ExoPriors corpus?
   |     scry.search_twitter_posts(), scry.search_openlibrary_editions(),
   |     scry.search_openlibrary_works(), scry.search_openlibrary_authors()
   |
+  +-- VC Twitter account or embedding coverage? --> scry.vc_accounts,
+  |     scry.vc_tweets, scry.vc_embedding_coverage, scry.vc_embedding_gaps
+  |
   +-- Need to share results? --> POST /v1/scry/shares
   |
   +-- Need to emit a structured observation? --> POST /v1/scry/judgements
@@ -539,7 +544,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026051502" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026051601" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
@@ -621,8 +626,9 @@ LIMIT 20
 ```
 
 `scry.search_reddit(...)` merges posts/comments, normalizes subreddit casing,
-accepts inline `r/...`, `subreddit:...`, and `cluster:...` scopes, and uses the
-bounded multi-window path. Keep `scry.reddit_posts`, `scry.reddit_comments`,
+accepts inline `r/...`, `subreddit:...`, and `cluster:...` scopes, and uses a
+bounded default path. Keep `scry.reddit_search_contract`,
+`scry.reddit_search_window_status`, `scry.reddit_posts`, `scry.reddit_comments`,
 `scry.mv_reddit_*`, `scry.search_reddit_posts(...)`, and
 `scry.search_reddit_comments(...)` for lower-level or explicit-window work.
 

@@ -107,6 +107,8 @@ union view over those records.
 | `scry.twitter_bucket_snapshots` | Scry Tweets bucket pull audit surface. Exposes snapshot-object progress, expected records, committed line coverage, and quality status for the `scry-tweets` Argus snapshot lane. |
 | `scry.twitter_follow_edges` | Public Twitter/X follow-edge substrate keyed by follower and followee IDs. Exposes handles, followee profile counts when present, public provenance tags, `coverage_status`, and `graph_coverage_note`; `partial_not_exhaustive` means observed follower/followee counts are lower bounds and missing edges are not evidence of non-following. |
 | `scry.twitter_follow_accounts` / `scry.twitter_followees(...)` / `scry.twitter_followers(...)` / `scry.twitter_mutual_followees(...)` / `scry.twitter_followee_overlap(...)` / `scry.twitter_follow_account_summary(...)` | Ergonomic Twitter/X graph traversal helpers. Use these before hand-writing joins when asking for followees, followers, overlap, mutuals, or observed account graph summaries. All returned counts are observed-only unless `coverage_status` states otherwise. |
+| `scry.vc_firms` / `scry.vc_accounts` / `scry.vc_tweets` | Venture-capital Twitter/X lens over source-native Twitter rows. Use `scry.vc_accounts` for account priority, VC evidence scores, firm links, and crawl state; use `scry.vc_tweets` for landed tweets by targeted accounts. |
+| `scry.vc_embedding_coverage` / `scry.vc_embedding_gaps` | VC target embedding-contract views. `desired_embedding_model` records the requested Voyage 4 tier; `scry.vc_embedding_gaps` lists landed tweets missing the required chunk-0 embedding model. |
 | `scry.mailing_lists` / `scry.mailing_list_messages` | Canonical mailing-list list metadata plus per-message substrate keyed by `list_key` / `message_key`. |
 | `scry.forum_sites` / `scry.forum_threads` / `scry.forum_posts` | Canonical forum substrate split into site metadata, thread headers, and post rows. Covers Discourse- and Forem-style archives keyed by `site_key` / `thread_key` / `post_key`. |
 | `scry.discussion_messages` | Normalized union over mailing-list messages and forum posts with shared `source_class`, `collection_key`, `thread_key`, `message_key`, and `archive_url` columns. |
@@ -227,10 +229,11 @@ these direct retrieval surfaces are currently **degraded**: they appear in the
 live schema, but performance is not reliable enough to treat them as the normal
 happy path.
 
-Use these only if `/v1/scry/schema` marks them healthy again. For default
-Reddit lexical work, use `scry.search_reddit(...)`,
-`scry.search_reddit_posts(...)`, or `scry.search_reddit_hot_subreddits(...)`
-when its subreddit slice matches the task. Use `scry.reddit_subreddit_stats`,
+Use these only when a query is already tightly bounded by subreddit and time.
+For default Reddit lexical work, use `scry.search_reddit(...)`; its `auto`
+window uses the fast frontier accelerator when applicable and a bounded
+recent-window lane otherwise. Use `scry.reddit_search_contract`,
+`scry.reddit_search_window_status`, `scry.reddit_subreddit_stats`,
 `scry.reddit_subreddit_stats_monthly`, `scry.reddit_clusters()`, and
 `scry.reddit_embeddings` for discovery and coverage checks.
 
@@ -865,6 +868,11 @@ registry functions for targeted lookups.
 | `scry.social_search(query_text, mode, limit_n)` | Cross-platform social search (Twitter/X, Reddit, StackExchange, mailing lists). Returns unified rows with `source`, `platform`, `uri`, `snippet`, `score`; use source-native helpers when source-specific provenance matters. |
 | `scry.search_twitter_posts(query_text, mode, limit_n)` | BM25 over individual source-native Twitter/X tweet rows. Returns `tweet_id`, `canonical_uri`, author/timestamp fields, and observation provenance arrays. |
 | `scry.search_twitter_threads(query_text, mode, limit_n)` | BM25 over Twitter/X thread root tweets. Returns thread-level aggregates (`tweet_count`, `total_likes`, `total_retweets`); do not use as the canonical tweet identity surface. |
+
+For VC-targeted Twitter/X work, start with `scry.vc_accounts` for the account
+queue, `scry.vc_tweets` for landed tweets, and
+`scry.vc_embedding_coverage` / `scry.vc_embedding_gaps` for Voyage 4 repair
+work.
 
 ### Diagnostic Views
 
