@@ -110,8 +110,8 @@ union view over those records.
 | `scry.vc_firms` / `scry.vc_accounts` / `scry.vc_tweets` | Venture-capital Twitter/X lens over source-native Twitter rows. Use `scry.vc_accounts` for account priority, VC evidence scores, firm links, and crawl state; use `scry.vc_tweets` for landed tweets by targeted accounts. |
 | `scry.vc_embedding_coverage` / `scry.vc_embedding_gaps` | VC target embedding-contract views. `desired_embedding_model` records the requested Voyage 4 tier; `scry.vc_embedding_gaps` lists landed tweets missing the required chunk-0 embedding model. |
 | `scry.mailing_lists` / `scry.mailing_list_messages` | Canonical mailing-list list metadata plus per-message substrate keyed by `list_key` / `message_key`. |
-| `scry.forum_sites` / `scry.forum_threads` / `scry.forum_posts` | Canonical forum substrate split into site metadata, thread headers, and post rows. Covers Discourse- and Forem-style archives keyed by `site_key` / `thread_key` / `post_key`. |
-| `scry.discussion_messages` | Normalized union over mailing-list messages and forum posts with shared `source_class`, `collection_key`, `thread_key`, `message_key`, and `archive_url` columns. |
+| `scry.forum_sites` / `scry.forum_threads` / `scry.forum_posts` | Canonical forum substrate split into site metadata, thread headers, and post rows. Covers Discourse- and Forem-style archives keyed by `site_key` / `thread_key` / `post_key`; `scry.forum_posts` exposes `content_risk` for dangerous/adversarial forum sources. |
+| `scry.discussion_messages` | Normalized union over mailing-list messages and forum posts with shared `source_class`, `collection_key`, `thread_key`, `message_key`, `archive_url`, and `content_risk` columns. |
 | `scry.openlibrary_editions` / `scry.openlibrary_works` / `scry.openlibrary_authors` | Canonical Open Library bibliographic substrates. |
 | `scry.gdelt_articles` | Canonical GDELT news-article substrate keyed by URL / GKG record pairs. Includes themes, tone, entity extraction, and publication time. |
 | `scry.who_iris_publications` | Canonical WHO IRIS publication substrate keyed by `handle`. Includes document type, authors, subjects, languages, publishers, and identifiers. |
@@ -176,7 +176,7 @@ Source-local lexical helpers exist for many of these views:
 | `scry.huggingface_find_paper_artifacts(query_text, year_from, limit_n)` | Traverses paper hits back into linked Hub repos using `huggingface_repo_links`; it prefers direct arXiv/DOI and OpenAlex resolution before falling back to HF paper pages, so paper-to-artifact recovery does not depend on starting inside Hugging Face first. |
 | `scry.openalex_find_works(query, min_year, limit)` | Source-native OpenAlex work lookup over titles and DOIs with dedicated abstract payload link-through. |
 | `scry.search_mailing_list_messages(query_text, mode, list_keys, limit_n)` | BM25 over mailing-list message rows. |
-| `scry.search_forum_posts(query_text, mode, site_keys, limit_n)` | BM25 over canonical forum posts keyed by site-specific `post_key`. Use site keys such as `ethresearch`, `datasecretslox`, or `solana_forum`. |
+| `scry.search_forum_posts(query_text, mode, site_keys, limit_n)` | BM25 over canonical forum posts keyed by site-specific `post_key`. Skips `content_risk='dangerous'` rows by default; use site keys such as `ethresearch`, `datasecretslox`, or `solana_forum`. |
 | `scry.search_discussions(query_text, mode, limit_n)` | Merges mailing-list and forum lexical hits into a normalized discussion result surface with shared collection/thread/message keys. |
 | `scry.search_packages(query_text, registries, limit_n)` | Cross-registry package search over npm, PyPI, crates.io, Go modules, NuGet, Maven Central, Hex.pm, Packagist, pub.dev, CocoaPods, conda-forge, JSR, and Homebrew. |
 | `scry.social_search(query_text, mode, limit_n)` | Convenience union over the major social/post surfaces when you want a fast social-only lexical pass. |
