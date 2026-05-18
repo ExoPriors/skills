@@ -140,9 +140,9 @@ union view over those records.
 | `scry.sec_edgar_denominator_targets` / `scry.sec_edgar_company_coverage` / `scry.sec_edgar_year_form_coverage` / `scry.sec_edgar_ingest_overview` | SEC EDGAR denominator/accounting views for company/form/year coverage and current metadata-stage queue totals. Use these before claiming SEC coverage completeness. |
 | `scry.sec_edgar_fulltext_queue` / `scry.sec_edgar_xbrl_queue` / `scry.sec_edgar_queue_summary` | SEC EDGAR work-queue/readiness views for full-text and XBRL followthrough. |
 | `scry.sec_edgar_material_filings` | SEC EDGAR material subset for periodic reports, current reports, registration/prospectus filings, governance/ownership filings, and insider-ownership forms, with `material_class` for triage. |
-| `scry.google_patents_publications` / `scry.google_patents_publication_lookup()` / `scry.google_patents_publication_facets()` | Google Patents BigQuery publication surface keyed by `publication_number`. Includes titles, abstracts, claims, descriptions, inventors, assignees, classifications, citations, patent-family links, and canonical patents.google.com URIs. The current public snapshot is loaded in full; use `scry.google_patents_publication_lookup(...)` for exact publication-number or patents.google.com URL lookup, and `scry.google_patents_publication_facets(...)` for inventor, assignee, CPC/IPC, and citation arrays. Verify live row counts before treating a query as exhaustive prior-art coverage. |
-| `scry.sec_quarterly_numbers` / `scry.sec_quarterly_submission` / `scry.sec_quarterly_presentation` / `scry.sec_quarterly_quick_summary` | SEC quarterly financial statement BigQuery tables. Use these for structured public-company facts, filing metadata, statement presentation context, and CIK/company/date joins. |
-| `scry.sec_quarterly_calculation` / `scry.sec_quarterly_dimension` / `scry.sec_quarterly_measure_tag` / `scry.sec_quarterly_rendering` / `scry.sec_quarterly_txt` / `scry.sec_quarterly_sic_codes` | SEC quarterly companion tables for XBRL calculation arcs, segment dimensions, tag definitions, rendering metadata, text facts, and SIC labels. |
+| `scry.google_patents_publications` / `scry.google_patents_publication_lookup()` / `scry.google_patents_publication_facets()` | Google Patents BigQuery publication surface keyed by `publication_number`, loaded as a full public snapshot. Includes titles, abstracts, claims, descriptions, inventors, assignees, classifications, citations, patent-family links, and canonical patents.google.com URIs. Use `scry.google_patents_publication_lookup(...)` for exact publication-number or patents.google.com URL lookup, and `scry.google_patents_publication_facets(...)` for inventor, assignee, CPC/IPC, and citation arrays. Snapshot row counts and freshness define its prior-art coverage. |
+| `scry.sec_quarterly_numbers` / `scry.sec_quarterly_submission` / `scry.sec_quarterly_presentation` / `scry.sec_quarterly_quick_summary` | SEC quarterly financial statement BigQuery tables. Use these for structured public-company facts, accession-number lookup, filing metadata, statement presentation context, and CIK/company/date joins. |
+| `scry.sec_quarterly_calculation` / `scry.sec_quarterly_dimension` / `scry.sec_quarterly_measure_tag` / `scry.sec_quarterly_rendering` / `scry.sec_quarterly_txt` / `scry.sec_quarterly_sic_codes` | SEC quarterly companion tables for XBRL calculation arcs, segment dimensions, tag labels/definitions, rendering metadata, text-block facts, and SIC labels. |
 | `scry.fec_bigquery_candidates` / `scry.fec_bigquery_committees` / `scry.fec_bigquery_candidate_committee_links` / `scry.fec_bigquery_transactions` / `scry.fec_bigquery_operating_expenditures` | FEC BigQuery campaign-finance substrate. Use candidate/committee tables for identity and relationship joins, and transaction/expenditure tables for contribution and spending analysis. |
 | `scry.google_trends_daily_terms` / `scry.google_trends_hourly_terms` | Google Trends public term-rank time series. Includes domestic/international daily terms plus hourly top/rising terms for attention and geography/time joins. |
 | `scry.irs_990_bigquery_returns` / `scry.irs_990_bigquery_ein_index` | IRS 990 BigQuery nonprofit returns and EIN index. Includes EIN, tax year/period, organization metadata, revenue, expenses, assets, liabilities, and preserved raw payloads for form-family fields. |
@@ -190,6 +190,68 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_europepmc_articles(query_text, mode, limit_n)` | BM25 over Europe PMC article titles, abstracts/payloads, authors, journal, DOI/PMID/PMCID, and terms. |
 | `scry.search_sec_edgar_filings(query_text, forms, ciks, limit_n)` | BM25 over SEC EDGAR filing payloads with optional form and CIK filters. |
 | `scry.sec_edgar_company_filings(cik_or_ticker, forms, limit_n)` | Bounded SEC filing lookup by ticker or CIK, newest first, returning queue/content-stage fields for one company. |
+
+### SEC Quarterly Financials
+
+Use the SEC quarterly BigQuery surfaces for structured XBRL financial-statement
+work. `submission_number` is the accession/adsh key across the quarterly
+tables; `central_index_key` is the CIK. Start with
+`scry.sec_quarterly_submission` for filer/form/date identity, use
+`scry.sec_quarterly_quick_summary` for common company facts, and join or filter
+into the companion tables when you need presentation order, tag definitions,
+text blocks, calculation arcs, dimensional segments, rendering metadata, or SIC
+labels. The quarterly tables contain structured public XBRL snapshot data; for
+complete filing text and live EDGAR followthrough, use the `scry.sec_edgar*`
+surfaces.
+
+```sql
+-- Company / CIK / fiscal-period filings.
+SELECT submission_number, company_name, form, fiscal_year, fiscal_period_focus, sic
+FROM scry.sec_quarterly_submission
+WHERE central_index_key = 104169
+ORDER BY date_filed DESC
+LIMIT 20;
+
+-- Accession/adsh lookup.
+SELECT submission_number, central_index_key, company_name, form, fiscal_year, fiscal_period_focus
+FROM scry.sec_quarterly_submission
+WHERE submission_number = '0000104169-16-000079';
+
+-- Concept facts for one company.
+SELECT submission_number, company_name, measure_tag, fiscal_year, fiscal_period_focus, value, units
+FROM scry.sec_quarterly_quick_summary
+WHERE central_index_key = 104169
+  AND measure_tag IN ('Assets', 'Revenues', 'NetIncomeLoss')
+ORDER BY fiscal_year DESC NULLS LAST
+LIMIT 50;
+
+-- Tag labels and definitions.
+SELECT measure_tag, version, tag_label, LEFT(doc, 240) AS definition
+FROM scry.sec_quarterly_measure_tag
+WHERE measure_tag = 'Revenues'
+LIMIT 20;
+
+-- Filing text-block facts.
+SELECT submission_number, measure_tag, LEFT(value, 500) AS text_preview
+FROM scry.sec_quarterly_txt
+WHERE submission_number = '0000104169-16-000079'
+  AND measure_tag ILIKE '%TextBlock'
+LIMIT 20;
+
+-- SIC industry slices.
+SELECT sub.company_name, sub.central_index_key, sub.form, sub.fiscal_year, sic.industry_title
+FROM scry.sec_quarterly_submission sub
+JOIN scry.sec_quarterly_sic_codes sic ON sic.sic_code = sub.sic
+WHERE sic.sic_code = '7372'
+LIMIT 50;
+
+-- Presentation tree rows for a filing.
+SELECT report, line, statement, measure_tag, preferred_label
+FROM scry.sec_quarterly_presentation
+WHERE submission_number = '0000104169-16-000079'
+ORDER BY report, line
+LIMIT 100;
+```
 
 It is normal to combine multiple source-native helpers in one statement:
 
