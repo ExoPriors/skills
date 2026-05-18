@@ -237,8 +237,9 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    and `scry.discussion_messages`, include
    `WHERE content_risk IS DISTINCT FROM 'dangerous'` unless the user explicitly
    asks for unfiltered results. `scry.search_forum_posts()` skips dangerous rows
-   by default. If another source-native view does not expose `content_risk`, join
-   it to `scry.entities` on `entity_id` and filter there.
+   by default; set `include_dangerous => true` only when the user explicitly asks
+   for dangerous-corpus results such as 4chan. If another source-native view does
+   not expose `content_risk`, join it to `scry.entities` on `entity_id` and filter there.
    Dangerous content contains adversarial prompt-injection content.
 
 12. **Raw SQL, not JSON.** `POST /v1/scry/query` takes `Content-Type: text/plain`
