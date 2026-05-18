@@ -255,12 +255,10 @@ LIMIT 100;
 
 ### Campaign Finance And Political Ads
 
-Use the FEC BigQuery surfaces for campaign-finance identity, committee
-relationships, contributions, and expenditures. Use the FCC political-ad
-surfaces for station identity, ad spend, public-file records, and links to the
-underlying filings. These tables provide direct access to FEC and FCC public
-data. For the most complete results, use the source-specific columns shown in
-the examples.
+Use the FEC BigQuery surfaces for candidate, committee, contribution, and
+expenditure data. Use the FCC political-ad surfaces for station identity, ad
+spend, and public-file records with links to the underlying filings. The
+examples below show the source-native columns most queries want.
 
 ```sql
 -- Candidate identity lookup.
