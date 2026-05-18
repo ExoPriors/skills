@@ -633,13 +633,13 @@ bounded default path. Keep `scry.reddit_search_contract`,
 `scry.mv_reddit_*`, `scry.search_reddit_posts(...)`, and
 `scry.search_reddit_comments(...)` for lower-level or explicit-window work.
 
-For the pregabalin/GABA and phenomenology frontier, use the accelerated public
+For the GABA/pregabalin and phenomenology frontier, use the accelerated public
 Reddit path through `scry.search_reddit(...)`:
 
 ```sql
 SELECT id, kind, subreddit, title, snippet, original_timestamp, score
 FROM scry.search_reddit(
-  'pregabalin phenomenology experience r/gabagoodness r/pregabalin r/gabapentin r/Phenomenology r/consciousness',
+  'pregabalin phenomenology experience r/gabagoodness r/pregabalin r/gabapentin r/Nootropics r/psychopharmacology r/Phenomenology r/consciousness',
   'auto',
   NULL,
   ARRAY['post', 'comment'],
@@ -668,8 +668,7 @@ LIMIT 20
 ```
 
 Voyage-4-lite Reddit coverage now uses the indexed interest-frontier semantic
-surface for `r/gabagoodness`, `r/pregabalin`, `r/gabapentin`, and a focused
-phenomenology/consciousness philosophy frontier.
+surface for the focused Reddit interest frontier.
 Keep explicit subreddit filters because Reddit semantic search is subset
 coverage, not global Reddit coverage.
 
