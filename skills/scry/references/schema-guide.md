@@ -253,6 +253,56 @@ ORDER BY report, line
 LIMIT 100;
 ```
 
+### Campaign Finance And Political Ads
+
+Use the FEC BigQuery surfaces for campaign-finance identity, committee
+relationships, contributions, and expenditures. Use the FCC political-ad
+surfaces for station identity, ad spend, public-file records, and links to the
+underlying filings. These tables provide direct access to FEC and FCC public
+data. For the most complete results, use the source-specific columns shown in
+the examples.
+
+```sql
+-- Candidate identity lookup.
+SELECT cand_id, cand_name, cand_office, cand_office_st, cand_pty_affiliation
+FROM scry.fec_bigquery_candidates
+WHERE cand_name ILIKE '%BIDEN%'
+LIMIT 20;
+
+-- Candidate-to-committee relationships.
+SELECT c.cand_id, c.cand_name, l.cmte_id, cm.cmte_nm, l.cmte_design, l.fec_election_yr
+FROM scry.fec_bigquery_candidates c
+JOIN scry.fec_bigquery_candidate_committee_links l ON l.cand_id = c.cand_id
+JOIN scry.fec_bigquery_committees cm ON cm.cmte_id = l.cmte_id
+WHERE c.cand_id = 'P80000722'
+LIMIT 50;
+
+-- Contribution rows by contributor or conduit name.
+SELECT name, cmte_id, transaction_amt, transaction_dt, memo_text
+FROM scry.fec_bigquery_transactions
+WHERE name ILIKE '%ACTBLUE%'
+LIMIT 50;
+
+-- Operating expenditures by purpose.
+SELECT cmte_id, name, transaction_amt, transaction_dt, purpose
+FROM scry.fec_bigquery_operating_expenditures
+WHERE purpose ILIKE '%MEDIA%'
+LIMIT 50;
+
+-- FCC political-ad content records with source file links.
+SELECT advertiser, candidate, gross_spend, period_start, period_end, raw_file_link
+FROM scry.fcc_political_ad_content_info
+WHERE advertiser IS NOT NULL
+LIMIT 50;
+
+-- FCC public-file records joined to station identity.
+SELECT r.station_id, s.call_sign, s.community_state, r.year, r.file_status, r.raw_file_link
+FROM scry.fcc_political_ad_file_records r
+LEFT JOIN scry.fcc_political_ad_stations s ON s.station_id = r.station_id
+WHERE r.raw_file_link IS NOT NULL
+LIMIT 50;
+```
+
 It is normal to combine multiple source-native helpers in one statement:
 
 ```sql
