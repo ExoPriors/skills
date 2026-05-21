@@ -513,25 +513,12 @@ ORDER BY distance
 LIMIT 50
 ```
 
-### Using the built-in hybrid_search function
-```sql
-SELECT id, uri, title, original_author, original_timestamp, distance
-FROM scry.hybrid_search(
-  'reward modeling',
-  @p_deadbeef_reward_modeling,
-  kinds=>ARRAY['post','paper'],
-  limit_n=>100,
-  rerank_n=>50
-)
-LIMIT 30
-```
+### Hybrid discipline
 
-### Rerank limits
-
-When using Scry rerank, keep candidate sets bounded. The current public cap is
-500 entities per rerank request, and candidate text is truncated to 4000
-characters before reranking. Allowed model ids are `gpt-5.4-nano`,
-`openai/gpt-5.4-nano`, `gpt-5.4-mini`, and `openai/gpt-5.4-mini`.
+Prefer an explicit lexical CTE plus vector ordering when you need hybrid search.
+It keeps the candidate window visible, source filters obvious, and provenance
+joins under your control. Treat public LLM ranking flows as out of the portable
+agent contract for now.
 
 ---
 

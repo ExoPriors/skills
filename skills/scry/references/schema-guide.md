@@ -546,6 +546,7 @@ Common names produce false merges. When `display_name` is generic (e.g., "John S
 | `scry.ai_philanthropy_actor_candidates` | Public author/account candidates from AI-philanthropy evidence, with exact actor matches and unresolved actor gaps |
 | `scry.ai_philanthropy_organization_signals` | Precomputed evidence-organization signal rows for the AI-philanthropy frontier |
 | `scry.ai_philanthropy_organization_candidates` | Aggregate organization and capital-allocation candidates derived from indexed AI-philanthropy evidence signals |
+| `scry.ai_philanthropy_organization_judgement_candidates` | Organization-linked first-class evidence targets queued for relevance and claim-unit judgement replay |
 | `scry.ai_philanthropy_harvest_health` | Freshness and coverage metrics for AI-philanthropy ingestion |
 | `scry.ai_philanthropy_embedding_coverage` | Per-evidence embedding and Reddit queue state for the AI-philanthropy frontier |
 
