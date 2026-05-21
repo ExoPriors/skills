@@ -157,6 +157,7 @@ Source-local lexical helpers exist for many of these views:
 |----------|-------|
 | `scry.search_bluesky_posts(query_text, mode, limit_n)` | BM25 over Bluesky `payload` plus DID / handle / display-name fields. |
 | `scry.search_twitter_posts(query_text, mode, limit_n)` | BM25 over source-native Twitter/X tweet rows. Use for individual tweet identity, canonical URI, author fields, timestamps, and public observation provenance arrays. |
+| `scry.search_crawled_pages(query_text, mode, kinds, limit_n)` | BM25 over source-native crawled web pages, including Substack posts. For cross-source discovery that includes crawled pages, use `scry.search_federated(..., sources => ARRAY['crawled_url'])`. |
 | `scry.search_hackernews_items(query_text, mode, kinds, limit_n)` | BM25 over HN `title`, `payload`, and `original_author`. |
 | `scry.search_wikipedia_articles(query_text, mode, limit_n)` | BM25 over Wikipedia `title`, `payload`, and `original_author`. |
 | `scry.search_pubmed_papers(query_text, mode, limit_n)` | BM25 over PubMed `title`, `payload`, `original_author`, and `journal`. |
