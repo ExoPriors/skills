@@ -1,61 +1,68 @@
 ---
 name: scry
 description: >
-  Query the ExoPriors Scry API -- SQL-over-HTTPS search across the public Scry corpus
-  spanning forums, papers, social media, government records, legal opinions,
-  books, knowledge graphs, and prediction markets.
+  Use Scry's agent-first research surface -- live context discovery, typed search,
+  SQL-over-HTTPS corpus search, semantic @handle embeddings, vector algebra,
+  source-native tables, shares, receipts, and structured agent judgements across
+  the public Scry corpus spanning forums, papers, social media, government
+  records, legal opinions, books, knowledge graphs, and prediction markets.
   Includes conservative public cross-platform author lookup (actors, people,
   aliases),
   OpenAlex academic graph navigation (authors, citations, institutions, concepts),
   shareable artifacts, and structured agent judgements.
   Use when the task involves: Scry API, ExoPriors, /v1/scry/query, scry.search,
   scry.entities, materialized views, corpus search, epistemic infrastructure,
-  lexical search, BM25, structured agent judgements, scry shares,
+  lexical search, BM25, semantic search, embeddings, @handles, vector algebra,
+  structured agent judgements, scry shares,
   StackExchange, caselaw, Gutenberg, Wikidata, KL3M federal corpus,
   cross-corpus analysis, who is this person, cross-platform identity, OpenAlex,
   citation graph, coauthor graph, academic papers, author lookup.
-  NOT for: semantic/vector search composition or embedding algebra (use
-  scry-vectors), LLM-based reranking (use scry-rerank), or the user's own
-  local Postgres / non-ExoPriors data sources.
+  NOT for: the user's own local Postgres / non-Scry data sources, production
+  database maintenance, or standalone LLM judge workflows that are not
+  advertised as healthy by live Scry context/schema.
 ---
 
 # Scry Skill
 
-Scry's canonical substrate is read-only SQL over the ExoPriors public corpus.
+Scry's canonical substrate is read-only SQL over the public Scry corpus.
 Most agents should reach that substrate through the hosted Scry HTTP surface and Scry tools,
 not raw database credentials. You write Postgres SQL against a curated `scry.*` schema
 and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just SQL.
 When SQL is unnecessary, the portable typed-search front door is `POST /v1/scry/search`.
-Typed search uses `method = lexical | hybrid | rerank`, may return a reusable
+Typed search uses `method = lexical | hybrid`, may return a reusable
 `candidate_set.receipt`, and `GET /v1/scry/search/records/{record_ref}` hydrates
 record details.
+Semantic work also lives here: create concept handles with `POST /v1/scry/embed`,
+reference them as `@handle` in SQL, and use vector-patterns guidance under this
+skill as the canonical packaged path.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026051801`
+**Skill generation**: `2026052101`
 
 ## A) When to use / not use
 
 **Use this skill when:**
 - Searching, filtering, or aggregating content across the ExoPriors corpus
 - Running lexical (BM25) or hybrid searches
+- Running semantic searches with stored `@handle` concept vectors
+- Using vector mixing, contrast axes, and debiasing when conceptual search needs nuance
 - Exploring author networks, public cross-platform identities, or publication patterns
 - Navigating the OpenAlex academic graph (authors, citations, institutions, concepts)
 - Creating shareable artifacts from query results
 - Emitting structured agent judgements about entities or external references
 
 **Do NOT use this skill when:**
-- The user wants semantic/vector search composition or embedding algebra
-  (use the scry-vectors skill)
-- The user wants LLM-based reranking (use the scry-rerank skill)
 - The user is querying their own local database
+- The user needs production database operations rather than the hosted Scry API
+- The task depends on standalone LLM judge behavior that live context/schema does not advertise as healthy
 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026051801`.
+   `GET /v1/scry/context?skill_generation=2026052101`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
-   budgets, canonical env var, default skill, and specialized skill catalog.
+   budgets, canonical env var, default skill, and installed skill catalog.
    Read `offerings.portable_entry` as the canonical `/scry` flow:
    `context -> schema -> route -> query`.
    Read `offerings.payments` as the payment-role contract: it tells you which
@@ -77,8 +84,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    track `surface_context_generation` and refresh when it changes.
    Use typed search for bounded discovery and candidate reuse, and use
    `scry.search_federated(...)` or source-native `scry.search_*` helpers for
-   custom lexical SQL. Typed-search `method` is `lexical`, `hybrid`, or
-   `rerank`; `candidate_receipt` reruns refinement over the same lexical
+   custom lexical SQL. Typed-search `method` is `lexical` or `hybrid`;
+   `candidate_receipt` reruns refinement over the same lexical
    shortlist. Pivot to source-local `scry.*` surfaces or semantic retrieval
    when those helpers do not fit the task. The `lexical_search` block describes
    the old shared BM25 diagnostic path, not the canonical lexical-serving path.
@@ -101,9 +108,12 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 
 2. **Schema first.** ALWAYS call `GET /v1/scry/schema` before writing SQL.
    Never guess column names or types. The schema endpoint returns live
-   column metadata and row-count estimates for every view. For semantic SQL,
-   also read each embedding-capable relation's `vector_indexed` field and
-   prefer `true` surfaces first; `false` means the relation is exposed but not
+   column metadata, row-count estimates where applicable, and scope metadata
+   (`access_scope`, `row_count_estimate_scope`) on caller-scoped relations. Use
+   those fields to tell global estimates apart from rows the current key can
+   read. For semantic SQL, also read each
+   embedding-capable relation's `vector_indexed` field and prefer `true`
+   surfaces first; `false` means the relation is exposed but not
    ANN-index-backed on the public path, so similarity ordering may degrade into
    seq-scan behavior that will not fit the sync envelope.
 
@@ -177,8 +187,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    Use the shared BM25 diagnostic helpers only when a task explicitly needs that
    path. Widen into broader SQL when you need joins,
    aggregation, or full control over filters. For conceptual intent ("themes",
-   "things like", "similar to"), route to scry-vectors first, then optionally
-   hybridize.
+   "things like", "similar to"), create or reuse a stored `@handle`, then
+   optionally hybridize with lexical candidates.
 
 8. **LIMIT always.** Every query MUST include a LIMIT clause. Max 10,000 rows.
    Queries without LIMIT are rejected by the SQL validator.
@@ -268,6 +278,11 @@ Durable machine bootstrap paths:
 
 Both paths end with the same `Authorization: Bearer $SCRY_API_KEY` contract.
 
+Console can also generate a copyable prompt with the bearer key already embedded,
+so a private agent can use Scry immediately. Treat embedded keys as local
+bearer secrets: keep them out of repositories, public prompts, shared transcripts,
+screenshots, and durable global agent context. For reusable multi-project setup,
+prefer `SCRY_API_KEY` in `.env`.
 ```bash
 printf '%s\n' 'SCRY_API_KEY=<your key>' >> .env
 set -a && source .env && set +a
@@ -384,10 +399,10 @@ When there is congestion, these are the key billing controls:
 - `GET /v1/scry/pricing` returns the live billing/market authority: the live query access contract (`free_unless_congested`), whether congestion pricing is currently active, the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
 - `GET /v1/scry/pricing` also exposes the x402 base funding quantum and the fact that x402 funding now scales off `X-Scry-Budget` when that header is present.
 - `GET /v1/scry/account` returns the authenticated funding summary. Read `funding.card_funding` first when the question is "can this agent use cards right now?" because it makes the current card state explicit (`requires_operator_setup`, `saved_method_ready`, `auto_topup_attention_required`, `auto_topup_active`, or `disabled`) and lists the next endpoints to call.
-- Funding-control endpoints such as `GET /v1/scry/account`, `POST /v1/billing/agent-topup`, `POST /v1/billing/payment-mandates`, and `PATCH /v1/billing/auto-topup` require account or billing scope.
+- Funding-control endpoints such as `POST /v1/billing/agent-topup`, `POST /v1/billing/setup-payment-method`, `POST /v1/billing/payment-mandates`, and `PATCH /v1/billing/auto-topup` require explicit billing scope for API keys. Interactive Console sessions can use account scope for browser-mediated account actions. A data/query key that gets `Missing required scope: billing` should ask the operator for a billing-scoped key or a browser handoff, not retry.
 - `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted upper-bound `cost_breakdown`.
 - `POST /v1/scry/query?receipt=summary` or `?receipt=full` returns an optional execution receipt inline with the result. Use `summary` when you only need the stable ID, SQL fingerprint, and main cost/runtime facts; use `full` when you want the estimate, billing, execution, and structured security details in one object.
-- `GET /v1/scry/query-receipts/{id}` re-hydrates the durable query receipt for the authenticated caller from `scry_query_log`. Raw SQL is omitted by default; add `?include_sql=true` when the owner explicitly needs the original statement back.
+- `GET /v1/scry/query-receipts` lists recent receipts for the authenticated caller. `GET /v1/scry/query-receipts/{id}` re-hydrates a durable query receipt from `scry_query_log`. Raw SQL is omitted by default from the detail response; add `?include_sql=true` when the owner explicitly needs the original statement back.
 - `X-Scry-Subject-Agent: <agent-id>` activates delegated query policy. If the authenticated account has a matching active `query_access` mandate, Scry applies that mandate's `max_query_exposure` as an additional cap and returns a `delegated_authorization` object. If not, `/v1/scry/query` fails with `delegated_authorization_required`.
   - Cards are a two-stage rail, not a zero-setup hot path.
   - `POST /v1/billing/setup-payment-method` creates a Stripe Checkout setup session that saves a card without charging it and returns `setup_url` for one operator browser visit. After completion, the card is persisted as a payment instrument and set as the default. This is the entry point for enabling Stripe-backed auto-topup and agent-topup.
@@ -436,7 +451,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026051801
+GET https://api.scry.io/v1/scry/context?skill_generation=2026052101
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -504,8 +519,8 @@ LIMIT 20;
 ```
 User wants to search the ExoPriors corpus?
   |
-  +-- Ambiguous / conceptual ask? --> Clarify intent first, then use
-  |     scry-vectors for semantic search (optionally hybridize with lexical)
+  +-- Ambiguous / conceptual ask? --> Clarify intent first, then create/reuse
+  |     a semantic @handle and optionally hybridize with lexical candidates
   |
   +-- By keywords/phrases? --> typed search, scry.search_federated(...), or source-native search helpers
   |     +-- Specific source? --> pass `sources` explicitly or use the source-native helper/table
@@ -517,9 +532,10 @@ User wants to search the ExoPriors corpus?
   |
   +-- By structured filters (source, date, author)? --> Direct SQL on MVs
   |
-  +-- By semantic similarity? --> (scry-vectors skill, not this one)
+  +-- By semantic similarity? --> POST /v1/scry/embed, then SQL over
+  |     scry.chunk_embeddings / scry.entities_with_embeddings
   |
-  +-- Hybrid (keywords + semantic rerank)? --> scry.hybrid_search() or
+  +-- Hybrid (keywords + semantic ordering)? --> scry.hybrid_search() or
   |     lexical CTE + JOIN scry.chunk_embeddings
   |
   +-- Author/people lookup? --> scry.actors, scry.people, scry.person_accounts
@@ -547,14 +563,14 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026051801" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026052101" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
 If response includes `"should_update_skill": true`, ask the user to run:
 `npx skills update`.
 If the response shows `"client_skill_generation": null` while the session is
-using packaged Scry skills, or if local instructions still point at
+using the packaged Scry skill, or if local instructions still point at
 legacy ExoPriors hostnames or legacy console routes, stop and ask the user
 to run `npx skills update` before deeper debugging.
 If response includes `"lexical_search": {...}`, read `status`, `status_basis`,
@@ -730,7 +746,22 @@ Removing the date bound turns this into a large base-table aggregation. Run
 `/v1/scry/estimate` first or prefer source-specific MVs when they already cover
 the question.
 
-### E6. Hybrid search (lexical + semantic rerank in SQL)
+### E6. Semantic handle + hybrid search
+
+Create a stored concept vector before referencing `@handle` in SQL:
+
+```bash
+curl -s "https://api.scry.io/v1/scry/embed" \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "deceptive_alignment",
+    "text": "deceptive alignment, mesa-optimizers, models strategically appearing aligned during training",
+    "model": "voyage-4-lite"
+  }'
+```
+
+Then combine lexical recall with semantic ordering:
 
 ```sql
 WITH c AS (
@@ -740,7 +771,7 @@ WITH c AS (
   WHERE entity_id IS NOT NULL
 )
 SELECT e.uri, e.title, e.original_author,
-       emb.embedding_voyage4 <=> @p_deadbeef_topic AS distance
+       emb.embedding_voyage4 <=> @deceptive_alignment AS distance
 FROM c
 JOIN scry.entities e ON e.id = c.entity_id
 JOIN scry.chunk_embeddings emb ON emb.entity_id = c.entity_id AND emb.chunk_index = 0
@@ -749,8 +780,9 @@ ORDER BY distance
 LIMIT 50
 ```
 
-Requires a stored embedding handle (`@p_deadbeef_topic`). See scry-vectors
-skill for creating handles.
+Requires a stored embedding handle. See
+`references/vector-patterns.md` for vector mixing, debiasing, contrast axes,
+and failure modes.
 
 ### E7. Cost estimation before execution
 
@@ -787,7 +819,7 @@ curl -s -X POST https://api.scry.io/v1/scry/shares \
   }'
 ```
 
-Kinds: `query`, `rerank`, `insight`, `chat`, `markdown`.
+Kinds: `query`, `insight`, `chat`, `markdown`.
 Progressive update: create stub immediately, then `PATCH /v1/scry/shares/{slug}`.
 Rendered at: `https://scry.io/scry/share/{slug}`.
 
@@ -902,17 +934,20 @@ When this skill completes a query task, return a consistent structure:
 
 **Produces:** JSON with `columns`, `rows`, `row_count`, `duration_ms`, `truncated`
 **Feeds into:**
-- `rerank`: ensure SQL returns `id` and `content_text` columns for candidate sets
-- `scry-vectors`: save entity IDs for embedding lookup and semantic reranking
-**Receives from:** none (entry point for SQL-based corpus access)
+- shares: preserve durable result artifacts with `POST /v1/scry/shares`
+- judgements: emit structured observations with `POST /v1/scry/judgements`
+- stored vectors: create `@handle` concepts with `POST /v1/scry/embed` and use them in SQL
+**Receives from:** live `/v1/scry/context`, `/v1/scry/schema`, and user intent
 
 ## Related Skills
 
-- [scry-vectors](../scry-vectors/SKILL.md) -- embed concepts as @handles, search by cosine distance, debias with vector algebra
-- [scry-rerank](../scry-rerank/SKILL.md) -- LLM-powered multi-attribute reranking of candidate sets via pairwise comparison
+The installable Scry package intentionally exposes one skill: this `/scry`
+surface. Semantic vectors, source-native SQL, shares, receipts, and judgements
+belong here.
 
 ---
 
 For detailed schema documentation, see `references/schema-guide.md`.
 For the full pattern library, see `references/query-patterns.md`.
+For semantic vector composition, see `references/vector-patterns.md`.
 For error codes and quota details, see `references/error-reference.md`.

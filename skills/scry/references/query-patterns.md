@@ -495,7 +495,7 @@ LIMIT 20
 
 ## 5. Hybrid Search (Lexical + Semantic)
 
-### Lexical candidates, semantic rerank via embedding
+### Lexical candidates, semantic ordering via embedding
 ```sql
 WITH c AS (
   SELECT entity_id
@@ -525,6 +525,13 @@ FROM scry.hybrid_search(
 )
 LIMIT 30
 ```
+
+### Rerank limits
+
+When using Scry rerank, keep candidate sets bounded. The current public cap is
+500 entities per rerank request, and candidate text is truncated to 4000
+characters before reranking. Allowed model ids are `gpt-5.4-nano`,
+`openai/gpt-5.4-nano`, `gpt-5.4-mini`, and `openai/gpt-5.4-mini`.
 
 ---
 
@@ -829,8 +836,8 @@ curl -s -X POST https://api.scry.io/v1/scry/shares \
   -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "kind": "rerank",
-    "title": "Rerank in progress...",
+    "kind": "query",
+    "title": "Semantic ordering in progress...",
     "summary": "Computing; will update with results."
   }'
 # Returns: {"slug": "abc123", ...}
@@ -840,7 +847,7 @@ curl -s -X PATCH https://api.scry.io/v1/scry/shares/abc123 \
   -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "title": "Top clarity posts (reranked)",
+    "title": "Top semantically ordered posts",
     "payload": {"request": {...}, "response": {...}}
   }'
 ```

@@ -540,6 +540,14 @@ Common names produce false merges. When `display_name` is generic (e.g., "John S
 |------|-------------|
 | `scry.agent_judgements` | Structured agent observations (queryable with an authenticated personal-key Scry SQL context) |
 | `scry.agent_emitters` | Aggregated agent emitter stats visible through the authenticated judgement surface |
+| `scry.ai_philanthropy_evidence` | Evidence rows on AI philanthropy, linking topics and ingestion provenance to source URLs or stored documents |
+| `scry.ai_philanthropy_claims` | Judgements on specific claims about AI and philanthropy, linked to the most relevant evidence record |
+| `scry.ai_philanthropy_actor_reviews` | Reviews and analysis of people or organizations involved in AI and philanthropy |
+| `scry.ai_philanthropy_actor_candidates` | Public author/account candidates from AI-philanthropy evidence, with exact actor matches and unresolved actor gaps |
+| `scry.ai_philanthropy_organization_signals` | Precomputed evidence-organization signal rows for the AI-philanthropy frontier |
+| `scry.ai_philanthropy_organization_candidates` | Aggregate organization and capital-allocation candidates derived from indexed AI-philanthropy evidence signals |
+| `scry.ai_philanthropy_harvest_health` | Freshness and coverage metrics for AI-philanthropy ingestion |
+| `scry.ai_philanthropy_embedding_coverage` | Per-evidence embedding and Reddit queue state for the AI-philanthropy frontier |
 
 ---
 
@@ -940,7 +948,7 @@ then widen into richer SQL once you know the right corpus and filters.
 | `scry.search_reddit_posts_semantic(query_embedding, subreddits, limit_n, min_upvotes, min_timestamp)` | Reddit semantic search over embedding-covered subset | 200 |
 | `scry.search_reddit_comments_semantic(query_embedding, subreddits, limit_n, min_upvotes, min_timestamp)` | Reddit comment semantic search over embedding-covered subset | 200 |
 | `scry.search_exhaustive(query_text, mode, kinds, limit_n, offset_n)` | Higher-cap paginated search | 1000 |
-| `scry.hybrid_search(query, query_vector, kinds, limit_n)` | Lexical + semantic rerank | 100 |
+| `scry.hybrid_search(query, query_vector, kinds, limit_n)` | Lexical candidates with semantic ordering | 100 |
 | `scry.author_topics(author_pattern, topics)` | Per-author topic hit counts | -- |
 | `scry.preview_text(input, max_chars)` | Safe content-text prefix helper | -- |
 | `scry.preview_text_safe(input, max_chars)` | Exception-safe content-text prefix helper | -- |
