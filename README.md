@@ -1,28 +1,21 @@
-# ExoPriors Agent Skills
+# ExoPriors Agent Skill
 
-Agent skills for [Scry](https://scry.io) — read-only SQL + semantic search over 240M+ entities (papers, posts, code, legal docs, predictions, and more).
+Agent skill package for [Scry](https://scry.io) — read-only SQL + semantic search over 240M+ entities (papers, posts, code, legal docs, predictions, and more).
 
 Works with Claude Code, Cursor, Codex, Gemini CLI, and [40+ other agents](https://github.com/vercel-labs/skills).
 
 ## Install
 
 ```bash
-# All skills
-npx skills add exopriors/skills
-
-# Individual skills
+# Scry skill
 npx skills add exopriors/skills --skill scry
-npx skills add exopriors/skills --skill scry-vectors
-npx skills add exopriors/skills --skill scry-rerank
 ```
 
-## Skills
+## Skill
 
 | Skill | What it does |
 |-------|-------------|
-| **scry** | Core querying — SQL-over-HTTPS, lexical search (BM25), materialized views, cross-platform identity resolution, OpenAlex academic graph, shares, judgements |
-| **scry-vectors** | Semantic search with `@handle` named vectors, cosine distance, debiasing, vector algebra |
-| **scry-rerank** | LLM pairwise multi-attribute reranking (clarity, technical_depth, insight, custom prompts) |
+| **scry** | Core querying — SQL-over-HTTPS, lexical search (BM25), semantic search with named vectors, LLM reranking, materialized views, cross-platform identity resolution, OpenAlex academic graph, shares, and judgements |
 
 ## Quick Start
 
