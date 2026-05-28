@@ -89,7 +89,8 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    `candidate_receipt` reruns refinement over the same lexical
    shortlist. Pivot to source-local `scry.*` surfaces or semantic retrieval
    when those helpers do not fit the task. The `lexical_search` block describes
-   the old shared BM25 diagnostic path, not the canonical lexical-serving path.
+   the shared BM25 diagnostic path; use the canonical lexical helpers above for
+   serving.
    If you are validating deploy/runtime conformance from this repo rather than
    just using the surface, run the canonical proof command:
 
@@ -146,10 +147,9 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    rejects windows wider than 24 hours.
 
 6. **Treat congested queries as budget-bounded.** Scry queries are free unless
-   there is congestion. When there is congestion, Scry reserves nanodollar
-   credits up front and derives a runtime timeout from the authorized spend
-   envelope. The runtime enforces that envelope with a live-burn watchdog first
-   and a timeout fallback second. Lead with the simplified surface:
+   there is congestion. When there is congestion, set a per-query budget; Scry
+   bounds each query's runtime to the spend you authorize. Lead with the
+   simplified surface:
    use `X-Scry-Budget` as the primary per-query cost control, `eager` and
    `patient` as the two execution modes, and `GET /v1/scry/account` as the
    one-stop status check before or after broad or expensive query work. Use `GET /v1/scry/pricing`
@@ -581,8 +581,8 @@ using the packaged Scry skill, or if local instructions still point at
 legacy ExoPriors hostnames or legacy console routes, stop and ask the user
 to run `npx skills update` before deeper debugging.
 If response includes `"lexical_search": {...}`, read `status`, `status_basis`,
-and `last_known_status` as metadata for the old shared BM25 diagnostic path, not
-as the Scry lexical-serving contract. Prefer
+and `last_known_status` as shared BM25 diagnostic metadata, not as the Scry
+lexical-serving contract. Prefer
 typed search, `scry.search_federated(...)`, source-native `scry.search_*`
 helpers, or `scry.entities_with_embeddings` depending on the task. Use
 `/v1/scry/index-view-status` for detailed live timing before blaming the query.
@@ -702,18 +702,23 @@ Use `scry.search_reddit_posts_semantic(...)` or
 `scry.search_reddit_comments_semantic(...)` only when you already know you want
 one kind.
 
-### E3. Source-filtered materialized view query
+### E3. Bounded arXiv lexical query
 
 ```sql
-SELECT entity_id, uri, title, original_author, score, original_timestamp
-FROM scry.arxiv_papers
-WHERE original_timestamp >= '2025-01-01'
-ORDER BY original_timestamp DESC
+SELECT arxiv_id, title, original_author, original_timestamp, snippet
+FROM scry.search_arxiv_papers(
+  'biosecurity dual use',
+  'auto',
+  '2024-01-01'::timestamptz,
+  '2025-01-01'::timestamptz,
+  50
+)
 LIMIT 50
 ```
 
-`score` is not the useful ranking axis for arXiv. Sort by
-`original_timestamp`, `primary_category`, or downstream citation proxies instead.
+Use `scry.search_arxiv_papers(...)` for source-native BM25 retrieval over arXiv
+paper text. Use `scry.arxiv_papers` directly for structured filters, recency
+lists, or category counts.
 
 ### E4. Author activity across sources
 

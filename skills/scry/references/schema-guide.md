@@ -97,7 +97,7 @@ union view over those records.
 | `scry.kalshi_markets` | Canonical Kalshi substrate keyed by `ticker`. Contains event/series tickers, market status/result, pricing snapshots, and market timing fields. |
 | `scry.nih_reporter_projects` | Canonical NIH RePORTER substrate keyed by `appl_id`. Contains fiscal year, award amount, project identifiers, PI lists, and organization metadata. |
 | `scry.govinfo_crec_granules` | Canonical GovInfo Congressional Record substrate keyed by `granule_id`. Contains package/chamber/class metadata and issue/publication dates. |
-| `scry.arxiv` / `scry.arxiv_papers` | Canonical arXiv substrate keyed by `arxiv_id`. Includes payload, DOI, categories, authors, publication metadata, and the source-native arXiv alias. |
+| `scry.arxiv` / `scry.arxiv_papers` | Canonical arXiv substrate keyed by `arxiv_id`. Includes payload, DOI, categories, authors, publication metadata, and the source-native arXiv alias. Use `scry.search_arxiv_papers(query_text, mode, start_ts, end_ts, limit_n)` for bounded BM25 retrieval. |
 | `scry.openalex_works` | Canonical OpenAlex work surface keyed by `work_id`. Joins graph metadata with dedicated abstract payload rows and optional `entity_id` bridge links. |
 | `scry.openalex_work_external_ids` | Source-local OpenAlex alias registry keyed by `work_id`. Use it for carried external identifiers such as PubMed PMIDs that belong to the OpenAlex work rather than the shared ext-id bridge. |
 | `scry.bluesky_posts` | Canonical Bluesky substrate keyed by AT URI. |

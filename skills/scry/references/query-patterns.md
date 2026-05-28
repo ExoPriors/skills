@@ -360,19 +360,33 @@ LIMIT 24
 
 ---
 
-## 3. Academic Paper Patterns
+## 4. Academic Paper Patterns
+
+### Bounded arXiv lexical search
+```sql
+SELECT arxiv_id, title, original_author, original_timestamp, snippet
+FROM scry.search_arxiv_papers(
+  'biosecurity dual use',
+  'auto',
+  '2024-01-01'::timestamptz,
+  '2025-01-01'::timestamptz,
+  50
+)
+LIMIT 50
+```
+
+This is the preferred arXiv keyword path when you need text relevance plus a
+date window.
 
 ### Recent arXiv papers by category
 ```sql
 SELECT entity_id, uri, title, original_author, original_timestamp
 FROM scry.arxiv_papers
 WHERE original_timestamp >= '2025-01-01'
+  AND primary_category = 'cs.AI'
 ORDER BY original_timestamp DESC
 LIMIT 50
 ```
-
-`score` is NULL for arXiv on the public surface. Prefer recency, category, or
-downstream citation-proxy fields for ranking.
 
 ### arXiv papers filtered by primary category (via metadata)
 ```sql
