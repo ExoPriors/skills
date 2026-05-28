@@ -875,7 +875,17 @@ curl -s -X POST https://api.scry.io/v1/scry/shares \
 
 ---
 
-## 14. Judgement Patterns
+## 14. Rerank Operation Limits
+
+Scry rerank request bodies are bounded before execution. Current allowed
+rerank model ids are `openai/gpt-5.4-mini` and `openai/gpt-5.4-nano`; default
+per-entity rerank text is capped at 4000 characters. Check
+`GET /v1/scry/context` before long-running jobs because deployment policy can
+disable async public/private rerank lanes independently.
+
+---
+
+## 15. Judgement Patterns
 
 ### Emit a classification judgement
 ```bash

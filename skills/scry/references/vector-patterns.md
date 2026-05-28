@@ -115,9 +115,13 @@ scan bounded, semantic ordering handles the user's concept.
 | Mix two concepts | `embedding_voyage4 <=> (scale_vector(@a, 0.6) + scale_vector(@b, 0.4))` |
 | Remove one direction | `embedding_voyage4 <=> debias_vector(@concept, @unwanted)` |
 | Build a contrast axis | `embedding_voyage4 <=> contrast_axis(@positive, @negative)` |
+| Build a balanced contrast axis | `embedding_voyage4 <=> contrast_axis_balanced(@positive, @negative)` |
+| Normalize a vector | `embedding_voyage4 <=> unit_vector(@concept)` |
 | Compare handles | `SELECT cosine_similarity(@a, @b)` |
+| Remove a direction with fallback | `embedding_voyage4 <=> debias_safe(@axis, @unwanted)` |
 | Check debias overlap | `SELECT debias_removed_fraction(@axis, @topic)` |
 | Diagnose debiasing | `SELECT * FROM debias_diagnostics(@axis, @topic)` |
+| Compare time buckets | `AVG(embedding_voyage4::vector) FILTER (...) <=> AVG(embedding_voyage4::vector) FILTER (...)` |
 
 ## Vector Mixing
 
@@ -174,6 +178,49 @@ Check `cosine_similarity(@positive, @negative)`. Very low similarity means the
 poles do not share enough context; very high similarity means the axis may be
 noise-dominated.
 
+## Temporal Deltas
+
+Temporal comparisons are SQL patterns over source timestamps and embedding
+centroids. Build explicit time buckets, compare centroids, then inspect the
+records nearest to each bucket or to the movement direction.
+
+```sql
+WITH bucketed AS (
+  SELECT
+    CASE
+      WHEN original_timestamp >= '2022-01-01'
+       AND original_timestamp < '2023-01-01' THEN '2022'
+      WHEN original_timestamp >= '2025-01-01'
+       AND original_timestamp < '2026-01-01' THEN '2025'
+    END AS bucket,
+    embedding_voyage4
+  FROM scry.mv_lesswrong_posts
+  WHERE original_timestamp >= '2022-01-01'
+    AND original_timestamp < '2026-01-01'
+    AND embedding_voyage4 IS NOT NULL
+),
+centroids AS (
+  SELECT bucket, AVG(embedding_voyage4::vector) AS centroid
+  FROM bucketed
+  WHERE bucket IS NOT NULL
+  GROUP BY bucket
+)
+SELECT recent.centroid <=> old.centroid AS centroid_distance
+FROM centroids recent
+JOIN centroids old ON recent.bucket = '2025' AND old.bucket = '2022'
+LIMIT 1;
+```
+
+For topic-specific drift, create or reuse an `@handle`, prefilter with lexical
+search or `embedding_voyage4 <=> @handle`, and only then aggregate. For
+author-specific drift, filter by `original_author`, `author_person_id`, or a
+source-native author/account field after checking `/v1/scry/schema`.
+For passage-level or cross-source work, move from focused `scry.mv_*` helpers to
+`scry.chunk_embeddings` only after checking schema and credential scope.
+
+Temporal deltas are sensitive to uneven source coverage. Always report the row
+counts per bucket and check source freshness before interpreting the distance.
+
 ## Common Mistakes
 
 - Searching `scry.entities` directly for `embedding_voyage4`; use an embedding
@@ -183,3 +230,5 @@ noise-dominated.
 - Running broad vector ordering before a cheap lexical/date/source probe.
 - Requesting raw vector arrays; use distances and `@handle` references instead.
 - Treating anonymous handles as durable; use a personal key for long-running work.
+- Assuming a built-in temporal-delta operator exists; use a
+  `/v1/scry/schema`-confirmed helper or explicit time-bucket SQL.

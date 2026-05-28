@@ -46,6 +46,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 - Running lexical (BM25) or hybrid searches
 - Running semantic searches with stored `@handle` concept vectors
 - Using vector mixing, contrast axes, and debiasing when conceptual search needs nuance
+- Comparing time-bucketed embedding centroids for temporal shifts
 - Exploring author networks, public cross-platform identities, or publication patterns
 - Navigating the OpenAlex academic graph (authors, citations, institutions, concepts)
 - Creating shareable artifacts from query results
@@ -185,7 +186,9 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
    `scry.search_federated(...)`, source-native `scry.search_*` helpers, or
    other lexical SQL when the user wants fast provenance-bearing first results.
    Use the shared BM25 diagnostic helpers only when a task explicitly needs that
-   path. Widen into broader SQL when you need joins,
+   path. For temporal vector comparisons, build explicit time buckets from
+   source timestamps and compare bucket centroids; confirm any special helper in
+   `/v1/scry/schema` before relying on it. Widen into broader SQL when you need joins,
    aggregation, or full control over filters. For conceptual intent ("themes",
    "things like", "similar to"), create or reuse a stored `@handle`, then
    optionally hybridize with lexical candidates.
@@ -398,21 +401,22 @@ When there is congestion, these are the key billing controls:
   per-query cost breakdowns.
 - `GET /v1/scry/pricing` returns the live billing/market authority: the live query access contract (`free_unless_congested`), whether congestion pricing is currently active, the live compute rate, bandwidth rate, load multiplier, reservation headroom, bid thresholds, the congestion-admission auction contract, and the budget-enforcement contract.
 - `GET /v1/scry/pricing` also exposes the x402 base funding quantum and the fact that x402 funding now scales off `X-Scry-Budget` when that header is present.
-- `GET /v1/scry/account` returns the authenticated funding summary. Read `funding.card_funding` first when the question is "can this agent use cards right now?" because it makes the current card state explicit (`requires_operator_setup`, `saved_method_ready`, `auto_topup_attention_required`, `auto_topup_active`, or `disabled`) and lists the next endpoints to call.
-- Funding-control endpoints such as `POST /v1/billing/agent-topup`, `POST /v1/billing/setup-payment-method`, `POST /v1/billing/payment-mandates`, and `PATCH /v1/billing/auto-topup` require explicit billing scope for API keys. Interactive Console sessions can use account scope for browser-mediated account actions. A data/query key that gets `Missing required scope: billing` should ask the operator for a billing-scoped key or a browser handoff, not retry.
+- `GET /v1/scry/account` returns the authenticated funding summary. Read `funding.card_funding` first when the question is "can this agent use cards right now?" because it makes the current card state explicit (`requires_operator_setup`, `saved_method_ready`, `auto_topup_attention_required`, `auto_topup_active`, or `disabled`) and lists the next endpoints to call. If you also send `X-Scry-Subject-Agent`, the account response can tell you whether direct saved-method topup is authorized for that agent.
+- Browser checkout surfaces such as `POST /v1/billing/checkout/custom`, `POST /v1/billing/checkout`, `POST /v1/billing/checkout/sync`, and `POST /v1/billing/setup-payment-method` work with ordinary Scry data/query keys. Direct stored-card topup at `POST /v1/billing/agent-topup` requires `X-Scry-Subject-Agent` plus an active capped `agent_topup` mandate for that agent/instrument. `POST /v1/billing/payment-mandates` and `PATCH /v1/billing/auto-topup` remain explicit account/billing control surfaces.
 - `POST /v1/scry/estimate` returns `estimated_cost_nanodollars`, `suggested_reserve_nanodollars`, `authorized_exposure_nanodollars`, `exposure_timeout_ms`, and a bid-adjusted upper-bound `cost_breakdown`.
 - `POST /v1/scry/query?receipt=summary` or `?receipt=full` returns an optional execution receipt inline with the result. Use `summary` when you only need the stable ID, SQL fingerprint, and main cost/runtime facts; use `full` when you want the estimate, billing, execution, and structured security details in one object.
 - `GET /v1/scry/query-receipts` lists recent receipts for the authenticated caller. `GET /v1/scry/query-receipts/{id}` re-hydrates a durable query receipt from `scry_query_log`. Raw SQL is omitted by default from the detail response; add `?include_sql=true` when the owner explicitly needs the original statement back.
-- `X-Scry-Subject-Agent: <agent-id>` activates delegated query policy. If the authenticated account has a matching active `query_access` mandate, Scry applies that mandate's `max_query_exposure` as an additional cap and returns a `delegated_authorization` object. If not, `/v1/scry/query` fails with `delegated_authorization_required`.
-  - Cards are a two-stage rail, not a zero-setup hot path.
-  - `POST /v1/billing/setup-payment-method` creates a Stripe Checkout setup session that saves a card without charging it and returns `setup_url` for one operator browser visit. After completion, the card is persisted as a payment instrument and set as the default. This is the entry point for enabling Stripe-backed auto-topup and agent-topup.
-- `POST /v1/billing/agent-topup` charges the default stored payment instrument for a pricing tier amount, granting credits immediately. Designed for agent-initiated funding without browser interaction and requires only a saved payment method.
+- `X-Scry-Subject-Agent: <agent-id>` activates delegated query policy. If the authenticated account has a matching active `query_access` mandate, Scry applies that mandate's `max_query_exposure` as an additional cap and returns a `delegated_authorization` object. If not, `/v1/scry/query` fails with `delegated_authorization_required`. The same header is also how delegated stored-card topup authority is selected on `POST /v1/billing/agent-topup`.
+- Cards are a differentiated three-step rail, not a zero-setup hot path.
+- `POST /v1/billing/checkout/custom` is the safe default funding path: it mints a browser checkout URL with the current key and does not grant stored-card authority.
+- `POST /v1/billing/setup-payment-method` creates a Stripe Checkout setup session that saves a card without charging it and returns `setup_url` for one operator browser visit. After completion, the card is persisted as a payment instrument and set as the default. This is the entry point for delegated agent-topup and Stripe-backed auto-topup.
+- `POST /v1/billing/agent-topup` charges a saved payment instrument for a pricing tier amount, granting credits immediately. It requires a saved payment method plus `X-Scry-Subject-Agent` and an active capped `agent_topup` mandate for that agent/instrument.
 - Recurring Stripe rescue is a separate opt-in that requires an active auto_topup mandate via `POST /v1/billing/payment-mandates` plus `PATCH /v1/billing/auto-topup`.
 - `GET /v1/billing/auto-topup` and `PATCH /v1/billing/auto-topup` control Stripe-backed replenishment into the same prepaid ledger. If enabled with a verified default Stripe payment method plus an active `auto_topup` mandate, `/v1/scry/query` gets one off-session topup attempt after an `insufficient_credits` reservation failure and then retries reservation once.
 - `GET /v1/billing/auto-topup/eligibility` explains why recurring saved-method funding is not yet ready when `funding.card_funding.state` reports `auto_topup_attention_required`.
 - `GET /v1/billing/pricing` returns available credit pricing tiers with id, usd_cents, credits (nanodollars), and display_label.
 - `GET /v1/billing/payment-instruments` lists saved payment methods.
-- Live funding rails are `x402`, Stripe saved-method funding, and crypto topup. `stripe_acp`, `ap2`, `visa_tap`, and `mastercard_agent_pay` are control-plane / future artifact layers, not interchangeable live funding rails.
+- Live funding rails are `x402`, browser Stripe checkout, delegated Stripe saved-method funding, and crypto topup. `stripe_acp`, `ap2`, `visa_tap`, and `mastercard_agent_pay` are control-plane / future artifact layers, not interchangeable live funding rails.
 - In `eager` mode, uniform clearing means the charged priority fee comes from
   the lowest winning bid in the epoch, not from every winner's submitted max
   bid.
@@ -537,6 +541,9 @@ User wants to search the ExoPriors corpus?
   |
   +-- Hybrid (keywords + semantic ordering)? --> scry.hybrid_search() or
   |     lexical CTE + JOIN scry.chunk_embeddings
+  |
+  +-- Temporal shift? --> source timestamps + bucketed centroid CTEs, then
+  |     compare centroid distances or nearest-neighbor deltas
   |
   +-- Author/people lookup? --> scry.actors, scry.people, scry.person_accounts
   |                            (conservative public account links)
@@ -782,7 +789,42 @@ LIMIT 50
 
 Requires a stored embedding handle. See
 `references/vector-patterns.md` for vector mixing, debiasing, contrast axes,
-and failure modes.
+temporal deltas, and failure modes.
+
+### E6b. Temporal centroid comparison
+
+Use ordinary SQL time buckets and embedding centroids. This pattern compares a
+source's center of gravity between two years:
+
+```sql
+WITH yearly AS (
+  SELECT date_part('year', original_timestamp)::int AS year,
+         AVG(embedding_voyage4::vector) AS centroid
+  FROM scry.mv_lesswrong_posts
+  WHERE original_timestamp >= '2022-01-01'
+    AND original_timestamp < '2026-01-01'
+    AND embedding_voyage4 IS NOT NULL
+  GROUP BY year
+)
+SELECT a.centroid <=> b.centroid AS centroid_distance
+FROM yearly a
+JOIN yearly b ON a.year = 2025 AND b.year = 2022
+LIMIT 1
+```
+
+For topic-specific drift, form lexical candidates first or filter by distance to
+an `@handle`, then aggregate the remaining embeddings by time bucket. For
+passage-level or cross-source work, move from `scry.mv_*` helpers to
+`scry.chunk_embeddings` after checking `/v1/scry/schema` and credential scope.
+
+### E6c. Twitter/X post helper shape
+
+`scry.search_twitter_posts(...)` returns bounded lexical hits with `snippet`,
+tweet identity, provenance arrays, and `original_timestamp`. For full text on
+already-selected tweets, join the returned `canonical_uri` values to
+`scry.twitter_posts` and read `content_text` there. Timestamp coverage is
+partial, so check null rates before
+monthly or daily aggregations.
 
 ### E7. Cost estimation before execution
 

@@ -151,6 +151,27 @@ union view over those records.
 | `scry.noaa_gsod_weather_observations` | NOAA GSOD BigQuery weather observations. Covers a bounded historical window; inspect `observed_on` for the available date range before using it for recent weather. |
 | `scry.polymarket_profiles` / `scry.polymarket_markets_embeddings` | Polymarket profile and embedding-support surfaces for prediction-market discovery. |
 
+### Additional Schema Families
+
+These family entries keep the skill aligned with repo-managed schema breadth
+without turning this guide into a column catalog. Use `GET /v1/scry/schema` for
+live columns, health, and availability before querying them.
+
+| Family | Notes |
+|--------|-------|
+| `active_operation_*` / `operation_*` | Operator intent and operation state surfaces. |
+| `ai_philanthropy_*` | AI-philanthropy frontier evidence, actor, organization, research-signal, embedding, and harvest-health surfaces. |
+| `apisguru_*` / `arena_*` / `autocodebase_improvement_*` / `codebase_autophagy_*` / `llm_coding_alpha_*` | Software, API, codebase-improvement, and coding-alpha curation surfaces. |
+| `bls_*` / `fred_*` / `ecb_*` / `eurostat_*` / `treasury_fiscal_*` | Public economic and statistical time-series surfaces. |
+| `cfpb_*` / `fec_*` / `google_ads_transparency_center_*` / `google_political_ads_*` / `usaspending_*` / `samgov_*` | Public government, campaign-finance, ads-transparency, spending, and procurement surfaces. |
+| `scry.clinicaltrials` / `clinicaltrials_*` / `cms_medicare_*` / `dailymed_*` / `openfda_*` / `scry.pmc` / `pmc_*` | Public biomedical, clinical, Medicare, FDA, SPL, and PMC surfaces. |
+| `company_*` / `conscientious_*` / `crawl_*` / `scry.crawled_pages` / `crossref_*` / `curation_*` / `diamond_*` / `ingestion_*` / `judgement_*` / `scry.judgements` / `pairwise_*` | Curation, crawl, provenance, source-frontier, and judgement substrate surfaces. |
+| `scry.ecb` / `scry.eric` / `eric_*` / `scry.eurostat` / `foursquare_*` / `scry.gbif` / `gbif_*` / `geonames_*` / `gleif_*` / `scry.inaturalist` / `inaturalist_*` / `osm_*` / `overture_*` | Public education, biodiversity, geospatial, company-identifier, and places surfaces. |
+| `github_archive_*` / `hf_*` / `huggingface_*` / `libraries_io_*` / `scry.osv` / `osv_*` / `crates_io_*` / `go_module_*` / `npm_*` / `nuget_*` / `packagist_*` / `pypi_*` | Software package, vulnerability, repository, Hugging Face, and registry surfaces. |
+| `google_patents_*` / `patentsview_*` / `uspto_*` | Patent and trademark source-native surfaces. |
+| `govinfo_*` / `kled_*` / `kalshi_*` / `mv_kl3m_*` / `scry.nhtsa` / `nhtsa_*` / `openalex_*` / `scry.openstax` / `openstax_*` / `polymarket_*` / `reddit_cluster_*` / `stackexchange_*` / `twitter_thread_*` / `scry.uscode` / `uscode_*` / `website_*` | Source-native government, market, legal, research, education, discussion, and website-denominator surfaces. |
+| `ingroup_blog_*` / `osint_*` | Ingroup blog and OSINT catalog/source-native surfaces. |
+
 Source-local lexical helpers exist for many of these views:
 
 | Function | Notes |
@@ -191,6 +212,9 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_europepmc_articles(query_text, mode, limit_n)` | BM25 over Europe PMC article titles, abstracts/payloads, authors, journal, DOI/PMID/PMCID, and terms. |
 | `scry.search_sec_edgar_filings(query_text, forms, ciks, limit_n)` | BM25 over SEC EDGAR filing payloads with optional form and CIK filters. |
 | `scry.sec_edgar_company_filings(cik_or_ticker, forms, limit_n)` | Bounded SEC filing lookup by ticker or CIK, newest first, returning queue/content-stage fields for one company. |
+| `scry.search_pmc_articles(query_text, mode, limit_n)` | BM25 over PMC article payloads where the live schema advertises the PMC surface. |
+| `scry.search_reddit_clusters(query_text, limit_n)` | Reddit cluster discovery helper. |
+| `scry.search_reddit_hot_subreddits(query_text, limit_n)` | Hot-subreddit discovery helper over Reddit activity summaries. |
 
 ### SEC Quarterly Financials
 
@@ -550,6 +574,10 @@ Common names produce false merges. When `display_name` is generic (e.g., "John S
 | `scry.ai_philanthropy_organization_judgement_candidates` | Organization-linked first-class evidence targets queued for relevance and claim-unit judgement replay |
 | `scry.ai_philanthropy_harvest_health` | Freshness and coverage metrics for AI-philanthropy ingestion |
 | `scry.ai_philanthropy_embedding_coverage` | Per-evidence embedding and Reddit queue state for the AI-philanthropy frontier |
+| `scry.codebase_autophagy_sources` | Curated public sources for codebase-autophagy methods, including provenance, review state, latest judgement, and ranking fields |
+| `scry.codebase_autophagy_axes` | Independent judgement axes for the codebase-autophagy lens |
+| `scry.codebase_autophagy_axis_scores` | Per-source axis scores and evidence for the codebase-autophagy lens |
+| `scry.codebase_autophagy_projected_scores` | Ranked projections built from axis scores, AHP weights, or pairwise rerank outputs |
 
 ---
 
