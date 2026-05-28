@@ -823,8 +823,8 @@ passage-level or cross-source work, move from `scry.mv_*` helpers to
 tweet identity, provenance arrays, and `original_timestamp`. For full text on
 already-selected tweets, join the returned `canonical_uri` values to
 `scry.twitter_posts` and read `content_text` there. Timestamp coverage is
-partial, so check null rates before
-monthly or daily aggregations.
+partial and pricing varies; for monthly or daily aggregations, check null rates,
+source coverage, and `/v1/scry/pricing` first.
 
 ### E7. Cost estimation before execution
 
