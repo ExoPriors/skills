@@ -45,6 +45,12 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus totals.
 | extraction_version | TEXT | Extractor/converter version when recorded |
 | processor | TEXT | Entity-level processor / transform program id |
 
+Hydrated typed-search records from
+`GET /v1/scry/search/records/{record_ref}` include a `book` object. It reports
+source identity, served-text status, transform audit fields, raw/replay status,
+proof tier, and verification basis for that record. The `book` object is the
+record-level provenance summary for the served text.
+
 **Common source values**: `hackernews`, `lesswrong`, `eaforum`, `arxiv`, `pubmed`,
 `twitter`, `bluesky`, `reddit`, `substack`, `manifold`, `metaculus`, `wikipedia`,
 `github_skills`, `astralcodexten`, `offshoreleaks`, `biorxiv`, `sec_edgar`,

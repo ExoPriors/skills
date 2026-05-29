@@ -31,7 +31,7 @@ and get JSON rows back. There is no ORM, no GraphQL, no pagination token -- just
 When SQL is unnecessary, the portable typed-search front door is `POST /v1/scry/search`.
 Typed search uses `method = lexical | hybrid`, may return a reusable
 `candidate_set.receipt`, and `GET /v1/scry/search/records/{record_ref}` hydrates
-record details.
+record details with a `book` provenance object and proof-tier status.
 Semantic work also lives here: create concept handles with `POST /v1/scry/embed`,
 reference them as `@handle` in SQL, and use vector-patterns guidance under this
 skill as the canonical packaged path.
