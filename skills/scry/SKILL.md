@@ -37,7 +37,7 @@ reference them as `@handle` in SQL, and use vector-patterns guidance under this
 skill as the canonical packaged path.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of relying on static numbers in docs.
 
-**Skill generation**: `2026052101`
+**Skill generation**: `2026052901`
 
 ## A) When to use / not use
 
@@ -60,7 +60,7 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of 
 ## B) Golden Rules
 
 1. **Context handshake first.** At session start, call
-   `GET /v1/scry/context?skill_generation=2026052101`.
+   `GET /v1/scry/context?skill_generation=2026052901`.
    This endpoint is public; you do not need a key for the handshake itself.
    Use the returned `offerings` block for the current product summary
    budgets, canonical env var, default skill, and installed skill catalog.
@@ -455,7 +455,7 @@ One end-to-end example: find recent high-scoring LessWrong posts about RLHF.
 
 ```
 Step 1: Get dynamic context + update advisory
-GET https://api.scry.io/v1/scry/context?skill_generation=2026052101
+GET https://api.scry.io/v1/scry/context?skill_generation=2026052901
 Authorization: Bearer $SCRY_API_KEY
 
 Step 2: Get schema
@@ -570,7 +570,7 @@ User wants to search the ExoPriors corpus?
 ### E0. Context handshake + skill update advisory
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026052101" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026052901" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
