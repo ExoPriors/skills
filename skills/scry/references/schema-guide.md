@@ -543,6 +543,11 @@ Three layers of author resolution, bottom to top:
 | `scry.people` | Cross-platform merged identities from verified public links, with public counts |
 | `scry.person_accounts` | Canonical public person-account edges (columns: `person_id`, `actor_id`, `source`, `external_id`, `handle`, `display_name`, `profile_url`, `link_method`, `confidence`, `entity_count`, `post_count`, `comment_count`, `first_activity`, `last_activity`) |
 | `scry.person_aliases` | Alias forms derived from verified public person-account links |
+| `scry.person_lenses` / `scry.person_axes` | Registries of person-intelligence lenses and axes (the available rubrics for judgement) |
+| `scry.person_signal_refs` | Public-signal references linked to a resolved public person identity |
+| `scry.person_context_packs` | Reviewed context windows over cited public person evidence |
+| `scry.person_axis_judgements` | Reviewed axis judgements with confidence, uncertainty, rubric, and evidence links |
+| `scry.person_vectors` / `scry.person_clusters` / `scry.person_cluster_memberships` | Vector and cluster read models over person judgements |
 | `scry.mv_author_profiles` | Per-source author stats aggregated from entity rows (threshold: >= 3 entities) |
 | `scry.mv_author_stats` | Author post counts and score aggregates |
 | `scry.github_people` | GitHub-specific maintainer aggregates (stars, repos, comments) |
@@ -561,6 +566,8 @@ Public identity views contain the conservative verified-public link layer used f
 Common names produce false merges. When `display_name` is generic (e.g., "John Smith"), verify with secondary evidence (same bio, cross-linked profiles, overlapping topics).
 
 **Primary query path:** find the person in `scry.people`, inspect linked public accounts in `scry.person_accounts`, then query `scry.entities` by `author_person_id`.
+
+**Person-intelligence path:** use `scry.person_lenses` and `scry.person_axes` to inspect available rubrics, then join reviewed `scry.person_context_packs`, `scry.person_axis_judgements`, and `scry.person_vectors` by `person_id`. Use `scry.person_signal_refs` when you need the cited public signals behind a context pack or judgement. These person-intelligence surfaces are available with an authenticated key.
 
 **Helper function:** `normalize_author_name(text)` -- lowercases, trims, collapses whitespace. Used for alias helpers, not as the canonical merge authority.
 
