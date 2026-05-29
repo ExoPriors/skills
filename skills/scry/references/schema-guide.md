@@ -177,7 +177,7 @@ Source-local lexical helpers exist for many of these views:
 | Function | Notes |
 |----------|-------|
 | `scry.search_bluesky_posts(query_text, mode, limit_n)` | BM25 over Bluesky `payload` plus DID / handle / display-name fields. |
-| `scry.search_twitter_posts(query_text, mode, limit_n)` | BM25 over source-native Twitter/X tweet rows. Use for individual tweet identity, canonical URI, author fields, timestamps, and public observation provenance arrays. |
+| `scry.search_twitter_posts(query_text, mode, limit_n, start_ts, end_ts)` | BM25 over source-native Twitter/X tweet rows. Returns `content_text`, individual tweet identity, canonical URI, author fields, timestamps, and public observation provenance arrays. |
 | `scry.search_crawled_pages(query_text, mode, kinds, limit_n)` | BM25 over source-native crawled web pages, including Substack posts. For cross-source discovery that includes crawled pages, use `scry.search_federated(..., sources => ARRAY['crawled_url'])`. |
 | `scry.search_hackernews_items(query_text, mode, kinds, limit_n)` | BM25 over HN `title`, `payload`, and `original_author`. |
 | `scry.search_wikipedia_articles(query_text, mode, limit_n)` | BM25 over Wikipedia `title`, `payload`, and `original_author`. |
@@ -1023,7 +1023,7 @@ registry functions for targeted lookups.
 | Function | Description |
 |----------|-------------|
 | `scry.social_search(query_text, mode, limit_n)` | Cross-platform social search (Twitter/X, Reddit, StackExchange, mailing lists). Returns unified rows with `source`, `platform`, `uri`, `snippet`, `score`; use source-native helpers when source-specific provenance matters. |
-| `scry.search_twitter_posts(query_text, mode, limit_n)` | BM25 over individual source-native Twitter/X tweet rows. Returns `tweet_id`, `canonical_uri`, author/timestamp fields, and observation provenance arrays. |
+| `scry.search_twitter_posts(query_text, mode, limit_n, start_ts, end_ts)` | BM25 over individual source-native Twitter/X tweet rows. Returns `tweet_id`, `canonical_uri`, `content_text`, author/timestamp fields, and observation provenance arrays. |
 | `scry.search_twitter_threads(query_text, mode, limit_n)` | BM25 over Twitter/X thread root tweets. Returns thread-level aggregates (`tweet_count`, `total_likes`, `total_retweets`); do not use as the canonical tweet identity surface. |
 
 For VC-targeted Twitter/X work, start with `scry.vc_accounts` for the account
