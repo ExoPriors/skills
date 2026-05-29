@@ -824,11 +824,15 @@ passage-level or cross-source work, move from `scry.mv_*` helpers to
 
 ### E6c. Twitter/X post helper shape
 
+Preflight `scry.twitter_search_contract` before Twitter/X monitoring,
+aggregation, or absence claims. It reports lexical helper health, timestamp
+coverage, freshness, bucket progress, embedding scale, and cost caveats.
 `scry.search_twitter_posts(...)` returns bounded lexical hits with `snippet`,
 `content_text`, tweet identity, provenance arrays, and `original_timestamp`.
-Pass `start_ts` / `end_ts` when the question has a historical window. Timestamp
-coverage is partial and pricing varies; for monthly or daily aggregations, check
-null rates, source coverage, and `/v1/scry/pricing` first.
+Pass `start_ts` / `end_ts` when the question has a historical window. Twitter/X
+is a partial, observational sample of public tweets; if `lexical_status` is not
+`usable_partial`, or timestamp coverage/freshness is unsuitable, do not build a
+monitoring conclusion on it.
 
 ### E7. Cost estimation before execution
 
