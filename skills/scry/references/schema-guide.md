@@ -46,9 +46,9 @@ Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus totals.
 | processor | TEXT | Entity-level processor / transform program id |
 
 Hydrated typed-search records from
-`GET /v1/scry/search/records/{record_ref}` include a `book` object. It reports
+`GET /v1/scry/search/records/{record_ref}` include a `provenance_audit` object. It reports
 source identity, served-text status, transform audit fields, raw/replay status,
-proof tier, and verification basis for that record. The `book` object is the
+proof tier, and verification basis for that record. The `provenance_audit` object is the
 record-level provenance summary for the served text.
 
 **Common source values**: `hackernews`, `lesswrong`, `eaforum`, `arxiv`, `pubmed`,
