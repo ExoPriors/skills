@@ -23,9 +23,8 @@ Before writing SQL:
    estimate semantics, health/status fields, and `vector_indexed` where
    applicable.
 3. If you need live discovery inside SQL, use `scry.queryable_relations`,
-   `scry.queryable_columns`, and `scry.queryable_functions`. These catalogs are
-   permission-aware and replace direct `pg_catalog` / `information_schema`
-   introspection on the public SQL surface.
+   `scry.queryable_columns`, and `scry.queryable_functions`. These
+   permission-aware catalogs respect the current role's grants and RLS posture.
 4. Prefer source-native surfaces and `scry.source_records` when a corpus no
    longer lives canonically in `scry.entities`.
 5. Treat row counts, freshness, and coverage as separate claims.
