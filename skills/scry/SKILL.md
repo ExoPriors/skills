@@ -19,7 +19,7 @@ and temporal comparisons.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of
 static numbers in docs.
 
-**Skill generation**: `2026052901`
+**Skill generation**: `2026053001`
 
 ## Use / Do Not Use
 
@@ -64,7 +64,7 @@ Load only the reference needed for the current task:
 1. **Context handshake first.** At session start, call:
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026052901" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026053001" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
