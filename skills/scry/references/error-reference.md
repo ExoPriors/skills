@@ -82,7 +82,7 @@ and run `npx skills update` first.
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
 | `forbidden` | "Missing Scry scope" or feature-specific access denial | The key is missing required scope or is the wrong key type | Use a personal Scry API key with the needed scope |
-| `forbidden` | "Postgres introspection blocked" | Query touched `pg_*` catalogs, `current_setting()`, `version()`, etc. | Use `GET /v1/scry/schema` instead |
+| `forbidden` | "Postgres introspection blocked" | Query touched `pg_*` catalogs, `information_schema`, `current_setting()`, `version()`, etc. | Use `GET /v1/scry/schema` or the SQL catalog views `scry.queryable_relations`, `scry.queryable_columns`, and `scry.queryable_functions` |
 | `forbidden` | "Only the share owner can update" | PATCH on share you don't own | Use the key that created the share |
 | `delegated_authorization_required` | "X-Scry-Subject-Agent is not authorized..." | The caller supplied `X-Scry-Subject-Agent`, but the authenticated account has no matching active `query_access` mandate for that agent/resource | Inspect `GET /v1/billing/payment-mandates`, create/activate a `query_access` mandate with `max_query_exposure`, or retry without delegated subject mode |
 
@@ -238,7 +238,7 @@ entities in LLM-visible contexts.
 | Missing LIMIT | "Query must include a LIMIT clause" | Add LIMIT |
 | API key from `.env` fails intermittently | 401 "Invalid authorization format" | Clean key with `KEY_CLEAN=\"$(printf '%s' \"$SCRY_API_KEY\" | tr -d '\\r\\n')\"` |
 | Using `kind = 'post'` without cast | Type mismatch | Use `kind = 'post'` (enum literal) or `kind::text = 'post'` |
-| Querying `pg_catalog` on the Scry SQL surface | Forbidden | Use `GET /v1/scry/schema` |
+| Querying `pg_catalog` or `information_schema` on the Scry SQL surface | Forbidden | Use `GET /v1/scry/schema` or `scry.queryable_*` catalog views |
 | Assuming all entities have embeddings | Empty results | Add `WHERE embedding_voyage4 IS NOT NULL` |
 | Using `id IN (SELECT ...)` | Slow O(n^2) | Use `EXISTS` or `JOIN` instead |
 | Scanning scry.entities without WHERE | Timeout | Use a materialized view or add filters |

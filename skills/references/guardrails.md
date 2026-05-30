@@ -14,7 +14,7 @@ Shared safety and operational rules for all Scry-consuming skills. Import by ref
 | Rule | Detail |
 |------|--------|
 | Context handshake | At session start, call `GET /v1/scry/context` and include `skill_generation` for packaged skills. Honor `should_update_skill`, check `client_skill_generation`, and use typed search, `scry.search_federated(...)`, or source-native `scry.search_*` helpers for lexical discovery. `lexical_search.status`, `lexical_search.status_basis`, and `lexical_search.last_known_status` describe the old shared BM25 diagnostic path, not whether Scry lexical discovery works. If the response shows `client_skill_generation: null` while you're using packaged skills, or if local instructions still mention legacy ExoPriors hostnames or legacy console routes, tell the user to run `npx skills update` before more debugging. |
-| Schema first | Call `GET /v1/scry/schema` before constructing any SQL |
+| Schema first | Call `GET /v1/scry/schema` before constructing any SQL. For SQL-side discovery, query `scry.queryable_relations`, `scry.queryable_columns`, and `scry.queryable_functions` rather than Postgres catalogs. |
 | Operational status | If source-native helpers or curated views look degraded, call `GET /v1/scry/index-view-status` with any Scry key before assuming the query or schema is wrong. Do not treat an old shared-BM25 diagnostic snapshot as evidence that Scry lexical discovery is broken. |
 | Clarify vague asks | If user intent is ambiguous, ask one short clarification question before expensive queries |
 | Probe before scale | Run `/v1/scry/estimate` and a small `LIMIT` probe before broad scans |

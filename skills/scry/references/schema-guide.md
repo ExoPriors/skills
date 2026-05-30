@@ -22,9 +22,30 @@ Before writing SQL:
 2. Check relation/function availability, column names, type names, scope, row
    estimate semantics, health/status fields, and `vector_indexed` where
    applicable.
-3. Prefer source-native surfaces and `scry.source_records` when a corpus no
+3. If you need live discovery inside SQL, use `scry.queryable_relations`,
+   `scry.queryable_columns`, and `scry.queryable_functions`. These catalogs are
+   permission-aware and replace direct `pg_catalog` / `information_schema`
+   introspection on the public SQL surface.
+4. Prefer source-native surfaces and `scry.source_records` when a corpus no
    longer lives canonically in `scry.entities`.
-4. Treat row counts, freshness, and coverage as separate claims.
+5. Treat row counts, freshness, and coverage as separate claims.
+
+Quick catalog probes:
+
+```sql
+SELECT qualified_name, relation_type, access_scope, row_count_estimate, sample_sql
+FROM scry.queryable_relations
+ORDER BY qualified_name
+LIMIT 200
+```
+
+```sql
+SELECT column_name, data_type, nullable, description
+FROM scry.queryable_columns
+WHERE qualified_name = 'scry.entities'
+ORDER BY ordinal_position
+LIMIT 200
+```
 
 ## Core Views
 
@@ -563,7 +584,9 @@ Three layers of author resolution, bottom to top:
 | `scry.person_intel_frontier` | Authenticated person-intelligence frontier counts for signal refs, observations, context packs, judgements, queues, and blocked predicate policies |
 | `scry.person_signal_refs` | Public-signal references linked to a resolved public person identity |
 | `scry.person_context_packs` | Reviewed context windows over cited public person evidence |
+| `scry.person_context_pack_evidence` | Evidence members and explicit observation quotes for reviewed/published context packs |
 | `scry.person_axis_judgements` | Reviewed axis judgements with confidence, uncertainty, rubric, and evidence links |
+| `scry.person_axis_judgement_work_items` | Pending low-risk judgement work items whose context pack is already visible |
 | `scry.person_vectors` / `scry.person_clusters` / `scry.person_cluster_memberships` | Vector and cluster read models over person judgements |
 | `scry.mv_author_profiles` | Per-source author stats aggregated from entity rows (threshold: >= 3 entities) |
 | `scry.mv_author_stats` | Author post counts and score aggregates |
@@ -584,7 +607,7 @@ Common names produce false merges. When `display_name` is generic (e.g., "John S
 
 **Primary query path:** find the person in `scry.people`, inspect linked public accounts in `scry.person_accounts`, then query `scry.entities` by `author_person_id`.
 
-**Person-intelligence path:** use `scry.person_predicate_policies` and `scry.person_intel_frontier` to inspect policy gates and queue/frontier state, then use `scry.person_lenses` and `scry.person_axes` to inspect available rubrics. Join reviewed `scry.person_context_packs`, `scry.person_axis_judgements`, and `scry.person_vectors` by `person_id`. Use `scry.person_signal_refs` when you need the cited public signals behind a context pack or judgement. These person-intelligence surfaces are available with an authenticated key.
+**Person-intelligence path:** use `scry.person_predicate_policies` and `scry.person_intel_frontier` to inspect policy gates and queue/frontier state, then use `scry.person_lenses` and `scry.person_axes` to inspect available rubrics. Join reviewed `scry.person_context_packs`, `scry.person_context_pack_evidence`, `scry.person_axis_judgements`, and `scry.person_vectors` by `person_id` or `context_pack_id`. Use `scry.person_axis_judgement_work_items` to find pending low-risk judgement packets whose context packs are already visible. Use `scry.person_signal_refs` when you need the cited public signals behind a context pack or judgement. These person-intelligence surfaces are available with an authenticated key.
 
 **Helper function:** `normalize_author_name(text)` -- lowercases, trims, collapses whitespace. Used for alias helpers, not as the canonical merge authority.
 
@@ -1086,7 +1109,7 @@ work.
 
 | Function | Description |
 |----------|-------------|
-| `scry.table_sample(surface_name, sample_n)` | Returns JSON row samples for quick shape inspection before writing more complex queries. |
+| `scry.table_sample(surface_name, sample_n)` | Returns JSON row samples for quick shape inspection. It only accepts relations listed in `scry.queryable_relations` for the current SQL role. |
 | `scry.entity_content_text_slice(entity_id, start, max_chars)` | Retrieves deeper public `content_text` slices beyond the 50K preview cap. Use `start` and `max_chars` to page through long entities. |
 | `scry.sporc_transcript_slice(entity_id, start, max_chars)` | Same as `entity_content_text_slice`, but isolates the transcript portion of SPORC pages before slicing. |
 

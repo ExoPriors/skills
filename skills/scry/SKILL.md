@@ -19,7 +19,7 @@ and temporal comparisons.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of
 static numbers in docs.
 
-**Skill generation**: `2026053001`
+**Skill generation**: `2026053002`
 
 ## Use / Do Not Use
 
@@ -64,7 +64,7 @@ Load only the reference needed for the current task:
 1. **Context handshake first.** At session start, call:
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026053001" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026053002" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
@@ -77,6 +77,9 @@ Load only the reference needed for the current task:
 2. **Schema before SQL.** Always call `GET /v1/scry/schema` before writing SQL.
    Never guess columns, types, relation health, `access_scope`,
    `row_count_estimate_scope`, row-count semantics, or `vector_indexed` status.
+   When you need discovery from inside SQL, query `scry.queryable_relations`,
+   `scry.queryable_columns`, and `scry.queryable_functions`; use
+   `scry.table_sample('scry.entities', 3)` only for small row-shape probes.
    For publication-first Parquet datasets, use
    `GET /v1/scry/datasets`, `GET /v1/scry/datasets/{id}`, and
    `POST /v1/scry/datasets/{id}/resolve` before writing DuckDB SQL.

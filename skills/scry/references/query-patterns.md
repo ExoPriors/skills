@@ -11,10 +11,12 @@ the live schema. Do not paste a large pattern blindly.
 Before running a pattern:
 
 1. Confirm the relevant relation or function exists in `GET /v1/scry/schema`.
-2. Keep `LIMIT` in place and tighten source, kind, date, or author filters.
-3. Filter dangerous content unless the user explicitly asks for that corpus.
-4. Start with a small probe before widening candidate counts or joins.
-5. Preserve the SQL that ran and any caveat about coverage, freshness, or
+2. Use `scry.queryable_relations` and `scry.queryable_columns` when you need
+   live relation or column discovery from inside SQL.
+3. Keep `LIMIT` in place and tighten source, kind, date, or author filters.
+4. Filter dangerous content unless the user explicitly asks for that corpus.
+5. Start with a small probe before widening candidate counts or joins.
+6. Preserve the SQL that ran and any caveat about coverage, freshness, or
    partial source-native surfaces.
 
 Use the main `SKILL.md` for routing, `schema-guide.md` for relation meaning,
