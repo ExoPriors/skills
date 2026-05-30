@@ -3,6 +3,24 @@
 Comprehensive pattern library for common and advanced queries against the ExoPriors
 Scry API. All patterns assume you have already called `GET /v1/scry/schema`.
 
+## How To Use This Reference
+
+Pick the narrowest pattern that matches the user's intent, then adapt it against
+the live schema. Do not paste a large pattern blindly.
+
+Before running a pattern:
+
+1. Confirm the relevant relation or function exists in `GET /v1/scry/schema`.
+2. Keep `LIMIT` in place and tighten source, kind, date, or author filters.
+3. Filter dangerous content unless the user explicitly asks for that corpus.
+4. Start with a small probe before widening candidate counts or joins.
+5. Preserve the SQL that ran and any caveat about coverage, freshness, or
+   partial source-native surfaces.
+
+Use the main `SKILL.md` for routing, `schema-guide.md` for relation meaning,
+`vector-patterns.md` for semantic handles, and `access-and-runtime.md` for
+pricing, receipts, and authorization.
+
 ---
 
 ## 1. Lexical Search Patterns

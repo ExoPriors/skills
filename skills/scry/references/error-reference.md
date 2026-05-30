@@ -14,6 +14,21 @@ All Scry API errors follow the standard envelope:
 
 The `Retry-After` header (seconds) is present on 429 responses.
 
+## How To Use This Reference
+
+Use this file after a Scry request fails or before explaining a quota, timeout,
+or SQL-validator boundary to a user.
+
+Triage order:
+
+1. Confirm the installed skill is current with `/v1/scry/context`.
+2. Identify the HTTP status and `error.code`.
+3. Apply the narrow fix in the table below.
+4. If the issue is runtime/search health rather than request shape, check
+   `/v1/scry/schema` and `/v1/scry/index-view-status`.
+5. To report a limitation or request a fix, send feedback through
+   `/v1/feedback?channel=scry_skill`.
+
 ---
 
 ## Before deeper debugging
@@ -59,8 +74,8 @@ and run `npx skills update` first.
 |------|----------------|-------|-----|
 | `insufficient_credits` | "Embedding token budget exhausted" | 1.5M token budget used up | Notify user; budget resets with a fresh personal key |
 | `insufficient_credits` | "Insufficient credits for query" | Prepaid balance too low for the estimated query cost | Live funding rails are `x402`, browser Stripe checkout, delegated Stripe saved-method funding, and crypto topup. Cards use a differentiated three-step rail. The safe default is `POST /v1/billing/checkout/custom`, which mints a browser checkout URL with the current key. If the operator wants delegated stored-card funding, first save a card with `POST /v1/billing/setup-payment-method`, which returns `setup_url` for one operator browser visit, then use `POST /v1/billing/agent-topup` with `X-Scry-Subject-Agent` and an active capped `agent_topup` mandate. Inspect `GET /v1/scry/account` and read `funding.card_funding` to see whether the account still needs the setup handoff or already has delegated direct-topup authority for the current subject. Recurring auto-topup is a separate opt-in that requires an active auto_topup mandate via `POST /v1/billing/payment-mandates` plus `PATCH /v1/billing/auto-topup`; inspect `GET /v1/billing/auto-topup/eligibility` when `funding.card_funding.state` reports `auto_topup_attention_required`. Non-wallet agents can receive a Scry-scoped data key from a signed-in operator via `POST /v1/auth/api-keys`; agents with an EVM wallet can bootstrap directly via `POST /v1/auth/agent/signup`. `stripe_acp`, `ap2`, `visa_tap`, and `mastercard_agent_pay` are control-plane / future artifacts, not alternate live funding rails. |
-| `estimate_exceeds_exposure` | "Estimated cost ... exceeds X-Scry-Max-Exposure" | The bid-adjusted estimate is already above the caller's authorized exposure | Run `/v1/scry/estimate`, narrow the query, or raise `X-Scry-Max-Exposure` |
-| `query_exposure_exhausted` | "Query exhausted its authorized exposure" | Live runtime burn hit the authorized exposure for this query (with timeout fallback if needed) | Raise `X-Scry-Max-Exposure` or reduce scan scope / LIMIT |
+| `estimate_exceeds_exposure` | "Estimated cost ... exceeds ..." | The estimate is already above the caller's authorized query budget | Run `/v1/scry/estimate`, narrow the query, or raise `X-Scry-Budget` |
+| `query_exposure_exhausted` | "Query exhausted its authorized exposure" | Live runtime burn hit the authorized budget for this query (with timeout fallback if needed) | Raise `X-Scry-Budget` or reduce scan scope / LIMIT |
 
 ### 403 Forbidden
 
@@ -126,21 +141,13 @@ Private keys get 1.5M tokens per 30-day key lifecycle. Tokens are consumed by
 
 ### Query Timeout (Adaptive)
 
-Timeouts are dynamic based on server load. The system reserves 12 cores for
-non-Scry work and 10 cores for burst headroom.
+Timeouts are dynamic based on server load and admission tier. `eager` admission
+can receive longer ceilings than base FIFO admission when the live contract
+allows it. Paid queries can still terminate earlier than the load-policy timeout
+when the live-burn watchdog reaches the authorized budget.
 
-| Condition | Personal Scry key | Higher-bid admission | Urgent admission |
-|-----------|-------------------|----------------------|------------------|
-| Idle | up to 30 min | up to 60 min | up to 2 hr |
-| Normal | up to 10 min | up to 30 min | up to 60 min |
-| Overloaded | up to 2 min | up to 10 min | up to 30 min |
-| Absolute min | 20s | 60s | 5 min |
-
-Paid queries can terminate earlier than the load-policy timeout when the
-live-burn watchdog reaches the authorized exposure. `exposure_timeout_ms`
-remains the fail-safe bound when the query is not producing rows yet or the
-watchdog cannot stop it first. Estimate first if the user wants a tight
-authorization.
+Use `/v1/scry/estimate` for query-specific `exposure_timeout_ms`, and use
+`/v1/scry/pricing` for the current load, admission, and timeout policy.
 
 ### SQL Constraints
 
@@ -186,7 +193,7 @@ authorization.
 4. Reduce LIMIT
 5. Use `scry.search_federated(...)` or a source-native helper for a cheaper candidate fetch
 6. Run `/v1/scry/estimate` to check plan cost, suggested reserve, and `exposure_timeout_ms` before retrying
-7. If the error is `query_exposure_exhausted`, raise `X-Scry-Max-Exposure` only after confirming the broader query is actually worth paying for
+7. If the error is `query_exposure_exhausted`, raise `X-Scry-Budget` only after confirming the broader query is actually worth paying for
 
 If curl prints HTTP `000`, that is usually a client timeout before the server
 responded (for example `--max-time` shorter than server timeout). Increase

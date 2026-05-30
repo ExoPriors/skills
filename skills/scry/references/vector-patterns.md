@@ -8,6 +8,15 @@ semantic, or hybrid retrieval. Start with live context and schema:
 3. `POST /v1/scry/embed` when you need a new concept handle
 4. `POST /v1/scry/query` with raw SQL and `Content-Type: text/plain`
 
+## Before Relying On A Semantic Result
+
+- confirm the embedding relation exists and check `vector_indexed`;
+- verify the handle exists in the current key or anonymous-session namespace;
+- use lexical or structured filters for recall when the user gave concrete
+  terms, sources, authors, or dates;
+- return distances and caveats rather than claiming exhaustive semantic truth;
+- avoid raw vector output unless the user needs vectors specifically.
+
 ## Mental Model
 
 Scry stores Voyage-4-lite vectors in a shared 2048-dimensional space. You store

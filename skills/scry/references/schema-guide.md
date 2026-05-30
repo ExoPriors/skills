@@ -11,6 +11,21 @@ it checks that `/v1/scry/context` and `/v1/scry/schema` expose the same
 `truth_manifest` as the versioned content manifest and fails on non-pass drift
 by default.
 
+## How To Use This Reference
+
+Use this guide to orient yourself to relation families and source-native shape.
+Use the live schema endpoint to decide what can be queried now.
+
+Before writing SQL:
+
+1. Call `GET /v1/scry/schema`.
+2. Check relation/function availability, column names, type names, scope, row
+   estimate semantics, health/status fields, and `vector_indexed` where
+   applicable.
+3. Prefer source-native surfaces and `scry.source_records` when a corpus no
+   longer lives canonically in `scry.entities`.
+4. Treat row counts, freshness, and coverage as separate claims.
+
 ## Core Views
 
 ### scry.entities
@@ -544,6 +559,8 @@ Three layers of author resolution, bottom to top:
 | `scry.person_accounts` | Canonical public person-account edges (columns: `person_id`, `actor_id`, `source`, `external_id`, `handle`, `display_name`, `profile_url`, `link_method`, `confidence`, `entity_count`, `post_count`, `comment_count`, `first_activity`, `last_activity`) |
 | `scry.person_aliases` | Alias forms derived from verified public person-account links |
 | `scry.person_lenses` / `scry.person_axes` | Registries of person-intelligence lenses and axes (the available rubrics for judgement) |
+| `scry.person_predicate_policies` | Authenticated predicate-policy registry for allowed, aggregate-only, and blocked person-intelligence predicates |
+| `scry.person_intel_frontier` | Authenticated person-intelligence frontier counts for signal refs, observations, context packs, judgements, queues, and blocked predicate policies |
 | `scry.person_signal_refs` | Public-signal references linked to a resolved public person identity |
 | `scry.person_context_packs` | Reviewed context windows over cited public person evidence |
 | `scry.person_axis_judgements` | Reviewed axis judgements with confidence, uncertainty, rubric, and evidence links |
@@ -567,7 +584,7 @@ Common names produce false merges. When `display_name` is generic (e.g., "John S
 
 **Primary query path:** find the person in `scry.people`, inspect linked public accounts in `scry.person_accounts`, then query `scry.entities` by `author_person_id`.
 
-**Person-intelligence path:** use `scry.person_lenses` and `scry.person_axes` to inspect available rubrics, then join reviewed `scry.person_context_packs`, `scry.person_axis_judgements`, and `scry.person_vectors` by `person_id`. Use `scry.person_signal_refs` when you need the cited public signals behind a context pack or judgement. These person-intelligence surfaces are available with an authenticated key.
+**Person-intelligence path:** use `scry.person_predicate_policies` and `scry.person_intel_frontier` to inspect policy gates and queue/frontier state, then use `scry.person_lenses` and `scry.person_axes` to inspect available rubrics. Join reviewed `scry.person_context_packs`, `scry.person_axis_judgements`, and `scry.person_vectors` by `person_id`. Use `scry.person_signal_refs` when you need the cited public signals behind a context pack or judgement. These person-intelligence surfaces are available with an authenticated key.
 
 **Helper function:** `normalize_author_name(text)` -- lowercases, trims, collapses whitespace. Used for alias helpers, not as the canonical merge authority.
 
