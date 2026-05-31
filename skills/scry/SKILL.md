@@ -97,9 +97,10 @@ Load only the reference needed for the current task:
    use `GET /v1/scry/pricing`, `POST /v1/scry/estimate`, and/or a tight
    `LIMIT 20` probe before scaling.
 
-5. **Budget during congestion.** Scry queries are free unless there is
-   congestion. Under congestion, lead with `X-Scry-Budget`, `eager` or
-   `patient`, `GET /v1/scry/account`, and `POST /v1/scry/estimate`.
+5. **Budget when billing may apply.** Ordinary low-volume Scry queries stay
+   free. When global congestion or concentrated authenticated usage activates
+   billing, lead with `X-Scry-Budget`, `eager` or `patient`,
+   `GET /v1/scry/account`, and `POST /v1/scry/estimate`.
    `GET /v1/scry/pricing` is the live billing/market authority;
    `GET /v1/scry/price` is the lightweight current epoch oracle, with
    `/v1/scry/price/history`, `/v1/scry/price/stream`, `/v1/scry/spend`,
