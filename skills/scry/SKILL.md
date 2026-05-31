@@ -172,7 +172,10 @@ Load only the reference needed for the current task:
 - **Reddit:** start with `scry.search_reddit(...)`,
   `scry.reddit_subreddit_stats`, `scry.reddit_clusters()`, or
   `scry.reddit_embeddings` depending on lexical, count, cluster, or semantic
-  intent.
+  intent. For long COVID, ME/CFS, POTS, dysautonomia, and chronic-illness
+  patient-community lexical work, use `scry.search_reddit(...)` with an
+  explicit subreddit array such as
+  `ARRAY['cfs','covidlonghaulers','LongCovid','POTS','dysautonomia']`.
 - **Academic graph:** use OpenAlex helpers and surfaces from
   `references/schema-guide.md`.
 - **Conceptual/semantic ask:** create or reuse an `@handle`, then search

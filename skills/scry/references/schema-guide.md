@@ -423,6 +423,12 @@ recent-window lane otherwise. Use `scry.reddit_search_contract`,
 `scry.reddit_subreddit_stats_monthly`, `scry.reddit_clusters()`, and
 `scry.reddit_embeddings` for discovery and coverage checks.
 
+For patient-community lexical retrieval around long COVID, ME/CFS, POTS,
+dysautonomia, mast-cell disease, fibromyalgia, and chronic illness, use
+`scry.search_reddit(...)` with explicit subreddit arrays. This path is indexed
+for posts and comments across the patient-community slice. Do not use broad
+`scry.reddit_health` scans as the default lexical path.
+
 | Column | Type | Notes |
 |--------|------|-------|
 | id | TEXT | Reddit full ID (`t1_` or `t3_`) |
@@ -491,7 +497,7 @@ Pre-filtered views for common research topics. Each covers 3-22 curated subreddi
 | `scry.reddit_economics` | Economics/Finance | economics, wallstreetbets, investing, CryptoCurrency |
 | `scry.reddit_law` | Law/Policy | law, scotus, geopolitics, PoliticalDiscussion |
 | `scry.reddit_tech` | Tech/Programming | programming, rust, Python, netsec, ExperiencedDevs |
-| `scry.reddit_health` | Health/Medicine | medicine, Nootropics, longevity, publichealth |
+| `scry.reddit_health` | Health/Medicine | medicine, Nootropics, publichealth, cfs, covidlonghaulers |
 | `scry.reddit_history` | History | history, AskHistorians, badhistory |
 | `scry.reddit_climate` | Climate/Energy | climate, energy, nuclear, collapse, sustainability |
 | `scry.reddit_philosophy` | Philosophy/CogSci | philosophy, psychology, cogsci, linguistics |

@@ -212,6 +212,7 @@ Reddit data lives in separate windowed tables (not `scry.entities`). Uses TEXT I
 - `scry.mv_reddit_interest_embeddings` — indexed Voyage-4-lite semantic materialized view for that frontier
 - `scry.search_reddit(...)` and `scry.search_reddit_posts(...)` — bounded source-native lexical search helpers
 - `scry.search_reddit(...)` — public-safe fast post/comment helper for the GABA/pregabalin and phenomenology frontier when you include explicit `r/...` scopes
+- `scry.search_reddit(...)` — indexed post/comment helper for long COVID, ME/CFS, POTS, dysautonomia, mast-cell disease, fibromyalgia, and chronic-illness patient-community searches when you pass explicit subreddit arrays
 
 **Direct table/view surfaces to treat as diagnostic unless schema marks them healthy**:
 - `scry.reddit_posts`
@@ -315,6 +316,26 @@ ORDER BY score DESC NULLS LAST
 
 This path uses the accelerated Reddit interest-frontier materialized view. Do not use
 `scry.search(...)` for this slice.
+
+### Patient-community lexical search
+Use explicit subreddit arrays for patient-community retrieval. This keeps API
+cost admission scoped and routes to the indexed patient-community search table.
+
+```sql
+SELECT id, kind, subreddit, title, snippet, original_timestamp, score
+FROM scry.search_reddit(
+  'agmatine',
+  'auto',
+  ARRAY['cfs','covidlonghaulers','LongCovid','POTS','dysautonomia','ChronicIllness','Fibromyalgia'],
+  ARRAY['post', 'comment'],
+  25,
+  'all'
+)
+ORDER BY score DESC NULLS LAST
+```
+
+Use the same pattern for terms such as `PEM`, `pacing`, `antihistamine`, or a
+treatment name. Avoid broad `scry.reddit_health` scans for lexical retrieval.
 
 ### Fast subreddit discovery from lexical hits
 ```sql
