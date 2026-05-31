@@ -81,8 +81,9 @@ or legacy console routes, stop and update skills before deeper debugging.
 
 ## Query Budgeting
 
-Scry queries are free unless there is congestion. Under congestion, every query
-should be budget-bounded.
+Ordinary low-volume Scry queries stay free. When global congestion or
+concentrated authenticated usage activates billing, every query should be
+budget-bounded.
 
 Primary controls:
 
