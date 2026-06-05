@@ -19,7 +19,7 @@ and temporal comparisons.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of
 static numbers in docs.
 
-**Skill generation**: `2026053002`
+**Skill generation**: `2026060501`
 
 ## Use / Do Not Use
 
@@ -64,15 +64,17 @@ Load only the reference needed for the current task:
 1. **Context handshake first.** At session start, call:
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026053002" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060501" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
-   The endpoint is public; a key is not required for the handshake itself.
-   Use the returned `offerings` block for product summary, budgets, canonical
-   env var, installed skill catalog, live payment-role contract, accelerator
-   policy, and shareable bootstrap prompt. If `should_update_skill=true`, tell
-   the user to run `npx skills update`.
+   The endpoint is public; a key is not required for the handshake itself. For
+   durable work, prefer a personal Scry key stored as `SCRY_API_KEY` in `.env`
+   in the directory where the agent is launched. Use the returned `offerings`
+   block for product summary, budgets, `key_setup`, `embedding_composition`,
+   installed skill catalog, live payment-role contract, accelerator policy, and
+   shareable bootstrap prompt. If `should_update_skill=true`, tell the user to
+   run `npx skills update`.
 
 2. **Schema before SQL.** Always call `GET /v1/scry/schema` before writing SQL.
    Never guess columns, types, relation health, `access_scope`,
@@ -90,7 +92,10 @@ Load only the reference needed for the current task:
    `scry.search_federated(...)` or source-native `scry.search_*` helpers for
    fast provenance-bearing lexical SQL. The old shared BM25 diagnostic is not
    the serving contract. Use stored `@handle` vectors for conceptual intent such
-   as themes, similarity, contrast, and drift.
+   as themes, similarity, contrast, and drift. Treat compositional embedding
+   expressions as iterative ranking hypotheses: inspect nearest records and
+   distances, adjust handles/weights/axes, and verify claims against provenance,
+   lexical baselines, and coverage.
 
 4. **Probe before broad queries.** Clarify ambiguous intent before broad or
    likely expensive searches. For work likely to run more than a few seconds,

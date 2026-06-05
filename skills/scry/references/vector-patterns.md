@@ -3,7 +3,7 @@
 Use this reference from the `/scry` skill when the user wants conceptual,
 semantic, or hybrid retrieval. Start with live context and schema:
 
-1. `GET /v1/scry/context?skill_generation=2026053002`
+1. `GET /v1/scry/context?skill_generation=2026060501`
 2. `GET /v1/scry/schema`
 3. `POST /v1/scry/embed` when you need a new concept handle
 4. `POST /v1/scry/query` with raw SQL and `Content-Type: text/plain`
@@ -12,6 +12,9 @@ semantic, or hybrid retrieval. Start with live context and schema:
 
 - confirm the embedding relation exists and check `vector_indexed`;
 - verify the handle exists in the current key or anonymous-session namespace;
+- keep `@handles` in vector-distance expressions or schema-advertised vector
+  helpers; do not use them as text, entity ids, boolean predicates, or
+  replacements for source/date/kind filters;
 - use lexical or structured filters for recall when the user gave concrete
   terms, sources, authors, or dates;
 - return distances and caveats rather than claiming exhaustive semantic truth;
@@ -29,6 +32,11 @@ embedding_voyage4 <=> @concept_handle
 Smaller cosine distance means greater similarity. Use lexical search for recall
 and vectors for conceptual ordering when the user asks for themes, analogies,
 near misses, or "things like this".
+
+Composition is an iterative query technique, not an automatic classifier. For
+nontrivial mixes, axes, or debiasing, inspect nearest records and distances,
+compare with a lexical or structured baseline, revise the handles or weights,
+and only then summarize the pattern.
 
 ## Create A Concept Handle
 
@@ -239,5 +247,9 @@ counts per bucket and check source freshness before interpreting the distance.
 - Running broad vector ordering before a cheap lexical/date/source probe.
 - Requesting raw vector arrays; use distances and `@handle` references instead.
 - Treating anonymous handles as durable; use a personal key for long-running work.
+- Treating a compositional vector expression as a boolean filter, source filter,
+  or entity identifier.
+- Reporting a semantic result without checking embedding coverage or a lexical
+  baseline when the claim matters.
 - Assuming a built-in temporal-delta operator exists; use a
   `/v1/scry/schema`-confirmed helper or explicit time-bucket SQL.

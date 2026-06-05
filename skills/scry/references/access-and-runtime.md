@@ -27,6 +27,10 @@ Treat embedded bearer keys as local secrets. Keep them out of repositories,
 public prompts, shared transcripts, screenshots, and durable global agent
 context.
 
+Use anonymous bootstrap for immediate discovery. Switch to a personal key in
+the launch-directory `.env` when the session needs durable vector handles,
+shares, receipts, spend controls, or continuity across agent restarts.
+
 ## Durable Bootstrap Paths
 
 1. **Operator-provisioned:** a signed-in human calls `POST /v1/auth/api-keys`,
@@ -70,7 +74,7 @@ npx skills update
 At session start, call:
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026053002" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060501" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
