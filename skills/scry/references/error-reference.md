@@ -236,7 +236,7 @@ entities in LLM-visible contexts.
 |---------|-------|-----|
 | JSON-wrapping the SQL body | Parse error | Use `Content-Type: text/plain` with raw SQL |
 | Missing LIMIT | "Query must include a LIMIT clause" | Add LIMIT |
-| API key from `.env` fails intermittently | 401 "Invalid authorization format" | Clean key with `KEY_CLEAN=\"$(printf '%s' \"$SCRY_API_KEY\" | tr -d '\\r\\n')\"` |
+| Loaded API key fails intermittently | 401 "Invalid authorization format" | Clean key with `KEY_CLEAN=\"$(printf '%s' \"$SCRY_API_KEY\" | tr -d '\\r\\n')\"` |
 | Using `kind = 'post'` without cast | Type mismatch | Use `kind = 'post'` (enum literal) or `kind::text = 'post'` |
 | Querying `pg_catalog` or `information_schema` on the Scry SQL surface | Forbidden | Use `GET /v1/scry/schema` or `scry.queryable_*` catalog views |
 | Assuming all entities have embeddings | Empty results | Add `WHERE embedding_voyage4 IS NOT NULL` |
