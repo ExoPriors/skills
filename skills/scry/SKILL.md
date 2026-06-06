@@ -85,8 +85,8 @@ Load only what the task needs:
    as `scry.openalex`, `scry.reddit_posts`, `scry.forum_posts`,
    `scry.wikipedia`, `scry.hackernews`, `scry.stackexchange`, `scry.caselaw`,
    `scry.gutenberg_books`, `scry.wikidata_items`, and `scry.kl3m` when the live
-   schema exposes them. Treat `mv_*` helpers as fast paths, not corpus-complete
-   truth.
+   schema exposes them. Treat `mv_*` helpers as fast paths, not
+   corpus-complete truth.
 
 7. **Filter dangerous content by default.** On broad content tables, include
    `WHERE content_risk IS DISTINCT FROM 'dangerous'` unless the user explicitly
@@ -98,8 +98,8 @@ Load only what the task needs:
    and `GET /v1/scry/query-receipts/{id}`. Share result artifacts with
    `POST /v1/scry/shares`. Browser Stripe checkout is
    `/v1/billing/checkout/custom`. Cards are a differentiated three-step rail:
-   `POST /v1/billing/setup-payment-method` returns `setup_url` for one
-   operator browser visit; `POST /v1/billing/agent-topup` uses
+   `POST /v1/billing/setup-payment-method` returns `setup_url` for
+   one operator browser visit; `POST /v1/billing/agent-topup` uses
    `X-Scry-Subject-Agent` and an active `agent_topup` mandate; recurring
    auto-topup is a separate opt-in requiring an active auto_topup mandate plus
    `/v1/billing/auto-topup/eligibility`. Wallet agents can use
