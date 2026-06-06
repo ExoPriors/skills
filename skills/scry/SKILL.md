@@ -202,6 +202,11 @@ Load only the reference needed for the current task:
   work. See `references/query-patterns.md`.
 - **Structured observation:** `POST /v1/scry/judgements`; exactly one target is
   required. Public judgements must target an entity, actor, or judgement.
+- **Public pairwise rerank judgement:** `POST /v1/scry/rerank`; provide `sql`
+  or `list_id`, `attributes`, and `topk`. It defaults to OpenRouter
+  `google/gemma-4-31b-it` and public judgement-run recording. Use
+  `judgement_privacy: "private"` (or `"self"`) for caller-only evidence.
+  Public recording requires UUID ids from Scry corpus entities.
 
 ## Minimal Query Shape
 
@@ -213,6 +218,29 @@ curl -s https://api.scry.io/v1/scry/query \
 ```
 
 Then widen only after confirming the results are relevant.
+
+## Public Rerank Judgement
+
+```bash
+curl -s https://api.scry.io/v1/scry/rerank \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "sql": "SELECT id, content_text FROM scry.entities WHERE source = '\''lesswrong'\'' AND kind = '\''post'\'' AND content_risk IS DISTINCT FROM '\''dangerous'\'' LIMIT 12",
+    "attributes": [{
+      "id": "insight",
+      "prompt": "Among public corpus entities, prefer non-obvious ideas that would change a careful researcher'\''s beliefs or next actions. Discount popularity, length, and polish.",
+      "weight": 1.0
+    }],
+    "topk": {"k": 5},
+    "judgement_privacy": "public"
+  }'
+```
+
+The response field `judgement_run` contains the run receipt id and
+`provider_call_job_id`. Query `scry.agent_judgements` for the public run receipt
+and child pairwise judgement atoms. Aggregate comparison rows are derived
+solver/cache state, not the evidence authority.
 
 ## Common SQL Patterns
 
