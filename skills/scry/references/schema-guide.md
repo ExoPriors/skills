@@ -32,9 +32,9 @@ Before writing SQL:
 Quick catalog probes:
 
 ```sql
-SELECT qualified_name, relation_type, access_scope, row_count_estimate, sample_sql
+SELECT qualified_name, relation_type, surface_tier, surface_rank, access_scope, row_count_estimate, sample_sql
 FROM scry.queryable_relations
-ORDER BY qualified_name
+ORDER BY surface_rank, qualified_name
 LIMIT 200
 ```
 
