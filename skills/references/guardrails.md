@@ -40,8 +40,9 @@ Base URL: https://api.scry.io
 ```
 
 Use `SCRY_API_KEY` as the canonical env var in examples and agent chats.
-For durable agent sessions, store it in `.env` in the directory where the agent
-is launched. A personal key gives you durable handles, shares, receipts, and
+For durable agent sessions, store it once in `~/.scry/.env`; a launch-directory
+`./.env` can supply project settings, but `~/.scry/.env` wins for the durable
+Scry key. A personal key gives you durable handles, shares, receipts, and
 continuity across restarts; anonymous keys are for bounded discovery.
 
 ## 5. Adaptive Timeouts

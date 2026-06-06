@@ -15,12 +15,20 @@ matters. For live truth, prefer `GET /v1/scry/context`,
 - Recommended anonymous client header:
   `X-Scry-Client-Tag: <short-stable-tag>`.
 
-Recommended default for less-technical users: store `SCRY_API_KEY` in `.env` in
-the directory where the agent is launched.
+Recommended default for less-technical users: store `SCRY_API_KEY` once in
+`~/.scry/.env`. A launch-directory `./.env` can supply project settings, but
+`~/.scry/.env` wins for the durable Scry key.
 
 ```bash
-printf '%s\n' 'SCRY_API_KEY=<your key>' >> .env
-set -a && source .env && set +a
+mkdir -p "$HOME/.scry"
+chmod 700 "$HOME/.scry"
+umask 077
+printf '%s\n' 'SCRY_API_KEY=<your key>' > "$HOME/.scry/.env"
+set -a
+[ -f ./.env ] && . ./.env
+[ -f "$HOME/.scry/.env" ] && . "$HOME/.scry/.env"
+[ ! -f "$HOME/.scry/.env" ] && [ -f "$HOME/.scry/env" ] && . "$HOME/.scry/env"
+set +a
 ```
 
 Treat embedded bearer keys as local secrets. Keep them out of repositories,
@@ -28,8 +36,8 @@ public prompts, shared transcripts, screenshots, and durable global agent
 context.
 
 Use anonymous bootstrap for immediate discovery. Switch to a personal key in
-the launch-directory `.env` when the session needs durable vector handles,
-shares, receipts, spend controls, or continuity across agent restarts.
+`~/.scry/.env` when the session needs durable vector handles, shares, receipts,
+spend controls, or continuity across agent restarts.
 
 ## Durable Bootstrap Paths
 
@@ -59,7 +67,10 @@ curl -s https://api.scry.io/v1/scry/schema \
 ```
 
 Keep the same `X-Scry-Client-Tag` on the same device while anonymous so access
-stays reliable across requests from the same device.
+stays reliable across requests from the same device. After minting an anonymous
+key, reuse the same client tag on schema, search, and query requests; your
+anonymous session stays reliable even if a later request is missing the key or
+uses a new one.
 Anonymous keys can also call `POST /v1/scry/embed`,
 `GET /v1/scry/vectors`, and `DELETE /v1/scry/vectors/{name}`. Handles stay
 bound to the anonymous session rather than a durable account namespace.
@@ -74,7 +85,7 @@ npx skills update
 At session start, call:
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060501" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060601" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 

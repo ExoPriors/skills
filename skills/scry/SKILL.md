@@ -19,7 +19,7 @@ and temporal comparisons.
 Use `GET /v1/stats` or `GET /v1/scry/context` for live corpus counts instead of
 static numbers in docs.
 
-**Skill generation**: `2026060501`
+**Skill generation**: `2026060601`
 
 ## Use / Do Not Use
 
@@ -64,13 +64,14 @@ Load only the reference needed for the current task:
 1. **Context handshake first.** At session start, call:
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060501" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060601" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
    The endpoint is public; a key is not required for the handshake itself. For
-   durable work, prefer a personal Scry key stored as `SCRY_API_KEY` in `.env`
-   in the directory where the agent is launched. Use the returned `offerings`
+   durable work, prefer a personal Scry key stored once as `SCRY_API_KEY` in
+   `~/.scry/.env`; a launch-directory `./.env` can supply project settings, but
+   `~/.scry/.env` wins for the durable Scry key. Use the returned `offerings`
    block for product summary, budgets, `key_setup`, `embedding_composition`,
    installed skill catalog, live payment-role contract, accelerator policy, and
    shareable bootstrap prompt. If `should_update_skill=true`, tell the user to
@@ -211,6 +212,12 @@ Load only the reference needed for the current task:
 ## Minimal Query Shape
 
 ```bash
+set -a
+[ -f ./.env ] && . ./.env
+[ -f "$HOME/.scry/.env" ] && . "$HOME/.scry/.env"
+[ ! -f "$HOME/.scry/.env" ] && [ -f "$HOME/.scry/env" ] && . "$HOME/.scry/env"
+set +a
+
 curl -s https://api.scry.io/v1/scry/query \
   -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: text/plain" \
