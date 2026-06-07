@@ -114,9 +114,9 @@ FROM scry.search_exhaustive('alignment tax',
 ORDER BY original_timestamp DESC
 ```
 
-### LessOnline: public schedule people and evidence
+### LessOnline: event-grounded people and evidence
 ```sql
--- One search across sessions, schedule people, aliases, and public-writing candidates.
+-- One search across sessions, event-grounded people, aliases, and public-writing candidates.
 SELECT result_scope, display_name, title, corpus_source::text, match_basis,
        confidence_tier, review_state, uri
 FROM scry.search_lessonline('Jeff Kaufman', 'lessonline-2026', NULL, 25);
@@ -136,7 +136,14 @@ WHERE event_slug = 'lessonline-2026'
 GROUP BY coverage_status
 ORDER BY coverage_status;
 
--- Highest-evidence public schedule-attested people.
+-- Provenance mix: schedule/page/profile evidence by role.
+SELECT evidence_role, record_type, count(*)
+FROM scry.lessonline_person_evidence
+WHERE event_slug = 'lessonline-2026'
+GROUP BY evidence_role, record_type
+ORDER BY evidence_role, record_type;
+
+-- Highest-evidence event-grounded people.
 SELECT display_name, session_count, evidence_count, role_tags
 FROM scry.lessonline_people
 WHERE event_slug = 'lessonline-2026'
@@ -161,7 +168,7 @@ FROM scry.search_lessonline_event_records('AE Studio', 'lessonline-2026', NULL, 
 ORDER BY score DESC NULLS LAST, starts_at NULLS LAST
 LIMIT 20;
 
--- Public-writing candidates for a schedule-grounded person.
+-- Public-writing candidates for an event-grounded person.
 -- Candidate rows are leads; check match_basis, confidence_tier, and review_state.
 SELECT lessonline_display_name, corpus_source::text, match_basis, review_state,
        title, uri, original_author, original_timestamp
@@ -999,7 +1006,8 @@ curl -s -X POST https://api.scry.io/v1/scry/shares \
 
 Scry rerank request bodies are bounded before execution. Current allowed
 rerank model ids include `google/gemma-4-31b-it`, the `gemma4:31b` alias,
-`openai/gpt-5.4-mini`, and `openai/gpt-5.4-nano`; default per-entity rerank
+`google/gemma-4-31b-it-20260402`, `openai/gpt-5.4-mini`, and
+`openai/gpt-5.4-nano`; default per-entity rerank
 text is capped at 4000 characters. `/v1/scry/rerank` records a public
 judgement-run receipt and child pairwise judgement atoms by default. Set
 `judgement_privacy` to `private` or `self` for caller-only evidence. Check

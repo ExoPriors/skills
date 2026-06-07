@@ -1,6 +1,6 @@
 ---
 name: lessonline-research
-description: Research LessOnline people, sessions, venues, aliases, public-writing candidates, and public event evidence through Scry's LessOnline tables. Use when exploring hosts, presenters, session evidence, people worth meeting, or public corpus matches for LessOnline.
+description: Research LessOnline people, sessions, venues, authenticated event profile evidence, aliases, public-writing candidates, and public event evidence through Scry's LessOnline tables. Use when exploring hosts, presenters, event/profile evidence, people worth meeting, or public corpus matches for LessOnline.
 ---
 
 # LessOnline Research
@@ -11,20 +11,21 @@ For LessOnline 2026, use `event_slug = 'lessonline-2026'`.
 
 ## What This Means
 
-LessOnline rows are public event evidence. A person row means a name appears in
-public schedule data or a public schedule-derived research view. It reflects
-public schedule data, not a full attendee list.
+LessOnline rows are provenance-bearing event evidence. A person row can be
+grounded by public schedule/page evidence, authenticated event profile evidence,
+or both. It is not a claim that Scry has a complete attendee directory.
 
 Use this skill for:
 
-- finding public schedule people, hosts, sessions, and venues;
-- grounding a person in event evidence before wider research;
+- finding event people, hosts, sessions, venues, and profile evidence;
+- grounding a person in event-record provenance before wider research;
 - finding aliases, public-writing candidates, and corpus matches;
 - ranking people to meet by schedule evidence, topical fit, corpus depth, and
   unresolved uncertainty.
 
-Do not use it to infer private attendance, merge identities without public
-evidence, or treat a missing match as absence.
+Do not use it to infer private attendance beyond the cited event/profile
+evidence, merge identities without public evidence, or treat a missing match as
+absence.
 
 ## Main Surfaces
 
@@ -69,7 +70,7 @@ WHERE event_slug = 'lessonline-2026'
 LIMIT 1;
 ```
 
-Person lookup with event grounding:
+Person lookup with event/profile grounding:
 
 ```sql
 WITH person AS (

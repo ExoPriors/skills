@@ -138,8 +138,13 @@ union view over those records.
 |------|-------|
 | `scry.source_records` | Cross-source union of source-native records. Includes `source`, `external_id`, `entity_id`, `kind`, `uri`, `title`, `content_text`, `metadata`, `created_at`, `updated_at`. Some families use prefixed `external_id` values such as `edition:...`, `repository:...`, or `paper_artifact:...`; when a canonical table stores a generic `document` kind, `metadata.logical_kind` carries the typed-search logical kind. |
 | `scry.bluesky` / `hackernews` / `wikipedia` / `pubmed` / `repec` / `kalshi` / `nih_reporter` / `govinfo_crec` / `offshoreleaks` / `openalex` | Clean primary aliases for the major source-native corpora. Prefer these names in new agent/user queries. |
-| `scry.lessonline_event_records` / `scry.lessonline_people` / `scry.lessonline_person_evidence` | LessOnline event schedule, venue, public schedule-host/person-candidate, and evidence substrate. Use the people table for public schedule-attested names, the evidence table for session-level grounding, and the event table for raw schedule/map records. |
-| `scry.lessonline_person_public_aliases` / `scry.lessonline_person_corpus_matches` / `scry.lessonline_person_research_frontier` / `scry.lessonline_person_cards` / `scry.lessonline_query_coverage` | LessOnline public writing index. Alias rows preserve evidence behind schedule names, parenthetical handles, and candidate identity links; corpus-match rows index public writing candidates across corpora with `match_basis`, `confidence_tier`, and `review_state`; the frontier view shows per-person follow-through state; cards package schedule evidence, aliases, corpus-source counts, writing candidates, and queue state into one row per schedule-grounded person; coverage shows filled rows and remaining gaps. |
+| `scry.clearerthinking_sources` / `scry.clearerthinking_pages` | ClearerThinking source registry and landed page records. Use `scry.search_clearerthinking_pages(query_text, limit_n)` for bounded retrieval when available. |
+| `scry.github_documents` | GitHub document substrate over repository-adjacent text artifacts. Use `scry.search_github_documents(query_text, mode, limit_n)` before broad direct scans. |
+| `scry.epoch_ai_dataset_tables` / `scry.epoch_ai_dataset_rows` / `scry.epoch_ai_artifacts` | Epoch AI dataset table, row, and artifact surfaces. Use `scry.search_epoch_ai(query_text, result_limit)` for bounded discovery. |
+| `scry.lessonline_event_records` / `scry.lessonline_people` / `scry.lessonline_person_evidence` | LessOnline event-record and person-evidence substrate. Use event records for sessions, venues, reachable pages, schedule hosts, and authenticated event profile records; use people for deduped event-grounded names; use evidence rows to inspect `evidence_role`, `record_type`, `uri`, `source_url`, and source metadata before making person claims. |
+| `scry.lessonline_person_public_aliases` / `scry.lessonline_person_corpus_matches` / `scry.lessonline_person_research_frontier` / `scry.lessonline_person_cards` / `scry.lessonline_query_coverage` | LessOnline public writing index. Alias rows preserve evidence behind event names, profile display names, parenthetical handles, and candidate identity links; corpus-match rows index public writing candidates across corpora with `match_basis`, `confidence_tier`, and `review_state`; the frontier view shows per-person follow-through state; cards package event evidence, aliases, corpus-source counts, writing candidates, and queue state into one row per event-grounded person; coverage shows filled rows and remaining gaps. |
+| `scry.lessonline_person_research_queue` | Work queue companion for LessOnline person research. Prefer the read models above for user-facing retrieval. |
+| `scry.lesswrong_v4large_posts` / `scry.lesswrong_v4large_comments` / `scry.lesswrong_v4large_chunks` / `scry.lesswrong_v4large_chunk0` / `scry.lesswrong_v4large_tags` / `scry.lesswrong_v4large_coverage` | LessWrong v4-large source-native post/comment/chunk/tag surfaces and coverage accounting. Check coverage before treating absence as evidence. |
 | `scry.hackernews_items` | Canonical HN substrate keyed by `hn_id`. Contains posts and comments, thread ancestry (`parent_hn_id`, `story_hn_id`), outbound URL, score, full text, and `anchor_entity_id` for joins to crawled webpage entities. |
 | `scry.wikipedia_articles` | Canonical Wikipedia substrate keyed by `page_id`. Contains revisions, categories, article text, and quality metadata. |
 | `scry.pubmed_papers` | Canonical PubMed substrate keyed by `pmid`. Contains paper text, DOI/PMC identifiers, journal metadata, and MeSH/keyword metadata. |
@@ -152,6 +157,7 @@ union view over those records.
 | `scry.openalex_work_external_ids` | Source-local OpenAlex alias registry keyed by `work_id`. Use it for carried external identifiers such as PubMed PMIDs that belong to the OpenAlex work rather than the shared ext-id bridge. |
 | `scry.bluesky_posts` | Canonical Bluesky substrate keyed by AT URI. |
 | `scry.twitter_posts` | Canonical Twitter/X substrate keyed by canonical tweet URI. Exposes public provenance tags plus aggregated observation-source tags such as `observation_sources`, `capture_channels`, and `has_extension_observation`. |
+| `scry.twitter_tweet_records` | Raw tweet-record surface for source-native Twitter/X record inspection. Prefer `scry.twitter_posts` or typed search for ordinary retrieval. |
 | `scry.twitter_threads` | Canonical Twitter thread-root substrate keyed by `thread:{root_tweet_id}`. Includes root payload, author/timestamp, aggregate tweet counts, and total likes/retweets for thread-level retrieval. |
 | `scry.twitter_post_observations` | Provenance rows for the Twitter substrate. Exposes source collection, observation source, capture channel, trust score, verification status, and metrics. |
 | `scry.twitter_bucket_snapshots` | Scry Tweets bucket pull audit surface. Exposes snapshot-object progress, expected records, committed line coverage, and quality status for the `scry-tweets` Argus snapshot lane. |
@@ -167,6 +173,8 @@ union view over those records.
 | `scry.gdelt_articles` | Canonical GDELT news-article substrate keyed by URL / GKG record pairs. Includes themes, tone, entity extraction, and publication time. |
 | `scry.who_iris_publications` | Canonical WHO IRIS publication substrate keyed by `handle`. Includes document type, authors, subjects, languages, publishers, and identifiers. |
 | `scry.moltbook` / `scry.moltbook_items` | Canonical Moltbook substrate keyed by `item_key`. Includes explicit `content_risk` plus mixed post/comment/document grain. |
+| `scry.substack_publications` / `scry.substack_posts` / `scry.substack_comments` | Source-native Substack publication, article, and comment surfaces. Use `scry.search_substack_posts(query_text, mode, limit_n)` and `scry.search_substack_comments(query_text, mode, limit_n)` for bounded retrieval. |
+| `scry.reddit_patient_health_search_status` | Patient-health Reddit search coverage/status surface. Use it as coverage context before interpreting search gaps. |
 | `scry.huggingface` / `scry.huggingface_repositories` | Canonical Hugging Face repository substrate keyed by `repo_id` (`owner/name`). Includes repo type (`model`/`dataset`/`space`), owner handle, card metadata, tags, likes/downloads, and synthesized repo payload text. |
 | `scry.huggingface_models` / `scry.huggingface_datasets` / `scry.huggingface_spaces` | Repo-type filtered Hugging Face aliases for common traversal without repeating `WHERE repo_type = ...`. |
 | `scry.huggingface_accounts` / `scry.huggingface_organizations` | Canonical Hugging Face account substrate keyed by handle. Includes user/org typing, bio, follower counts, plan/pro flags, and profile metadata. |
@@ -238,9 +246,9 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_openlibrary_works(query_text, mode, limit_n)` | BM25 over Open Library work `title`, `payload`, and `original_author`. |
 | `scry.search_openlibrary_authors(query_text, mode, limit_n)` | BM25 over Open Library author `name`, `payload`, `original_author`, and life-date fields. |
 | `scry.search_federated(query_text, sources, kinds, limit_n, per_source_cap)` | Cross-source lexical shortlist helper across shared and source-native corpora. It normalizes provenance-bearing results for first-pass discovery. |
-| `scry.search_lessonline_event_records(query_text, event_slug_filter, record_types, limit_n)` / `scry.search_lessonline_people(query_text, event_slug_filter, limit_n)` | LessOnline lexical search over public event records and public schedule-attested person candidates. Use `event_slug_filter => 'lessonline-2026'` for LessOnline 2026. |
+| `scry.search_lessonline_event_records(query_text, event_slug_filter, record_types, limit_n)` / `scry.search_lessonline_people(query_text, event_slug_filter, limit_n)` | LessOnline lexical search over event records and event-grounded person candidates. Use `event_slug_filter => 'lessonline-2026'` for LessOnline 2026. |
 | `scry.search_lessonline_person_corpus_matches(person_query, writing_query, event_slug_filter, confidence_tiers, limit_n)` | Searches the LessOnline public writing index. Use `review_state` and `confidence_tier` to separate leads from reviewed identity-backed matches. |
-| `scry.search_lessonline(query_text, event_slug_filter, scopes, limit_n)` | Unified LessOnline search over event records, schedule-grounded people, public aliases, and public-writing candidates. `scopes` can include `event_record`, `person`, `alias`, and `writing_match`. |
+| `scry.search_lessonline(query_text, event_slug_filter, scopes, limit_n)` | Unified LessOnline search over event records, event-grounded people, public aliases, and public-writing candidates. `scopes` can include `event_record`, `person`, `alias`, and `writing_match`. |
 | `scry.search_huggingface(query_text, mode, scopes, repo_types, limit_n)` | Unified Hugging Face discovery helper across repos, artifacts, collections, papers, discussions, accounts, and paper-artifact hops. Use this when you do not yet know which HF surface is the right starting point. |
 | `scry.search_huggingface_accounts(query_text, mode, account_types, limit_n)` | BM25 over HF account handles, display names, bios, and plan labels. |
 | `scry.huggingface_account_repositories(owner_handle, repo_types, limit_n)` | Traverses a HF handle into its owned repositories with popularity/freshness ordering. |
@@ -604,9 +612,13 @@ Three layers of author resolution, bottom to top:
 | `scry.person_context_pack_evidence` | Evidence members and explicit observation quotes for reviewed/published context packs |
 | `scry.person_axis_judgements` | Reviewed axis judgements with confidence, uncertainty, rubric, and evidence links |
 | `scry.person_axis_judgement_work_items` | Pending low-risk judgement work items whose context pack is already visible |
+| `scry.person_context_pack_refresh_work_items` | Refresh queue for person context packs that need evidence or freshness work |
 | `scry.person_vectors` / `scry.person_clusters` / `scry.person_cluster_memberships` | Vector and cluster read models over person judgements |
 | `scry.mv_author_profiles` | Per-source author stats aggregated from entity rows (threshold: >= 3 entities) |
 | `scry.mv_author_stats` | Author post counts and score aggregates |
+| `scry.author_linking_public_coverage` / `scry.author_linking_method_velocity` / `scry.author_counterpart_frontier_velocity` / `scry.author_linking_queue_throughput` | Author-linking coverage and throughput views for public identity work |
+| `scry.linkedin_profiles` / `scry.linkedin_profile_seeds` / `scry.linkedin_profile_crawl_attempts` | LinkedIn profile seed, profile, and crawl-attempt surfaces used by public identity frontier work |
+| `scry.ai_safety_people_crm` / `scry.ai_safety_candidate_crm` / `scry.ai_safety_people_evidence` / `scry.ai_safety_people_profile_links` / `scry.ai_safety_people_source_runs` | AI-safety person/candidate CRM and evidence surfaces. Treat these as frontier/accounting views and inspect live schema columns before broad joins. |
 | `scry.github_people` | GitHub-specific maintainer aggregates (stars, repos, comments) |
 | `scry.github_person_repos` | GitHub person-to-repo mapping |
 
@@ -624,7 +636,7 @@ Common names produce false merges. When `display_name` is generic (e.g., "John S
 
 **Primary query path:** find the person in `scry.people`, inspect linked public accounts in `scry.person_accounts`, then query `scry.entities` by `author_person_id`.
 
-**LessOnline person-writing path:** use `scry.search_lessonline(...)` for first-pass discovery. For a person-shaped result, open `scry.lessonline_person_cards`; when drilling in, read `scry.lessonline_person_evidence`, inspect `scry.lessonline_person_public_aliases`, then use `scry.search_lessonline_person_corpus_matches(...)` or `scry.lessonline_person_corpus_matches`. Use `review_state` and `confidence_tier` to separate leads from reviewed identity-backed matches.
+**LessOnline person-writing path:** use `scry.search_lessonline(...)` for first-pass discovery. For a person-shaped result, open `scry.lessonline_person_cards`; when drilling in, read `scry.lessonline_person_evidence` to distinguish schedule/page evidence from authenticated event profile evidence, inspect `scry.lessonline_person_public_aliases`, then use `scry.search_lessonline_person_corpus_matches(...)` or `scry.lessonline_person_corpus_matches`. Use `match_basis`, `review_state`, and `confidence_tier` to separate event/profile evidence, research leads, and reviewed identity-backed matches.
 
 **Person-intelligence path:** use `scry.person_predicate_policies` and `scry.person_intel_frontier` to inspect policy gates and queue/frontier state, then use `scry.person_lenses` and `scry.person_axes` to inspect available rubrics. Join reviewed `scry.person_context_packs`, `scry.person_context_pack_evidence`, `scry.person_axis_judgements`, and `scry.person_vectors` by `person_id` or `context_pack_id`. Use `scry.person_axis_judgement_work_items` to find pending low-risk judgement packets whose context packs are already visible. Use `scry.person_signal_refs` when you need the cited public signals behind a context pack or judgement. These person-intelligence surfaces are available with an authenticated key.
 
@@ -1109,6 +1121,7 @@ work.
 | View | Notes |
 |------|-------|
 | `scry.mv_freshness` | Materialized view health: populated status, approx row counts, last analyze timestamp. Useful for diagnosing stale search results. |
+| `scry.embedding_staging_lanes` / `scry.embedding_staging_lane_status` | Embedding staging lane and status views. Use them to understand staged embedding backlog, lane health, and drain state before interpreting missing semantic coverage. |
 
 ### OpenAlex Helper Functions
 
@@ -1129,6 +1142,7 @@ work.
 | Function | Description |
 |----------|-------------|
 | `scry.table_sample(surface_name, sample_n)` | Returns JSON row samples for quick shape inspection. It only accepts relations listed in `scry.queryable_relations` for the current SQL role. |
+| `scry.entity_source_artifact_provenance_metadata(entity_id)` | Returns source-artifact provenance metadata for an accessible entity UUID. Prefer hydrated typed-search records when you already have a `record_ref`. |
 | `scry.entity_content_text_slice(entity_id, start, max_chars)` | Retrieves deeper public `content_text` slices beyond the 50K preview cap. Use `start` and `max_chars` to page through long entities. |
 | `scry.sporc_transcript_slice(entity_id, start, max_chars)` | Same as `entity_content_text_slice`, but isolates the transcript portion of SPORC pages before slicing. |
 

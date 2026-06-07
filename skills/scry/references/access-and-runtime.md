@@ -85,7 +85,7 @@ npx skills update
 At session start, call:
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060602" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060702" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 

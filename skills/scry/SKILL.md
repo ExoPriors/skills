@@ -13,7 +13,7 @@ over curated `scry.*` relations, and `POST /v1/scry/embed` to create semantic
 Use `GET /v1/stats`, `GET /v1/scry/context`, and `GET /v1/scry/schema` for live
 truth. Do not rely on static corpus counts or guessed schema.
 
-**Skill generation**: `2026060602`
+**Skill generation**: `2026060702`
 
 ## Reference Map
 
@@ -30,21 +30,23 @@ Load only what the task needs:
 - `references/access-and-runtime.md`: `SCRY_API_KEY`, `~/.scry/.env`, anonymous
   access, congestion pricing, receipts, x402, funding, and delegated agent
   policy.
-- `../references/guardrails.md`: shared Scry guardrails and degradation rules.
+- `references/guardrails.md`: shared Scry guardrails and degradation rules.
 
 ## Mandatory Workflow
 
 1. **Handshake first.**
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060602" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060702" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
    The context endpoint is public, but durable work should use a personal
-   `SCRY_API_KEY` stored once in `~/.scry/.env`. A launch-directory `./.env`
-   can supply project settings, but `~/.scry/.env` wins for the durable Scry
-   key. If `should_update_skill=true`, tell the user to run
+   `SCRY_API_KEY` stored once in `~/.scry/.env`. If a prompt or console flow
+   gives you a Scry key for immediate use, first persist it there as
+   `SCRY_API_KEY`, then use `$SCRY_API_KEY` in headers. A launch-directory
+   `./.env` can supply project settings, but `~/.scry/.env` wins for the
+   durable Scry key. If `should_update_skill=true`, tell the user to run
    `npx skills update`.
 
 2. **Schema before SQL.** Call `GET /v1/scry/schema` before writing SQL. Never
@@ -80,8 +82,11 @@ Load only what the task needs:
    `x-scry-priority-fee`, `x-scry-compute-units`, `x-scry-utilization`, and
    `x-scry-epoch`.
 
-5. **Every SQL query needs `LIMIT`.** Maximum: 10,000 rows. Raw SQL goes in a
-   `Content-Type: text/plain` body, not JSON.
+5. **Every SQL query needs `LIMIT`.** Free personal keys start at 2,000
+   standard rows, raw-vector responses start at 200 rows, and higher-authority
+   lanes may reach the 10,000-row standard API ceiling. Treat the live schema,
+   query response `max_rows`, and current key limits as the authority. Raw SQL
+   goes in a `Content-Type: text/plain` body, not JSON.
 
 6. **Prefer source-native surfaces.** `scry.entities` is not the canonical home
    for every corpus. Prefer typed search, `scry.search_federated(...)`,
