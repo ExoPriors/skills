@@ -619,6 +619,7 @@ Three layers of author resolution, bottom to top:
 | `scry.author_linking_public_coverage` / `scry.author_linking_method_velocity` / `scry.author_counterpart_frontier_velocity` / `scry.author_linking_queue_throughput` | Author-linking coverage and throughput views for public identity work |
 | `scry.linkedin_profiles` / `scry.linkedin_profile_seeds` / `scry.linkedin_profile_crawl_attempts` | LinkedIn profile seed, profile, and crawl-attempt surfaces for public identity research |
 | `scry.ai_safety_candidate_crm` | AI-safety candidate CRM surface. Inspect live schema columns before broad joins. |
+| `scry.ai_safety_people_crm` / `scry.ai_safety_people_evidence` / `scry.ai_safety_people_profile_links` / `scry.ai_safety_people_source_runs` | AI-safety person CRM, evidence, profile-link, and source-run surfaces. Inspect live schema columns before broad joins. |
 | `scry.github_people` | GitHub-specific maintainer aggregates (stars, repos, comments) |
 | `scry.github_person_repos` | GitHub person-to-repo mapping |
 
