@@ -121,6 +121,13 @@ Chunked semantic vectors for entities.
 - `scry.entities_with_embeddings` is `scry.entities` pre-joined to `scry.entity_embeddings`.
 - `scry.embedding_coverage` is a reporting surface for source/kind public vs staged vs ready coverage and freshness.
 
+**Vector diagnostics:**
+- `scry.vector_diagnostics(v)` reports norm and near-zero warnings for one composed vector.
+- `scry.axis_diagnostics(pos, neg)` reports pole norms, pole similarity, raw axis length, and a recommended contrast helper.
+- `scry.debias_audit(axis, topic, max_removal DEFAULT 0.5)` reports debiasing signal loss and returns the safe residual vector.
+- `scry.handle_matrix(ARRAY['handle_a','handle_b', ...])` compares the stored handles you can access.
+- `scry.seed_centroid(ARRAY[entity_id, ...])` builds a document-level seed centroid with cohesion and missing-seed accounting.
+
 ### Source-native corpus views
 
 Not all large corpora live canonically in `scry.entities`. Source-native tables

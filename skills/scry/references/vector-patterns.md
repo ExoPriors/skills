@@ -138,6 +138,11 @@ scan bounded, semantic ordering handles the user's concept.
 | Remove a direction with fallback | `embedding_voyage4 <=> debias_safe(@axis, @unwanted)` |
 | Check debias overlap | `SELECT debias_removed_fraction(@axis, @topic)` |
 | Diagnose debiasing | `SELECT * FROM debias_diagnostics(@axis, @topic)` |
+| Inspect one composed vector | `SELECT * FROM scry.vector_diagnostics(@axis)` |
+| Inspect contrast poles | `SELECT * FROM scry.axis_diagnostics(@positive, @negative)` |
+| Audit capped debiasing | `SELECT * FROM scry.debias_audit(@axis, @topic, 0.5)` |
+| Compare stored handles | `SELECT * FROM scry.handle_matrix(ARRAY['a', 'b'])` |
+| Build a seed centroid | `SELECT * FROM scry.seed_centroid(ARRAY['00000000-0000-0000-0000-000000000001'::uuid])` |
 | Compare time buckets | `AVG(embedding_voyage4::vector) FILTER (...) <=> AVG(embedding_voyage4::vector) FILTER (...)` |
 
 ## Vector Mixing
@@ -178,6 +183,10 @@ LIMIT 20;
 
 Debiasing removes one direction. It is not a hard topic filter.
 
+Use `scry.debias_audit(@axis, @topic, 0.5)` before trusting a composed
+residual. The audit reports the removed fraction, whether the cap applied, and
+the `safe_vector` you can normalize for retrieval.
+
 ## Contrast Axes
 
 Use matched pole descriptions:
@@ -194,6 +203,9 @@ LIMIT 20;
 Check `cosine_similarity(@positive, @negative)`. Very low similarity means the
 poles do not share enough context; very high similarity means the axis may be
 noise-dominated.
+
+Use `scry.axis_diagnostics(@positive, @negative)` when pole quality matters. It
+reports the same similarity check plus norm balance and a recommended helper.
 
 ## Temporal Deltas
 
