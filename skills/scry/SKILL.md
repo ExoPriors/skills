@@ -65,15 +65,16 @@ Load only what the task needs:
    provenance, and coverage checks.
 
 4. **Probe before scaling.** Clarify ambiguous broad requests. Use
-   `GET /v1/scry/pricing`, `POST /v1/scry/estimate`, or a tight `LIMIT 20`
-   probe before expensive work. `GET /v1/scry/pricing` is the live
-   billing/market authority; authenticated queries have no daily quota.
-   Congestion pricing, eager/patient mode, and ordinary rate limits
-   resolve contention. `GET /v1/scry/price` is the lightweight current epoch oracle,
-   with `/v1/scry/price/history`, `/v1/scry/price/stream`, `/v1/scry/spend`,
-   and `/v1/scry/preferences` for history, streaming price, spend, and mode.
-   `max_bid_multiplier` is the account cap for eager admission; use eager or
-   patient mode deliberately. `X-Scry-Budget` is an optional eager-bid and x402
+   `GET /v1/scry/account`, `GET /v1/scry/pricing`,
+   `POST /v1/scry/estimate`, or a tight `LIMIT 20` probe before expensive
+   work. `GET /v1/scry/pricing` is the live billing/market authority;
+   authenticated queries have no daily quota. Use eager or patient mode to
+   choose how you respond to congestion pricing; ordinary rate limits also
+   apply. `GET /v1/scry/price` is the lightweight current epoch oracle, with
+   `/v1/scry/price/history`, `/v1/scry/price/stream`, `/v1/scry/spend`, and
+   `/v1/scry/preferences` for history, streaming price, spend, and mode.
+   `max_bid_multiplier` is the account cap for eager admission.
+   `X-Scry-Budget` is an optional eager-bid and x402
    funding hint; `X-Scry-Max-Exposure` caps the query's runtime exposure.
    Query responses may include `x-scry-base-fee`,
    `x-scry-priority-fee`, `x-scry-compute-units`, `x-scry-utilization`, and
