@@ -143,7 +143,7 @@ union view over those records.
 | `scry.epoch_ai_dataset_tables` / `scry.epoch_ai_dataset_rows` / `scry.epoch_ai_artifacts` | Epoch AI dataset table, row, and artifact surfaces. Use `scry.search_epoch_ai(query_text, result_limit)` for bounded discovery. |
 | `scry.lessonline_event_records` / `scry.lessonline_people` / `scry.lessonline_person_evidence` | LessOnline event-record and person-evidence substrate. Use event records for sessions, venues, reachable pages, schedule hosts, and authenticated event profile records; use people for deduped event-grounded names; use evidence rows to inspect `evidence_role`, `record_type`, `uri`, `source_url`, and source metadata before making person claims. |
 | `scry.lessonline_person_public_aliases` / `scry.lessonline_person_corpus_matches` / `scry.lessonline_person_research_frontier` / `scry.lessonline_person_cards` / `scry.lessonline_query_coverage` | LessOnline public writing index. Alias rows preserve evidence behind event names, profile display names, parenthetical handles, and candidate identity links; corpus-match rows index public writing candidates across corpora with `match_basis`, `confidence_tier`, and `review_state`; the frontier view shows per-person follow-through state; cards package event evidence, aliases, corpus-source counts, writing candidates, and queue state into one row per event-grounded person; coverage shows filled rows and remaining gaps. |
-| `scry.lessonline_person_research_queue` | Work queue companion for LessOnline person research. Prefer the read models above for user-facing retrieval. |
+| `scry.lessonline_person_research_queue` | Backing work queue for LessOnline person research. Prefer the read models above for retrieval. |
 | `scry.lesswrong_v4large_posts` / `scry.lesswrong_v4large_comments` / `scry.lesswrong_v4large_chunks` / `scry.lesswrong_v4large_chunk0` / `scry.lesswrong_v4large_tags` / `scry.lesswrong_v4large_coverage` | LessWrong v4-large source-native post/comment/chunk/tag surfaces and coverage accounting. Check coverage before treating absence as evidence. |
 | `scry.hackernews_items` | Canonical HN substrate keyed by `hn_id`. Contains posts and comments, thread ancestry (`parent_hn_id`, `story_hn_id`), outbound URL, score, full text, and `anchor_entity_id` for joins to crawled webpage entities. |
 | `scry.wikipedia_articles` | Canonical Wikipedia substrate keyed by `page_id`. Contains revisions, categories, article text, and quality metadata. |
@@ -617,8 +617,8 @@ Three layers of author resolution, bottom to top:
 | `scry.mv_author_profiles` | Per-source author stats aggregated from entity rows (threshold: >= 3 entities) |
 | `scry.mv_author_stats` | Author post counts and score aggregates |
 | `scry.author_linking_public_coverage` / `scry.author_linking_method_velocity` / `scry.author_counterpart_frontier_velocity` / `scry.author_linking_queue_throughput` | Author-linking coverage and throughput views for public identity work |
-| `scry.linkedin_profiles` / `scry.linkedin_profile_seeds` / `scry.linkedin_profile_crawl_attempts` | LinkedIn profile seed, profile, and crawl-attempt surfaces used by public identity frontier work |
-| `scry.ai_safety_people_crm` / `scry.ai_safety_candidate_crm` / `scry.ai_safety_people_evidence` / `scry.ai_safety_people_profile_links` / `scry.ai_safety_people_source_runs` | AI-safety person/candidate CRM and evidence surfaces. Treat these as frontier/accounting views and inspect live schema columns before broad joins. |
+| `scry.linkedin_profiles` / `scry.linkedin_profile_seeds` / `scry.linkedin_profile_crawl_attempts` | LinkedIn profile seed, profile, and crawl-attempt surfaces for public identity research |
+| `scry.ai_safety_candidate_crm` | AI-safety candidate CRM surface. Inspect live schema columns before broad joins. |
 | `scry.github_people` | GitHub-specific maintainer aggregates (stars, repos, comments) |
 | `scry.github_person_repos` | GitHub person-to-repo mapping |
 
@@ -1121,7 +1121,7 @@ work.
 | View | Notes |
 |------|-------|
 | `scry.mv_freshness` | Materialized view health: populated status, approx row counts, last analyze timestamp. Useful for diagnosing stale search results. |
-| `scry.embedding_staging_lanes` / `scry.embedding_staging_lane_status` | Embedding staging lane and status views. Use them to understand staged embedding backlog, lane health, and drain state before interpreting missing semantic coverage. |
+| `scry.embedding_staging_lanes` / `scry.embedding_staging_lane_status` | Embedding staging lane and status views. Check them to understand staged embedding backlog and lane health before interpreting missing semantic coverage. |
 
 ### OpenAlex Helper Functions
 
