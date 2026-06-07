@@ -25,10 +25,11 @@ Load only what the task needs:
   people, hybrid, share, and judgement recipes.
 - `references/vector-patterns.md`: `@handle` vectors, vector algebra, contrast
   axes, debiasing, temporal drift, and semantic failure modes.
-- `references/error-reference.md`: error codes, limits, quota, SQL constraints,
+- `references/error-reference.md`: error codes, limits, funding, SQL constraints,
   and timeout/debugging moves.
 - `references/access-and-runtime.md`: `SCRY_API_KEY`, `~/.scry/.env`, anonymous
-  access, budgets, receipts, x402, funding, and delegated agent policy.
+  access, congestion pricing, receipts, x402, funding, and delegated agent
+  policy.
 - `../references/guardrails.md`: shared Scry guardrails and degradation rules.
 
 ## Mandatory Workflow
@@ -65,16 +66,18 @@ Load only what the task needs:
 
 4. **Probe before scaling.** Clarify ambiguous broad requests. Use
    `GET /v1/scry/pricing`, `POST /v1/scry/estimate`, or a tight `LIMIT 20`
-   probe before expensive work. Add `X-Scry-Budget` when billing may apply and
-   inspect `GET /v1/scry/account` if admission fails. `GET /v1/scry/pricing`
-   is the live billing/market authority; `GET /v1/scry/price` is the
-   lightweight current epoch oracle, with `/v1/scry/price/history`,
-   `/v1/scry/price/stream`, `/v1/scry/spend`, and `/v1/scry/preferences` for
-   history, streaming price, spend, and mode. `max_bid_multiplier` is the
-   account cap for eager admission; use eager or patient mode deliberately.
-   Query responses may include `x-scry-base-fee`, `x-scry-priority-fee`,
-   `x-scry-compute-units`, `x-scry-utilization`, `x-scry-epoch`, and
-   `x-scry-budget-remaining`.
+   probe before expensive work. `GET /v1/scry/pricing` is the live
+   billing/market authority; authenticated queries have no daily quota.
+   Congestion pricing, eager/patient mode, and ordinary rate limits
+   resolve contention. `GET /v1/scry/price` is the lightweight current epoch oracle,
+   with `/v1/scry/price/history`, `/v1/scry/price/stream`, `/v1/scry/spend`,
+   and `/v1/scry/preferences` for history, streaming price, spend, and mode.
+   `max_bid_multiplier` is the account cap for eager admission; use eager or
+   patient mode deliberately. `X-Scry-Budget` is an optional eager-bid and x402
+   funding hint; `X-Scry-Max-Exposure` caps the query's runtime exposure.
+   Query responses may include `x-scry-base-fee`,
+   `x-scry-priority-fee`, `x-scry-compute-units`, `x-scry-utilization`, and
+   `x-scry-epoch`.
 
 5. **Every SQL query needs `LIMIT`.** Maximum: 10,000 rows. Raw SQL goes in a
    `Content-Type: text/plain` body, not JSON.
@@ -184,7 +187,7 @@ Use `references/error-reference.md` for the full catalogue. First moves:
 
 - `400`: fix SQL, parameters, missing `LIMIT`, or payload shape.
 - `401`: reload `SCRY_API_KEY`; check whitespace and scope.
-- `402`: inspect account, budget, estimate, and funding path.
+- `402`: inspect account, pricing, estimate, and funding path.
 - `403`: use a correctly scoped key or avoid blocked introspection.
 - `429`: respect `Retry-After`.
 - `503` or curl HTTP `000`: retry later, simplify, estimate, or tighten filters.

@@ -1,7 +1,7 @@
 # Scry Access And Runtime
 
 Use this reference when authentication, anonymous bootstrap, x402 payment,
-query budgeting, receipts, delegated authorization, or congestion behavior
+congestion pricing, receipts, delegated authorization, or runtime behavior
 matters. For live truth, prefer `GET /v1/scry/context`,
 `GET /v1/scry/pricing`, `GET /v1/scry/account`, and
 `GET /v1/scry/schema` over static text.
@@ -85,7 +85,7 @@ npx skills update
 At session start, call:
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060601" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060602" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
@@ -94,18 +94,17 @@ If the response includes `should_update_skill=true`, tell the user to run
 skill is active, or local instructions still point to legacy ExoPriors hostnames
 or legacy console routes, stop and update skills before deeper debugging.
 
-## Query Budgeting
-
-Ordinary low-volume Scry queries stay free. When global congestion or
-concentrated authenticated usage activates billing, every query should be
-budget-bounded.
+## Congestion Pricing
 
 Primary controls:
 
-- `X-Scry-Budget: <nanodollars>` bounds estimate checks, runtime authorization,
-  and eager-mode bid caps.
+- Authenticated queries have no daily quota. Use eager or patient mode to choose
+  how you respond to congestion pricing; ordinary rate limits also apply.
+- `X-Scry-Budget: <nanodollars>` is optional. It sets an eager-bid cap and an
+  x402 funding hint; authenticated queries do not need it.
+- `X-Scry-Max-Exposure: <nanodollars>` caps runtime exposure for the query.
 - `GET /v1/scry/account` is the one-stop billing status check: balance, mode,
-  max budget, spend, live base fee, utilization, and auto-topup state.
+  spend, live base fee, utilization, and auto-topup state.
 - `GET /v1/scry/preferences` returns `pricing_mode` and
   `max_bid_multiplier`.
 - `PATCH /v1/scry/preferences` changes `pricing_mode` and bid multiplier.
@@ -123,8 +122,9 @@ not every winner's submitted maximum. `max_bid_multiplier` clamps the effective
 eager bid before admission.
 
 If a congestion-priced query runs into its spend envelope, the API returns
-`402` with `query_exposure_exhausted`. Narrow the query or raise
-`X-Scry-Budget`; do not retry the same request unchanged.
+`402` with `query_exposure_exhausted`. Narrow the query, switch to patient
+mode, or use eager mode only when the broader query is worth the congestion
+price; do not retry the same request unchanged.
 
 ## Receipts
 
@@ -157,7 +157,6 @@ Useful query response headers:
 - `X-Scry-Compute-Units`
 - `X-Scry-Utilization`
 - `X-Scry-Epoch`
-- `X-Scry-Budget-Remaining`
 
 ## Funding Rails
 
@@ -208,10 +207,9 @@ direct paid query execution.
 
 If x402 is enabled and the request has no `Authorization` header, the first
 unsigned query returns `402 Payment Required` with machine-readable payment
-requirements. When the caller also sends `X-Scry-Budget`, Scry asks the wallet
-to fund at least that budget subject to the configured x402 base quantum. After
-settlement, the paid amount converts into reusable Scry credits on the shared
-ledger.
+requirements. When the caller also sends `X-Scry-Budget`, Scry treats it as an
+x402 funding hint subject to the configured base quantum. After settlement, the
+paid amount converts into reusable Scry credits on the shared ledger.
 
 Minimal client shape:
 

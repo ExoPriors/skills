@@ -3,7 +3,7 @@
 Use this reference from the `/scry` skill when the user wants conceptual,
 semantic, or hybrid retrieval. Start with live context and schema:
 
-1. `GET /v1/scry/context?skill_generation=2026060601`
+1. `GET /v1/scry/context?skill_generation=2026060602`
 2. `GET /v1/scry/schema`
 3. `POST /v1/scry/embed` when you need a new concept handle
 4. `POST /v1/scry/query` with raw SQL and `Content-Type: text/plain`
@@ -70,7 +70,7 @@ Always call `/v1/scry/schema` before choosing a relation. Read
 `vector_indexed`; prefer indexed surfaces for broad semantic ordering and
 pre-filter first when the surface is not ANN-backed.
 
-Vector result budgets follow the Scry guardrails: personal keys can request up
+Vector result limits follow the Scry guardrails: personal keys can request up
 to 200 rows with raw vectors, and the absolute API ceiling for vector-bearing
 responses is 500 rows. Prefer distances and ids over raw vector output unless
 you actually need the vector values.

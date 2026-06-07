@@ -1087,7 +1087,8 @@ LIMIT 50
    for chunk-level granularity.
 
 7. **Run `/v1/scry/estimate` first** for complex queries. The EXPLAIN output
-   reveals sequential scans and estimated costs before you burn quota.
+   reveals sequential scans and estimated costs before you pay for congested
+   capacity.
 
 8. **Cast enum columns** (`kind::text`, `source::text`) in GROUP BY and WHERE
    to avoid type mismatch errors.
