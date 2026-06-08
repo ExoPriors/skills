@@ -103,7 +103,7 @@ Primary controls:
 - `X-Scry-Budget: <nanodollars>` is optional. It sets an eager-bid cap and an
   x402 funding hint; authenticated queries do not need it.
 - `X-Scry-Max-Exposure: <nanodollars>` caps runtime exposure for the query.
-- `GET /v1/scry/account` is the one-stop billing status check: balance, mode,
+- `GET /v1/scry/account` is the one-stop billing status check: wallet, mode,
   spend, live base fee, utilization, and auto-topup state.
 - `GET /v1/scry/preferences` returns `pricing_mode` and
   `max_bid_multiplier`.
@@ -178,7 +178,7 @@ Common card surfaces:
 - `POST /v1/billing/agent-topup`: charges a saved payment instrument and
   requires `X-Scry-Subject-Agent` plus an active capped `agent_topup` mandate.
 - `GET /v1/billing/auto-topup` and `PATCH /v1/billing/auto-topup`: Stripe-backed
-  replenishment into the prepaid ledger.
+  replenishment into paid balance.
 - `GET /v1/billing/auto-topup/eligibility`: reports whether recurring
   saved-method funding is available, and what is needed if not.
 - `GET /v1/billing/payment-instruments`: lists saved payment methods.
@@ -209,7 +209,8 @@ If x402 is enabled and the request has no `Authorization` header, the first
 unsigned query returns `402 Payment Required` with machine-readable payment
 requirements. When the caller also sends `X-Scry-Budget`, Scry treats it as an
 x402 funding hint subject to the configured base quantum. After settlement, the
-paid amount converts into reusable Scry credits on the shared ledger.
+paid amount converts into paid balance. Scry queries spend Scry credits first
+and paid balance second; provider-backed work requires paid balance.
 
 Minimal client shape:
 

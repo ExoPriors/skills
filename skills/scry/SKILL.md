@@ -106,7 +106,7 @@ Load only what the task needs:
    `POST /v1/scry/query?receipt=summary|full`, `GET /v1/scry/query-receipts`,
    and `GET /v1/scry/query-receipts/{id}`. Share result artifacts with
    `POST /v1/scry/shares`. Browser Stripe checkout is
-   `/v1/billing/checkout/custom`. Cards are a differentiated three-step rail:
+   `/v1/billing/checkout/custom`. Cards use a three-step rail:
    `POST /v1/billing/setup-payment-method` returns `setup_url` for
    one operator browser visit; `POST /v1/billing/agent-topup` uses
    `X-Scry-Subject-Agent` and an active `agent_topup` mandate; recurring

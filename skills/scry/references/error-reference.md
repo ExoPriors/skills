@@ -38,6 +38,19 @@ legacy console routes, or if `/v1/scry/context` reports
 `client_skill_generation: null` while you're using the packaged Scry skill, stop
 and run `npx skills update` first.
 
+Funding recovery uses the same bootstrap paths as ordinary setup:
+`POST /v1/auth/agent/signup` for wallet-native agents and
+`POST /v1/auth/api-keys` for operator-provisioned agents. Cards are a
+three-step rail: `POST /v1/billing/setup-payment-method` returns
+`setup_url` for one operator browser visit, then direct saved-method topup at
+`POST /v1/billing/agent-topup` requires `x-scry-subject-agent` plus an active
+`agent_topup` mandate. Check `funding.card_funding` before assuming the saved
+card rail is ready.
+Recurring auto-topup is a separate opt-in that requires an active auto_topup mandate;
+inspect `/v1/billing/auto-topup/eligibility` before configuring it.
+`stripe_acp`, `ap2`, `visa_tap`, and `mastercard_agent_pay` are control-plane
+or future rails, not live account-funding rails.
+
 ---
 
 ## Error Codes by HTTP Status
@@ -73,7 +86,8 @@ and run `npx skills update` first.
 | Code | Message Pattern | Cause | Fix |
 |------|----------------|-------|-----|
 | `insufficient_credits` | "Embedding token budget exhausted" | 1.5M token budget used up | Notify user; budget resets with a fresh personal key |
-| `insufficient_credits` | "Insufficient credits for query" | Prepaid balance too low for the estimated query cost | Live funding rails are `x402`, browser Stripe checkout, delegated Stripe saved-method funding, and crypto topup. Cards use a differentiated three-step rail. The safe default is `POST /v1/billing/checkout/custom`, which mints a browser checkout URL with the current key. If the operator wants delegated stored-card funding, first save a card with `POST /v1/billing/setup-payment-method`, which returns `setup_url` for one operator browser visit, then use `POST /v1/billing/agent-topup` with `X-Scry-Subject-Agent` and an active capped `agent_topup` mandate. Inspect `GET /v1/scry/account` and read `funding.card_funding` to see whether the account still needs the setup handoff or already has delegated direct-topup authority for the current subject. Recurring auto-topup is a separate opt-in that requires an active auto_topup mandate via `POST /v1/billing/payment-mandates` plus `PATCH /v1/billing/auto-topup`; inspect `GET /v1/billing/auto-topup/eligibility` when `funding.card_funding.state` reports `auto_topup_attention_required`. Non-wallet agents can receive a Scry-scoped data key from a signed-in operator via `POST /v1/auth/api-keys`; agents with an EVM wallet can bootstrap directly via `POST /v1/auth/agent/signup`. `stripe_acp`, `ap2`, `visa_tap`, and `mastercard_agent_pay` are control-plane / future artifacts, not alternate live funding rails. |
+| `insufficient_credits` | "Insufficient credits for query" | Scry-spendable wallet balance is too low for the estimated query cost | Scry wallets have Scry credits from grants and paid balance from payments. Scry queries spend Scry credits first and paid balance second. Add paid balance through `x402`, browser Stripe checkout at `POST /v1/billing/checkout/custom`, delegated Stripe saved-method funding at `POST /v1/billing/agent-topup`, or crypto topup. `POST /v1/billing/setup-payment-method` returns `setup_url` for the one-time card setup visit. Use `GET /v1/scry/account` to read `wallet` and `funding.card_funding`; use `GET /v1/billing/auto-topup/eligibility` for recurring payment status. |
+| `insufficient_paid_balance` | "Insufficient paid balance" | Provider-backed work requires payment-backed balance before dispatch | Add paid balance with `x402`, browser Stripe checkout at `POST /v1/billing/checkout/custom`, delegated Stripe saved-method funding at `POST /v1/billing/agent-topup`, or crypto topup, then retry the provider-backed request. `POST /v1/billing/setup-payment-method` returns `setup_url` for the one-time card setup visit. |
 | `estimate_exceeds_exposure` | "Estimated cost ... exceeds ..." | The estimate is already above the caller's authorized exposure cap | Run `/v1/scry/estimate`, narrow the query, or raise the exposure cap to fit the current price |
 | `query_exposure_exhausted` | "Query exhausted its authorized exposure" | Live runtime burn hit the authorized exposure cap for this query (with timeout fallback if needed) | Raise the exposure cap, switch to patient mode, or reduce scan scope / LIMIT |
 
