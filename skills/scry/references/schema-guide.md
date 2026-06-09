@@ -174,7 +174,7 @@ union view over those records.
 | `scry.gdelt_articles` | Canonical GDELT news-article substrate keyed by URL / GKG record pairs. Includes themes, tone, entity extraction, and publication time. |
 | `scry.who_iris_publications` | Canonical WHO IRIS publication substrate keyed by `handle`. Includes document type, authors, subjects, languages, publishers, and identifiers. |
 | `scry.moltbook` / `scry.moltbook_items` | Canonical Moltbook substrate keyed by `item_key`. Includes explicit `content_risk` plus mixed post/comment/document grain. |
-| `scry.substack_publications` / `scry.substack_posts` / `scry.substack_comments` | Source-native Substack publication, article, and comment surfaces. Use `scry.search_substack_posts(query_text, mode, limit_n)` and `scry.search_substack_comments(query_text, mode, limit_n)` for bounded retrieval. |
+| `scry.substack_publications` / `scry.substack_posts` / `scry.substack_comments` | Source-native Substack publication, article, and comment surfaces. Use `scry.search_substack_posts(query_text, limit_n)` and `scry.search_substack_comments(query_text, limit_n)` for bounded retrieval. |
 | `scry.reddit_patient_health_search_status` | Patient-health Reddit search coverage/status surface. Use it as coverage context before interpreting search gaps. |
 | `scry.huggingface` / `scry.huggingface_repositories` | Canonical Hugging Face repository substrate keyed by `repo_id` (`owner/name`). Includes repo type (`model`/`dataset`/`space`), owner handle, card metadata, tags, likes/downloads, and synthesized repo payload text. |
 | `scry.huggingface_models` / `scry.huggingface_datasets` / `scry.huggingface_spaces` | Repo-type filtered Hugging Face aliases for common traversal without repeating `WHERE repo_type = ...`. |
