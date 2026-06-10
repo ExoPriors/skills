@@ -144,7 +144,10 @@ Load only what the task needs:
   required. Public judgements must target an entity, actor, or judgement.
 - Pairwise rerank judgement: `POST /v1/scry/rerank` with `sql` or `list_id`,
   `attributes`, and `topk`. It defaults to OpenRouter
-  `google/gemma-4-31b-it` / `gemma4:31b` and public judgement-run recording.
+  `google/gemma-4-31b-it` / `gemma4:31b` and public judgement-run recording;
+  other maintained judge models (gemma-4-26b-a4b, qwen3-30b-a3b-instruct,
+  gpt-oss, deepseek-v4-flash, gemini-2.5-flash-lite, claude-haiku-4.5,
+  gpt-5.4-nano/mini) are listed in `references/query-patterns.md` §14.
   Use `judgement_privacy: "private"` or `"self"` for caller-only evidence.
 
 ## Minimal Query
