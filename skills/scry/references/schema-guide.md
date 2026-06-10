@@ -1054,7 +1054,7 @@ then widen into richer SQL once you know the right corpus and filters.
 
 | Function | Description | Max limit |
 |----------|-------------|-----------|
-| `scry.search_federated(query_text, sources, kinds, limit_n, per_source_cap)` | Canonical source-aware lexical shortlist helper across shared and source-native corpora | 200 |
+| `scry.search_federated(query_text, sources, kinds, limit_n, per_source_cap)` | Canonical source-scoped lexical shortlist helper across shared and source-native corpora | 200 |
 | `scry.search(query_text, mode, kinds, limit_n)` | Shared BM25 diagnostic helper over `content_text`; prefer `scry.search_federated(...)` | 100 |
 | `scry.search_ids(query, mode, kinds, limit_n)` | Shared BM25 diagnostic id helper over `content_text`; prefer `scry.search_federated(...)` | 2000 |
 | `scry.search_reddit(query_text, mode, subreddits, kinds, limit_n, window_key)` | Ergonomic Reddit lexical search across posts/comments | 100 |

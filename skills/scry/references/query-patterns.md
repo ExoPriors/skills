@@ -27,7 +27,7 @@ pricing, receipts, and authorization.
 
 ## 1. Lexical Search Patterns
 
-### Basic source-aware lexical search
+### Basic source-scoped lexical search
 ```sql
 WITH c AS (
   SELECT entity_id
@@ -1084,7 +1084,7 @@ LIMIT 50
 3. **Avoid `COUNT(*)` on large tables.** Use `/v1/scry/schema` row estimates or
    `pg_class.reltuples` (authenticated keys only).
 
-4. **Prefer source-aware shortlist helpers** (`scry.search_federated(...)`,
+4. **Prefer source-scoped shortlist helpers** (`scry.search_federated(...)`,
    source-native `scry.search_*`) for further filtering. They cap any single
    source's contribution and return provenance fields ready for join.
 
