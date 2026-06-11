@@ -1007,8 +1007,6 @@ curl -s -X POST https://api.scry.io/v1/scry/shares \
 Scry rerank request bodies are bounded before execution. Current allowed
 rerank model ids include `google/gemma-4-31b-it` (default; `gemma4:31b` alias,
 `google/gemma-4-31b-it-20260402` dated variant), `google/gemma-4-26b-a4b-it`,
-`qwen/qwen3-30b-a3b-instruct-2507`, `openai/gpt-oss-20b`, `openai/gpt-oss-120b`,
-`deepseek/deepseek-v4-flash`, `google/gemini-2.5-flash-lite`,
 `anthropic/claude-haiku-4.5`, `openai/gpt-5.4-mini`, and
 `openai/gpt-5.4-nano`. Each model runs with judge-correct parameters
 (reasoning suppressed, deterministic sampling, logprob posteriors where the
