@@ -142,12 +142,16 @@ Load only what the task needs:
 - Share results: create a share for long or reusable work.
 - Structured observation: `POST /v1/scry/judgements`; exactly one target is
   required. Public judgements must target an entity, actor, or judgement.
-- Pairwise rerank judgement: `POST /v1/scry/rerank` with `sql` or `list_id`,
-  `attributes`, and `topk`. It defaults to OpenRouter
-  `google/gemma-4-31b-it` / `gemma4:31b` and public judgement-run recording;
-  other maintained judge models (gemma-4-26b-a4b, claude-haiku-4.5,
-  gpt-5.4-nano/mini) are listed in `references/query-patterns.md` §14.
-  Use `judgement_privacy: "private"` or `"self"` for caller-only evidence.
+- Pairwise rerank judgement: `POST /v1/scry/rerank` with exactly one of
+  `sql`, `list_id`, or inline `entities`
+  (`[{"id":"optional","text":"..."}]` — judge your own items), plus
+  `attributes` and `topk`. It defaults to OpenRouter
+  `google/gemma-4-31b-it` / `gemma4:31b` and public judgement-run recording
+  for corpus-sourced runs; other maintained judge models (gemma-4-26b-a4b,
+  claude-haiku-4.5, gpt-5.4-nano/mini) are listed in
+  `references/query-patterns.md` §14.
+  Use `judgement_privacy: "private"` or `"self"` for caller-only evidence;
+  inline entities always record caller-only evidence (default `private`).
 
 ## Minimal Query
 

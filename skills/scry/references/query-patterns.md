@@ -1004,7 +1004,12 @@ curl -s -X POST https://api.scry.io/v1/scry/shares \
 
 ## 14. Rerank Operation Limits
 
-Scry rerank request bodies are bounded before execution. Current allowed
+Scry rerank request bodies are bounded before execution. Candidates come
+from exactly one of `sql`, `list_id`, or inline `entities`
+(`[{"id":"optional","text":"..."}]`); inline entities are caller-supplied
+items (drafts, plans, candidates) judged with the same lanes, recording
+caller-only evidence (`judgement_privacy` defaults to `private` and must
+not be `public`; `persist` and `cache_results` are corpus-only). Current allowed
 rerank model ids include `google/gemma-4-31b-it` (default; `gemma4:31b` alias,
 `google/gemma-4-31b-it-20260402` dated variant), `google/gemma-4-26b-a4b-it`,
 `anthropic/claude-haiku-4.5`, `openai/gpt-5.4-mini`, and
