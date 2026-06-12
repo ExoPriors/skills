@@ -155,6 +155,9 @@ Load only what the task needs:
   `references/query-patterns.md` §14.
   Use `judgement_privacy: "private"` or `"self"` for caller-only evidence;
   inline entities always record caller-only evidence (default `private`).
+  Rerank and other external model calls draw on paid balance, not Scry
+  credits; check `wallet.paid_balance_nanodollars` in `GET /v1/scry/account`
+  and top up with `POST /v1/billing/checkout/custom` before large runs.
 
 ## Minimal Query
 
