@@ -170,6 +170,8 @@ union view over those records.
 | `scry.mailing_lists` / `scry.mailing_list_messages` | Canonical mailing-list list metadata plus per-message substrate keyed by `list_key` / `message_key`. |
 | `scry.forum_sites` / `scry.forum_threads` / `scry.forum_posts` | Canonical forum substrate split into site metadata, thread headers, and post rows. Covers Discourse- and Forem-style archives keyed by `site_key` / `thread_key` / `post_key`; `scry.forum_posts` exposes `content_risk` for dangerous/adversarial forum sources. |
 | `scry.discussion_messages` | Normalized union over mailing-list messages and forum posts with shared `source_class`, `collection_key`, `thread_key`, `message_key`, `archive_url`, and `content_risk` columns. |
+| `scry.forum_crawl_priority` | Crawl ordering for seeded/partial forum sites: demand-weighted by inbound URL mentions across the corpus and cost-discounted by estimated thread count, with `priority_score` plus landed thread/post counts. |
+| `scry.url_mentions` / `scry.url_mention_targets` / `scry.url_mention_host_edges` | Corpus-wide outbound URL mention edges extracted from source tables. `scry.url_mentions` is one row per (source, URL) edge with `mention_count` and first/last seen; `scry.url_mention_targets` aggregates per URL; `scry.url_mention_host_edges` aggregates source→host. Always filter by `url` or `target_host` (both indexed). |
 | `scry.openlibrary_editions` / `scry.openlibrary_works` / `scry.openlibrary_authors` | Canonical Open Library bibliographic substrates. |
 | `scry.gdelt_articles` | Canonical GDELT news-article substrate keyed by URL / GKG record pairs. Includes themes, tone, entity extraction, and publication time. |
 | `scry.who_iris_publications` | Canonical WHO IRIS publication substrate keyed by `handle`. Includes document type, authors, subjects, languages, publishers, and identifiers. |
@@ -213,6 +215,8 @@ union view over those records.
 | `scry.manifold` / `scry.manifold_markets` / `scry.manifold_comments` / `scry.manifold_bets` / `scry.manifold_trades` / `scry.manifold_users` / `scry.manifold_market_positions` | Source-native Manifold prediction-market substrate keyed by `market_id`. Markets carry probability, pool, volume, resolution state, and creator metadata; comments, bets, trades, users, and per-market positions expose the discussion and trading graph. `scry.manifold` aliases `scry.manifold_markets`. |
 | `scry.manifold_markets_embeddings` / `scry.manifold_api_records` | Manifold embedding-support rows keyed by `market_id` plus raw Manifold API record payloads keyed by `record_key` for source-record inspection. |
 | `scry.open_data_catalog_datasets` | Open-data catalog dataset registry keyed by `catalog_dataset_key`. Includes catalog and dataset identity, URI, discovery and reachability metadata, and source-manifest provenance fields. |
+| `scry.houjin_bangou` | Japan National Tax Agency corporate-number registry keyed by 13-digit `corporate_number`. Includes kanji/furigana/English names, prefecture/city address fields and codes, entity kind, closure and successor fields, and assignment/update dates. NTA display-suppressed (`hihyoji`) rows are excluded from this surface. |
+| `scry.industry_lens_members` / `scry.industry_robotics_members` | Industry vertical membership surface: one row per recruited industry actor (company, person, webpage) per lens, with decision, confidence, tags, and website/twitter/ticker/CIK/SIC metadata. `scry.industry_robotics_members` filters to `lens_key = 'industry_robotics'`. |
 
 ### Additional Schema Families
 
@@ -608,6 +612,7 @@ Three layers of author resolution, bottom to top:
 | `scry.people` | Cross-platform merged identities from verified public links, with public counts |
 | `scry.person_accounts` | Canonical public person-account edges (columns: `person_id`, `actor_id`, `source`, `external_id`, `handle`, `display_name`, `profile_url`, `link_method`, `confidence`, `entity_count`, `post_count`, `comment_count`, `first_activity`, `last_activity`) |
 | `scry.person_aliases` | Alias forms derived from verified public person-account links |
+| `scry.person_account_bridges` | Cross-source account pairs for the same person, with per-link methods, `min_confidence`, and a `nonobvious` flag for pairs that share no normalized handle or display name |
 | `scry.person_lenses` / `scry.person_axes` | Registries of person-intelligence lenses and axes (the available rubrics for judgement) |
 | `scry.person_predicate_policies` | Authenticated predicate-policy registry for allowed, aggregate-only, and blocked person-intelligence predicates |
 | `scry.person_intel_frontier` | Authenticated person-intelligence frontier counts for signal refs, observations, context packs, judgements, queues, and blocked predicate policies |
