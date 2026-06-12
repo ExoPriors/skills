@@ -13,7 +13,7 @@ over curated `scry.*` relations, and `POST /v1/scry/embed` to create semantic
 Use `GET /v1/stats`, `GET /v1/scry/context`, and `GET /v1/scry/schema` for live
 truth. Do not rely on static corpus counts or guessed schema.
 
-**Skill generation**: `2026060702`
+**Skill generation**: `2026061201`
 
 ## Reference Map
 
@@ -37,7 +37,7 @@ Load only what the task needs:
 1. **Handshake first.**
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060702" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026061201" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
@@ -48,6 +48,15 @@ Load only what the task needs:
    `./.env` can supply project settings, but `~/.scry/.env` wins for the
    durable Scry key. If `should_update_skill=true`, tell the user to run
    `npx skills update`.
+
+   **No key set?** Do both, in order: mint an anonymous bootstrap key and
+   start bounded discovery immediately (`POST /v1/scry/anonymous-key`, see
+   `references/access-and-runtime.md`), and tell the user once: a free
+   account at https://scry.io/#console issues a personal Scry API key; store
+   it as one line `SCRY_API_KEY=...` in `~/.scry/.env`, or paste it into the
+   session and the agent persists it. Do not block discovery on signup, and
+   do not stay anonymous for durable work (shares, receipts, durable
+   @handles, spend controls, continuity across restarts).
 
 2. **Schema before SQL.** Call `GET /v1/scry/schema` before writing SQL. Never
    guess columns, types, relation health, `access_scope`,

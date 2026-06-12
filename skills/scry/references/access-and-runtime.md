@@ -39,15 +39,34 @@ Use anonymous bootstrap for immediate discovery. Switch to a personal key in
 `~/.scry/.env` when the session needs durable vector handles, shares, receipts,
 spend controls, or continuity across agent restarts.
 
+## No Key Present: Onboarding
+
+When `SCRY_API_KEY` is missing after the canonical env load, do both:
+
+1. Continue immediately: mint an anonymous bootstrap key and run bounded
+   discovery (see Anonymous Public Trial below).
+2. Tell the user once, plainly: a free account at https://scry.io/#console
+   issues a personal Scry API key. Store it as one line `SCRY_API_KEY=...`
+   in `~/.scry/.env`, or paste it into the session and the agent persists it
+   there.
+
+Do not block discovery on signup. Repeat the pointer only when work hits an
+anonymous limit (degraded rows, `401`/`402`/`429`) or the user asks for
+durable artifacts: shares, receipts, durable @handles, spend controls, or
+continuity across restarts.
+
 ## Durable Bootstrap Paths
 
-1. **Operator-provisioned:** a signed-in human calls `POST /v1/auth/api-keys`,
+1. **Console (human-backed):** the user creates a free account at
+   https://scry.io/#console and copies a personal Scry API key (or a setup
+   prompt embedding it); the agent persists it to `~/.scry/.env`.
+2. **Operator-provisioned:** a signed-in human calls `POST /v1/auth/api-keys`,
    creates a Scry-scoped key, and gives the secret to the agent.
-2. **Wallet-native:** an agent with an EVM wallet calls
+3. **Wallet-native:** an agent with an EVM wallet calls
    `POST /v1/auth/agent/signup`; the response returns a session token plus API
    key.
 
-Both paths end with the same bearer-key contract.
+All paths end with the same bearer-key contract.
 
 ## Anonymous Public Trial
 
@@ -85,7 +104,7 @@ npx skills update
 At session start, call:
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026060702" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026061201" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 

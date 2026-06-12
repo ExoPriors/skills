@@ -38,9 +38,10 @@ legacy console routes, or if `/v1/scry/context` reports
 `client_skill_generation: null` while you're using the packaged Scry skill, stop
 and run `npx skills update` first.
 
-Funding recovery uses the same bootstrap paths as ordinary setup:
-`POST /v1/auth/agent/signup` for wallet-native agents and
-`POST /v1/auth/api-keys` for operator-provisioned agents. Cards are a
+Funding recovery uses the same bootstrap paths as ordinary setup: a free
+account and personal Scry API key from `https://scry.io/#console` for
+human-backed agents, `POST /v1/auth/agent/signup` for wallet-native agents,
+and `POST /v1/auth/api-keys` for operator-provisioned agents. Cards are a
 three-step rail: `POST /v1/billing/setup-payment-method` returns
 `setup_url` for one operator browser visit, then direct saved-method topup at
 `POST /v1/billing/agent-topup` requires `x-scry-subject-agent` plus an active
