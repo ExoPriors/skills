@@ -104,8 +104,11 @@ Load only what the task needs:
 
 8. **Use receipts and shares for durable work.** Query receipts are
    `POST /v1/scry/query?receipt=summary|full`, `GET /v1/scry/query-receipts`,
-   and `GET /v1/scry/query-receipts/{id}`. Share result artifacts with
-   `POST /v1/scry/shares`. Browser Stripe checkout is
+   and `GET /v1/scry/query-receipts/{id}`.
+   `GET /v1/scry/query-receipts/{id}/result` returns the exact response body
+   of a finished query (kept 48 hours, same account), so a response lost
+   mid-flight is recoverable without re-running the query. Share result
+   artifacts with `POST /v1/scry/shares`. Browser Stripe checkout is
    `/v1/billing/checkout/custom`. Cards use a three-step rail:
    `POST /v1/billing/setup-payment-method` returns `setup_url` for
    one operator browser visit; `POST /v1/billing/agent-topup` uses
