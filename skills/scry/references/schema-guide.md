@@ -210,6 +210,9 @@ union view over those records.
 | `scry.openaq_air_quality_measurements` | OpenAQ BigQuery air-quality measurement surface with country/city/location, pollutant, measured value, timestamp, units, coordinates, and source name. |
 | `scry.noaa_gsod_weather_observations` | NOAA GSOD BigQuery weather observations. Covers a bounded historical window; inspect `observed_on` for the available date range before using it for recent weather. |
 | `scry.polymarket_profiles` / `scry.polymarket_markets_embeddings` | Polymarket profile and embedding-support surfaces for prediction-market discovery. |
+| `scry.manifold` / `scry.manifold_markets` / `scry.manifold_comments` / `scry.manifold_bets` / `scry.manifold_trades` / `scry.manifold_users` / `scry.manifold_market_positions` | Source-native Manifold prediction-market substrate keyed by `market_id`. Markets carry probability, pool, volume, resolution state, and creator metadata; comments, bets, trades, users, and per-market positions expose the discussion and trading graph. `scry.manifold` aliases `scry.manifold_markets`. |
+| `scry.manifold_markets_embeddings` / `scry.manifold_api_records` | Manifold embedding-support rows keyed by `market_id` plus raw Manifold API record payloads keyed by `record_key` for source-record inspection. |
+| `scry.open_data_catalog_datasets` | Open-data catalog dataset registry keyed by `catalog_dataset_key`. Includes catalog and dataset identity, URI, discovery and reachability metadata, and source-manifest provenance fields. |
 
 ### Additional Schema Families
 
@@ -1146,6 +1149,8 @@ work.
 | `scry.entity_source_artifact_provenance_metadata(entity_id)` | Returns source-artifact provenance metadata for an accessible entity UUID. Prefer hydrated typed-search records when you already have a `record_ref`. |
 | `scry.entity_content_text_slice(entity_id, start, max_chars)` | Retrieves deeper public `content_text` slices beyond the 50K preview cap. Use `start` and `max_chars` to page through long entities. |
 | `scry.sporc_transcript_slice(entity_id, start, max_chars)` | Same as `entity_content_text_slice`, but isolates the transcript portion of SPORC pages before slicing. |
+| `scry.substack_post_content_slice(native_post_id, offset_chars, limit_chars)` | Full Substack article text by `scry.substack_posts` native post id, with title, publication host, text-quality state, and offset/limit paging for long posts. |
+| `scry.substack_post_content_by_url(post_url, offset_chars, limit_chars)` | Same retrieval keyed by canonical Substack post URL instead of native post id. |
 
 ### Vector Algebra Functions
 
