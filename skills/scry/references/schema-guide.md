@@ -115,11 +115,32 @@ Chunked semantic vectors for entities.
 **Key patterns:**
 - Doc-level search: `WHERE chunk_index = 0`
 - Not all entities have embeddings. Filter `embedding_voyage4 IS NOT NULL`.
+- Voyage 4 family tiers share the `embedding_voyage4` column. Use
+  `scry.semantic_search(...)` for policy-aware retrieval when you do not need
+  custom ranking SQL.
 
 **Derived helpers:**
 - `scry.entity_embeddings` gives you exactly the `chunk_index = 0` rows.
 - `scry.entities_with_embeddings` is `scry.entities` pre-joined to `scry.entity_embeddings`.
 - `scry.embedding_coverage` is a reporting surface for source/kind public vs staged vs ready coverage and freshness.
+- `scry.embedding_model_policy` describes the supported Voyage 4 semantic
+  tiers and which tier supports stored handle creation.
+
+### scry.embedding_model_policy
+
+Compact tier contract for Voyage 4 semantic retrieval.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| model_name | TEXT | `voyage-4-lite` or `voyage-4-nano` |
+| recommended_policy | TEXT | `high_fidelity` or `broad_coverage` |
+| tier_rank | INT | Stable display/merge order |
+| summary | TEXT | Short tier description |
+| handle_creation_supported | BOOL | Whether `/v1/scry/embed` can create this model directly |
+| retrieval_supported | BOOL | Whether corpus retrieval can use this model |
+
+Use this for the tier contract. Use source-specific diagnostics for detailed
+coverage and freshness.
 
 **Vector diagnostics:**
 - `scry.vector_diagnostics(v)` reports norm and near-zero warnings for one composed vector.

@@ -3,7 +3,7 @@
 Use this reference from the `/scry` skill when the user wants conceptual,
 semantic, or hybrid retrieval. Start with live context and schema:
 
-1. `GET /v1/scry/context?skill_generation=2026061201`
+1. `GET /v1/scry/context?skill_generation=2026061301`
 2. `GET /v1/scry/schema`
 3. `POST /v1/scry/embed` when you need a new concept handle
 4. `POST /v1/scry/query` with raw SQL and `Content-Type: text/plain`
@@ -22,16 +22,28 @@ semantic, or hybrid retrieval. Start with live context and schema:
 
 ## Mental Model
 
-Scry stores Voyage-4-lite vectors in a shared 2048-dimensional space. You store
-concepts as named handles, then reference them in SQL:
+Scry stores Voyage 4 family vectors in a shared 2048-dimensional space. You
+store concepts as named handles with `voyage-4-lite`, then reference them in
+SQL:
 
 ```sql
 embedding_voyage4 <=> @concept_handle
 ```
 
-Smaller cosine distance means greater similarity. Use lexical search for recall
+Smaller cosine distance means greater similarity. For ordinary semantic
+retrieval, prefer `scry.semantic_search(@handle, 'auto', ...)`; it retrieves
+within the high-fidelity and broad-coverage tiers and returns model-local rank,
+normalized score, model name, and raw distance. Use lexical search for recall
 and vectors for conceptual ordering when the user asks for themes, analogies,
 near misses, or "things like this".
+
+Embedding policies:
+
+| Policy | Meaning |
+| --- | --- |
+| `auto` | Merge high-fidelity `voyage-4-lite` and broad-coverage `voyage-4-nano` retrieval by model-local rank |
+| `high_fidelity` / `lite_only` / `voyage-4-lite` | Restrict retrieval to `voyage-4-lite` |
+| `broad_coverage` / `nano_only` / `voyage-4-nano` | Restrict retrieval to `voyage-4-nano` |
 
 Composition is an iterative query technique, not an automatic classifier. For
 nontrivial mixes, axes, or debiasing, inspect nearest records and distances,
@@ -64,6 +76,8 @@ keys have session-local namespaces.
 | `scry.entity_embeddings` | One entity-level vector row per entity (`chunk_index = 0`) |
 | `scry.entities_with_embeddings` | Public entity rows pre-joined to entity-level vectors |
 | `scry.embedding_coverage` | Source/kind coverage and readiness checks |
+| `scry.embedding_model_policy` | Voyage 4 tier contract and handle/retrieval support |
+| `scry.semantic_search(...)` | Policy-aware semantic retrieval over stored handles or halfvec expressions |
 | `scry.*_embeddings` | Source-native embedding owner tables when schema advertises them |
 
 Always call `/v1/scry/schema` before choosing a relation. Read
@@ -76,6 +90,27 @@ responses is 500 rows. Prefer distances and ids over raw vector output unless
 you actually need the vector values.
 
 ## Semantic Search
+
+Default policy-aware form:
+
+```sql
+SELECT uri, title, original_author, source, kind,
+       model_name, model_rank, normalized_score, distance
+FROM scry.semantic_search(
+  @mech_interp,
+  'auto',
+  ARRAY['lesswrong', 'arxiv'],
+  ARRAY['post', 'paper'],
+  30
+)
+LIMIT 30;
+```
+
+Use `auto` unless the task needs a specific tier. For mixed-tier results, treat
+`model_rank` and `normalized_score` as the merge signal and keep raw `distance`
+visible for inspection.
+
+Lower-level custom SQL:
 
 ```sql
 SELECT e.uri, e.title, e.original_author, e.source::text,

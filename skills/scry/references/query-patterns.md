@@ -651,6 +651,23 @@ agent contract for now.
 
 ## 6. Semantic-Only Search (via MV)
 
+### Policy-aware semantic search
+```sql
+SELECT uri, title, original_author, source, kind,
+       model_name, model_rank, normalized_score, distance
+FROM scry.semantic_search(
+  @p_deadbeef_topic,
+  'auto',
+  ARRAY['lesswrong', 'eaforum', 'hackernews'],
+  ARRAY['post'],
+  20
+)
+LIMIT 20
+```
+
+Use `auto` by default. Switch to `high_fidelity` / `lite_only` or
+`broad_coverage` / `nano_only` when a task needs a specific Voyage 4 tier.
+
 ### Nearest neighbors on a materialized view
 ```sql
 SELECT entity_id, uri, title, original_author, score,

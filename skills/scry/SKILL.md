@@ -13,7 +13,7 @@ over curated `scry.*` relations, and `POST /v1/scry/embed` to create semantic
 Use `GET /v1/stats`, `GET /v1/scry/context`, and `GET /v1/scry/schema` for live
 truth. Do not rely on static corpus counts or guessed schema.
 
-**Skill generation**: `2026061201`
+**Skill generation**: `2026061301`
 
 ## Reference Map
 
@@ -37,7 +37,7 @@ Load only what the task needs:
 1. **Handshake first.**
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026061201" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026061301" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
@@ -67,6 +67,9 @@ Load only what the task needs:
 3. **Choose the surface deliberately.** Use typed search for bounded candidate
    discovery, source-native SQL/helpers for provenance-bearing corpus work, and
    stored `@handle` vectors for conceptual similarity, contrast, and drift.
+   Prefer `scry.semantic_search(@handle, 'auto', sources, kinds, limit_n)` for
+   policy-aware Voyage 4 retrieval across the high-fidelity and broad-coverage
+   tiers before hand-writing cross-model ranking SQL.
    Hydrate typed-search records with `GET /v1/scry/search/records/{record_ref}`.
    For publication-first Parquet datasets, use `GET /v1/scry/datasets`,
    `GET /v1/scry/datasets/{id}`, and `POST /v1/scry/datasets/{id}/resolve`
@@ -145,8 +148,9 @@ Load only what the task needs:
 - Specific source: use source filters, source-native tables, or source-native
   helpers after checking schema.
 - Academic graph: use OpenAlex helpers and schema-guide surfaces.
-- Conceptual/semantic ask: create or reuse an `@handle`, then search an
-  embedding surface or rerank a lexical candidate set.
+- Conceptual/semantic ask: create or reuse an `@handle`, then use
+  `scry.semantic_search(...)`, search an embedding surface, or rerank a lexical
+  candidate set.
 - People/author lookup: use `scry.actors`, `scry.people`,
   `scry.person_accounts`, and relevant source-native author/account surfaces.
 - LessOnline: use the packaged `lessonline-research` specialization when
