@@ -116,8 +116,10 @@ Chunked semantic vectors for entities.
 - Doc-level search: `WHERE chunk_index = 0`
 - Not all entities have embeddings. Filter `embedding_voyage4 IS NOT NULL`.
 - Voyage 4 family tiers share the `embedding_voyage4` column. Use
-  `scry.semantic_search(...)` for policy-aware retrieval when you do not need
-  custom ranking SQL.
+  `scry.semantic_rerank(...)` over bounded candidate entity ids for
+  policy-aware live retrieval. Use `scry.semantic_search(...)` for broad
+  retrieval across the corpus when schema or index status reports the vector
+  index ready.
 
 **Derived helpers:**
 - `scry.entity_embeddings` gives you exactly the `chunk_index = 0` rows.

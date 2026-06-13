@@ -30,10 +30,14 @@ SQL:
 embedding_voyage4 <=> @concept_handle
 ```
 
-Smaller cosine distance means greater similarity. For ordinary semantic
-retrieval, prefer `scry.semantic_search(@handle, 'auto', ...)`; it retrieves
-within the high-fidelity and broad-coverage tiers and returns model-local rank,
-normalized score, model name, and raw distance. Use lexical search for recall
+Smaller cosine distance means greater similarity. For ordinary semantic work,
+first build a bounded candidate set with typed search, lexical SQL, or a
+source-native helper, then use
+`scry.semantic_rerank(@handle, candidate_entity_ids, 'auto', limit_n)`. It
+retrieves within the high-fidelity and broad-coverage tiers and returns
+model-local rank, normalized score, model name, and raw distance. Use
+`scry.semantic_search(...)` for broad retrieval across the corpus when schema
+or index status reports the vector index ready. Use lexical search for recall
 and vectors for conceptual ordering when the user asks for themes, analogies,
 near misses, or "things like this".
 
@@ -77,7 +81,8 @@ keys have session-local namespaces.
 | `scry.entities_with_embeddings` | Public entity rows pre-joined to entity-level vectors |
 | `scry.embedding_coverage` | Source/kind coverage and readiness checks |
 | `scry.embedding_model_policy` | Voyage 4 tier contract and handle/retrieval support |
-| `scry.semantic_search(...)` | Policy-aware semantic retrieval over stored handles or halfvec expressions |
+| `scry.semantic_rerank(...)` | Policy-aware semantic reranking over bounded candidate entity ids |
+| `scry.semantic_search(...)` | Broad policy-aware semantic retrieval across the corpus when the vector index is ready |
 | `scry.*_embeddings` | Source-native embedding owner tables when schema advertises them |
 
 Always call `/v1/scry/schema` before choosing a relation. Read
@@ -91,16 +96,28 @@ you actually need the vector values.
 
 ## Semantic Search
 
-Default policy-aware form:
+Default policy-aware form over bounded candidates:
 
 ```sql
+WITH lexical AS (
+  SELECT id AS entity_id
+  FROM scry.entities
+  WHERE source = 'arxiv'
+    AND kind = 'paper'
+    AND content_text ILIKE '%mechanistic interpretability%'
+  LIMIT 200
+),
+candidates AS (
+  SELECT array_agg(entity_id) AS entity_ids
+  FROM lexical
+)
 SELECT uri, title, original_author, source, kind,
        model_name, model_rank, normalized_score, distance
-FROM scry.semantic_search(
+FROM candidates c
+CROSS JOIN LATERAL scry.semantic_rerank(
   @mech_interp,
+  c.entity_ids,
   'auto',
-  ARRAY['lesswrong', 'arxiv'],
-  ARRAY['post', 'paper'],
   30
 )
 LIMIT 30;

@@ -649,17 +649,29 @@ agent contract for now.
 
 ---
 
-## 6. Semantic-Only Search (via MV)
+## 6. Policy-Aware Semantic Rerank
 
-### Policy-aware semantic search
+### Rerank bounded candidates across Voyage 4 tiers
 ```sql
+WITH lexical AS (
+  SELECT id AS entity_id
+  FROM scry.entities
+  WHERE source = 'arxiv'
+    AND kind = 'paper'
+    AND content_text ILIKE '%mechanistic interpretability%'
+  LIMIT 200
+),
+candidates AS (
+  SELECT array_agg(entity_id) AS entity_ids
+  FROM lexical
+)
 SELECT uri, title, original_author, source, kind,
        model_name, model_rank, normalized_score, distance
-FROM scry.semantic_search(
+FROM candidates c
+CROSS JOIN LATERAL scry.semantic_rerank(
   @p_deadbeef_topic,
+  c.entity_ids,
   'auto',
-  ARRAY['lesswrong', 'eaforum', 'hackernews'],
-  ARRAY['post'],
   20
 )
 LIMIT 20
@@ -667,6 +679,8 @@ LIMIT 20
 
 Use `auto` by default. Switch to `high_fidelity` / `lite_only` or
 `broad_coverage` / `nano_only` when a task needs a specific Voyage 4 tier.
+Use `scry.semantic_search(...)` for broad retrieval across the corpus when
+schema or index status reports the vector index ready.
 
 ### Nearest neighbors on a materialized view
 ```sql

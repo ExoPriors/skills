@@ -67,9 +67,11 @@ Load only what the task needs:
 3. **Choose the surface deliberately.** Use typed search for bounded candidate
    discovery, source-native SQL/helpers for provenance-bearing corpus work, and
    stored `@handle` vectors for conceptual similarity, contrast, and drift.
-   Prefer `scry.semantic_search(@handle, 'auto', sources, kinds, limit_n)` for
+   Prefer `scry.semantic_rerank(@handle, candidate_entity_ids, 'auto', limit_n)`
+   after typed, lexical, or source-native candidate discovery for live
    policy-aware Voyage 4 retrieval across the high-fidelity and broad-coverage
-   tiers before hand-writing cross-model ranking SQL.
+   tiers. Use `scry.semantic_search(...)` for broad retrieval across the corpus
+   when schema or index status reports the vector index ready.
    Hydrate typed-search records with `GET /v1/scry/search/records/{record_ref}`.
    For publication-first Parquet datasets, use `GET /v1/scry/datasets`,
    `GET /v1/scry/datasets/{id}`, and `POST /v1/scry/datasets/{id}/resolve`
@@ -148,9 +150,9 @@ Load only what the task needs:
 - Specific source: use source filters, source-native tables, or source-native
   helpers after checking schema.
 - Academic graph: use OpenAlex helpers and schema-guide surfaces.
-- Conceptual/semantic ask: create or reuse an `@handle`, then use
-  `scry.semantic_search(...)`, search an embedding surface, or rerank a lexical
-  candidate set.
+- Conceptual/semantic ask: create or reuse an `@handle`, then rerank a bounded
+  candidate set with `scry.semantic_rerank(...)`, or use a source-native
+  embedding surface after checking schema and index status.
 - People/author lookup: use `scry.actors`, `scry.people`,
   `scry.person_accounts`, and relevant source-native author/account surfaces.
 - LessOnline: use the packaged `lessonline-research` specialization when
