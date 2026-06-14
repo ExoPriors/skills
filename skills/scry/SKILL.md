@@ -64,7 +64,10 @@ Load only what the task needs:
    Inside SQL, use `scry.queryable_relations`, `scry.queryable_columns`,
    `scry.queryable_functions`, and small `scry.table_sample(...)` probes.
 
-3. **Choose the surface deliberately.** Use typed search for bounded candidate
+3. **Choose the surface deliberately.** When unsure where to look, route first:
+   `POST /v1/scry/route` with `{"question": "..."}` returns the best surface(s),
+   the exact indexed `search_*` query to run, and cost warnings — use it instead
+   of guessing across surfaces. Then use typed search for bounded candidate
    discovery, source-native SQL/helpers for provenance-bearing corpus work, and
    stored `@handle` vectors for conceptual similarity, contrast, and drift.
    Prefer `scry.semantic_rerank(@handle, candidate_entity_ids, 'auto', limit_n)`
@@ -145,6 +148,9 @@ Load only what the task needs:
 
 ## Routing Guide
 
+- Unsure where to look: `POST /v1/scry/route` with the question returns ranked
+  surfaces, the exact `search_*` query, and cost warnings. Use it before
+  guessing across surfaces.
 - Fast keyword discovery: typed search, `scry.search_federated(...)`, or a
   source-native `scry.search_*` helper.
 - Specific source: use source filters, source-native tables, or source-native
