@@ -783,7 +783,8 @@ These are the primary performance tool. Use them instead of scanning `scry.entit
 | `scry.mv_wikipedia_articles` | Wikipedia articles |
 | `scry.mv_prediction_markets` | Manifold, Metaculus, Polymarket, Kalshi |
 | `scry.mv_manifold_markets` | Manifold markets specifically |
-| `scry.mv_metaculus_questions` | Metaculus questions |
+| `scry.metaculus_questions` | Metaculus questions with forecast and resolution metadata |
+| `scry.mv_metaculus_questions` | Metaculus questions fast-path alias |
 | `scry.polymarket` / `scry.polymarket_markets` | Polymarket markets (source-native table) |
 | `scry.polymarket_events` | Polymarket event groups |
 | `scry.polymarket_market_outcomes` | Outcome rows and CLOB token IDs for each Polymarket market |

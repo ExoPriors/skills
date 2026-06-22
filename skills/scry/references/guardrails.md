@@ -17,6 +17,7 @@ Shared safety and operational rules for Scry-consuming skills.
 | Schema first | Call `GET /v1/scry/schema` before constructing any SQL. For SQL-side discovery, query `scry.queryable_relations`, `scry.queryable_columns`, and `scry.queryable_functions` to inspect the queryable SQL schema. |
 | Operational status | If source-native helpers or curated views look degraded, call `GET /v1/scry/index-view-status` with any Scry key before assuming the query or schema is wrong. The `lexical_search.*` status fields are a separate diagnostic; check index-view-status before assuming lexical discovery is degraded. |
 | Clarify vague asks | If user intent is ambiguous, ask one short clarification question before expensive queries. |
+| Narrate the run | Before each query, state in one line what you are searching for, which surface, and why; after it returns, what it found or ruled out. Keep the user oriented throughout a synchronous run. |
 | Probe before scale | Run `/v1/scry/estimate` and a small `LIMIT` probe before broad scans. |
 | LIMIT required | Every query must include a `LIMIT` clause. The live route, key, and vector-output mode determine the cap. |
 | Content-Type | `text/plain` for `/v1/scry/query`; `application/json` for all other endpoints. |
@@ -60,6 +61,13 @@ Server applies load-aware statement timeouts:
 | Higher-bid admission | Can clear into longer ceilings under congestion; use `X-Scry-Budget` only when faster admission or longer runtime is worth the extra burn. |
 
 Do not hardcode a single timeout expectation. If a query times out, reduce `LIMIT` and retry.
+
+Cap your own wait with `X-Scry-Max-Wait: <seconds>` — a tighten-only ceiling on
+how long you block on one query. The query then fails fast at that bound (a
+`query_timeout` naming your requested max wait) instead of running to the system
+ceiling, so you narrow and retry rather than stall. It never extends the server
+timeout. Choose the bound from the user's patience and the query's value: a
+quick lookup and a deep scan do not deserve the same wait.
 
 ## 6. Key Leak Prevention
 

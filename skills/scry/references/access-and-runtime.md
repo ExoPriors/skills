@@ -104,7 +104,7 @@ npx skills update
 At session start, call:
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026061301" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062201" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
@@ -122,6 +122,10 @@ Primary controls:
 - `X-Scry-Budget: <nanodollars>` is optional. It sets an eager-bid cap and an
   x402 funding hint; authenticated queries do not need it.
 - `X-Scry-Max-Exposure: <nanodollars>` caps runtime exposure for the query.
+- `X-Scry-Max-Wait: <seconds>` is optional. It caps how long you block on one
+  query and fails it fast at that bound instead of running to the system
+  ceiling; it can only tighten the wait, never extend it. A resulting
+  `query_timeout` names your requested max wait, so narrow the query and retry.
 - `GET /v1/scry/account` is the one-stop billing status check: wallet, mode,
   spend, live base fee, utilization, and auto-topup state.
 - `GET /v1/scry/preferences` returns `pricing_mode` and

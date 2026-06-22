@@ -42,6 +42,95 @@ ORDER BY e.original_timestamp DESC
 LIMIT 50
 ```
 
+### Lexical approximation loop for deep research
+
+For open questions, do not run one clever query and stop. Build a small ledger
+of competing lexical hypotheses, probe each one cheaply, then revise from the
+observed hit counts, timings, and sample rows.
+
+Each probe should record:
+
+- `label`: the angle being tested;
+- `hypothesis`: what that wording should surface if the angle is real;
+- `query_text`: the exact lexical query sent to Scry;
+- `sources` / `kinds`: the bounded scope;
+- `row_count`, `duration_ms`, `truncated`, and any receipt/share id;
+- `next_move`: widen, narrow, swap source, add rare terms, or hydrate records.
+
+Probe weights are planning weights for the agent's next move; they do not alter
+BM25 ranking. Use them to decide which successful angle deserves more follow-up.
+
+With the Scry repo checked out, this helper emits a repeatable ledger; the SQL below does the same without it:
+
+```bash
+python3 tools/scry_live.py --format table lexical-loop \
+  --question "Where do alignment researchers argue that scalable oversight fails?" \
+  --sources lesswrong,eaforum,arxiv \
+  --kinds post,paper \
+  --limit 25 \
+  --per-source-cap 5 \
+  --max-wait 15 \
+  --probe "core=scalable oversight debate failure" \
+  --probe "adjacent=recursive oversight amplification limitations" \
+  --probe "rare=oversight bottleneck evaluator collusion"
+```
+
+Run the loop entirely inside SQL when a single query is more useful than several
+separate timed calls:
+
+```sql
+WITH probes(label, hypothesis, query_text, weight) AS (
+  VALUES
+    ('core', 'Direct discussions of scalable oversight limits',
+     'scalable oversight debate failure', 1.0),
+    ('adjacent', 'Neighboring vocabulary around amplification and recursion',
+     'recursive oversight amplification limitations', 0.8),
+    ('rare', 'Sparse terms likely to find edge-case critiques',
+     'oversight bottleneck evaluator collusion', 1.2)
+),
+hits AS (
+  SELECT p.label, p.hypothesis, p.query_text, p.weight,
+         h.record_ref, h.source, h.kind, h.uri, h.title,
+         h.snippet, h.lexical_score, h.entity_id
+  FROM probes p
+  CROSS JOIN LATERAL scry.search_federated(
+    p.query_text,
+    ARRAY['lesswrong','eaforum','arxiv'],
+    ARRAY['post','paper'],
+    25,
+    5
+  ) h
+)
+SELECT label, hypothesis, query_text, weight,
+       COUNT(*) AS returned_rows,
+       MAX(lexical_score) AS best_lexical_score,
+       JSONB_AGG(
+         JSONB_BUILD_OBJECT(
+           'record_ref', record_ref,
+           'source', source,
+           'kind', kind,
+           'title', title,
+           'uri', uri
+         )
+         ORDER BY lexical_score DESC NULLS LAST
+       ) FILTER (WHERE record_ref IS NOT NULL) AS sample_hits
+FROM hits
+GROUP BY label, hypothesis, query_text, weight
+ORDER BY weight DESC, returned_rows DESC, label
+LIMIT 20
+```
+
+Iteration rule of thumb:
+
+- `0 rows`: relax phrasing, add synonyms, or split the concept into several
+  narrower probes.
+- `limit_n rows`: inspect samples, then add rare terms, source/date filters, or
+  a source-native helper.
+- slow but relevant: keep the angle, narrow its scope, and rerun before
+  widening.
+- relevant and cheap: fan out adjacent terms, hydrate the best records, then
+  decide whether semantic rerank or judgement adds information.
+
 ### Scoped to a specific forum
 ```sql
 WITH c AS (
@@ -872,9 +961,9 @@ LIMIT 50
 
 ### Metaculus questions
 ```sql
-SELECT entity_id, uri, title, original_timestamp
-FROM scry.mv_metaculus_questions
-ORDER BY original_timestamp DESC
+SELECT metaculus_id, entity_id, uri, title, status, resolved, nr_forecasters, original_timestamp
+FROM scry.search_metaculus_questions('artificial intelligence timelines', 'auto', 50)
+ORDER BY score DESC NULLS LAST, original_timestamp DESC NULLS LAST
 LIMIT 50
 ```
 
@@ -1052,6 +1141,37 @@ judgement-run receipt and child pairwise judgement atoms by default. Set
 `judgement_privacy` to `private` or `self` for caller-only evidence. Check
 `GET /v1/scry/context` before long-running jobs because deployment policy can
 disable async public/private rerank lanes independently.
+
+### Prompt perturbation coherence
+
+Add `attribute_perturbations` when the same judgement should be tested under
+aligned or inverted prompt variants. Each variant is scored alongside the base
+attribute, and the response includes a `perturbation_report` with Spearman
+coherence between each variant and the base attribute.
+
+```json
+{
+  "attributes": [{
+    "id": "insight",
+    "prompt": "Prefer non-obvious ideas that would change a careful researcher's beliefs or next actions.",
+    "weight": 1.0
+  }],
+  "attribute_perturbations": [{
+    "attribute_id": "insight",
+    "variants": [
+      {
+        "id": "positive",
+        "prompt": "Prefer the candidate with more concrete, non-obvious insight."
+      },
+      {
+        "id": "negative",
+        "prompt": "Prefer the candidate that is more derivative or generic.",
+        "polarity": "inverted"
+      }
+    ]
+  }]
+}
+```
 
 ---
 

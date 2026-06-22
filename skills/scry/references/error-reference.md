@@ -164,6 +164,16 @@ runtime spend reaches the authorized exposure cap.
 Use `/v1/scry/estimate` for query-specific `exposure_timeout_ms`, and use
 `/v1/scry/pricing` for the current load, admission, and timeout policy.
 
+Cap your own wait with `X-Scry-Max-Wait: <seconds>` when a user is waiting
+synchronously. It tightens the statement timeout to your bound (never extends
+it), so a query you are unwilling to block on fails fast with a `query_timeout`
+that names your requested max wait and a `limit_source` of `caller_max_wait`,
+rather than stalling to the system ceiling. Treat that timeout as a signal to
+narrow the query (tighter filters, smaller `LIMIT`, a source-native
+`scry.search_*` helper) and retry, rather than raise the bound. The
+effective bound is echoed back as `requested_max_wait_seconds` on successful
+responses.
+
 ### SQL Constraints
 
 - Max query length: 100 KB
@@ -209,6 +219,7 @@ Use `/v1/scry/estimate` for query-specific `exposure_timeout_ms`, and use
 5. Use `scry.search_federated(...)` or a source-native helper for a cheaper candidate fetch
 6. Run `/v1/scry/estimate` to check plan cost, suggested reserve, and `exposure_timeout_ms` before retrying
 7. If the error is `query_exposure_exhausted`, raise `X-Scry-Max-Exposure` only after confirming the broader query is actually worth the live price
+8. If the timeout names your `X-Scry-Max-Wait` (`limit_source: caller_max_wait`), the query exceeded the wait you chose, not a system limit — narrow it first; raise `X-Scry-Max-Wait` only when the longer wait is genuinely worth it to the user
 
 If curl prints HTTP `000`, that is usually a client timeout before the server
 responded (for example `--max-time` shorter than server timeout). Increase
