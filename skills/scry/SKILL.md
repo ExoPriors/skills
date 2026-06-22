@@ -13,7 +13,7 @@ over curated `scry.*` relations, and `POST /v1/scry/embed` to create semantic
 Use `GET /v1/stats`, `GET /v1/scry/context`, and `GET /v1/scry/schema` for live
 truth. Do not rely on static corpus counts or guessed schema.
 
-**Skill generation**: `2026062201`
+**Skill generation**: `2026062202`
 
 ## Reference Map
 
@@ -37,7 +37,7 @@ Load only what the task needs:
 1. **Handshake first.**
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062201" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062202" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
@@ -90,14 +90,20 @@ Load only what the task needs:
    `duration_ms`, truncation state, representative rows, and the next
    widen/narrow/swap-source move. Fan out promising angles with adjacent terms,
    exact phrases, rare vocabulary, source-specific helpers, and different
-   weights. Probe weights prioritize follow-up; they do not change BM25
-   ranking. If you have the Scry repo checked out, `python3 tools/scry_live.py lexical-loop ...`
-   emits this ledger for you; otherwise run the probes directly as shown below.
+   weights. Use probe weights to prioritize your own follow-up; they order your
+   investigation, not the underlying lexical ranking. If you have the Scry repo
+   checked out, `python3 tools/scry_live.py lexical-loop ...` emits this ledger
+   for you; otherwise run the probes directly as shown below.
 
 5. **Probe before scaling.** Clarify ambiguous broad requests. Use
    `GET /v1/scry/account`, `GET /v1/scry/pricing`,
    `POST /v1/scry/estimate`, or a tight `LIMIT 20` probe before expensive
-   work. `GET /v1/scry/pricing` is the live billing/market authority;
+   work. When SQL text and results should not be kept, quote first with
+   `POST /v1/scry/estimate/zero-retention`, then run
+   `POST /v1/scry/query/zero-retention`; the response includes
+   `retention_pricing`, costs 10x the ordinary priced query with a $0.25
+   minimum, and has no receipts or result replay. `GET /v1/scry/pricing` is
+   the live billing/market authority;
    authenticated queries have no daily quota. Use eager or patient mode to
    choose how you respond to congestion pricing; ordinary rate limits also
    apply. `GET /v1/scry/price` is the lightweight current epoch oracle, with
@@ -140,7 +146,9 @@ Load only what the task needs:
    and `GET /v1/scry/query-receipts/{id}`.
    `GET /v1/scry/query-receipts/{id}/result` returns the exact response body
    of a finished query (kept 48 hours, same account), so a response lost
-   mid-flight is recoverable without re-running the query. Share result
+   mid-flight is recoverable without re-running the query. Receipts do not
+   apply to `/v1/scry/query/zero-retention`: that lane keeps no query text and
+   no result to replay. Share result
    artifacts with `POST /v1/scry/shares`. Browser Stripe checkout is
    `/v1/billing/checkout/custom`. Cards use a three-step rail:
    `POST /v1/billing/setup-payment-method` returns `setup_url` for

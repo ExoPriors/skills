@@ -104,7 +104,7 @@ npx skills update
 At session start, call:
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062201" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062202" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
@@ -120,7 +120,8 @@ Primary controls:
 - Authenticated queries have no daily quota. Use eager or patient mode to choose
   how you respond to congestion pricing; ordinary rate limits also apply.
 - `X-Scry-Budget: <nanodollars>` is optional. It sets an eager-bid cap and an
-  x402 funding hint; authenticated queries do not need it.
+  x402 funding hint; authenticated queries do not need it. For x402 query-only
+  access, the hint rounds up to whole `$0.03 / 20s` quanta.
 - `X-Scry-Max-Exposure: <nanodollars>` caps runtime exposure for the query.
 - `X-Scry-Max-Wait: <seconds>` is optional. It caps how long you block on one
   query and fails it fast at that bound instead of running to the system
@@ -139,6 +140,10 @@ Primary controls:
 - `GET /v1/scry/pricing` is the live billing and market authority.
 - `POST /v1/scry/estimate` returns estimate, reserve, authorized exposure,
   exposure timeout, and cost breakdown.
+- `POST /v1/scry/estimate/zero-retention` quotes the authenticated
+  zero-retention lane before execution. It reports `retention_pricing`,
+  prices at 10x the ordinary priced query with a $0.25 minimum, and should be
+  used before `POST /v1/scry/query/zero-retention`.
 
 In eager mode, Scry uses uniform clearing: winners pay the epoch clearing price,
 not every winner's submitted maximum. `max_bid_multiplier` clamps the effective
@@ -163,6 +168,11 @@ fingerprint, runtime, billing, or security details.
 - `GET /v1/scry/query-receipts/{id}` rehydrates a durable query receipt.
 - Add `?include_sql=true` only when the owner explicitly needs the original SQL
   back.
+- Zero-retention queries do not support receipts or result replay. Use
+  `/v1/scry/estimate/zero-retention` for the quote and
+  `/v1/scry/query/zero-retention` for execution when your SQL text and results
+  should not be kept; accounting metadata remains with redacted query text for
+  spend and bandwidth controls.
 
 Useful query response headers:
 
@@ -180,6 +190,10 @@ Useful query response headers:
 - `X-Scry-Compute-Units`
 - `X-Scry-Utilization`
 - `X-Scry-Epoch`
+- `x-scry-retention-mode`
+- `x-scry-retention-multiplier`
+- `x-scry-retention-minimum`
+- `x-scry-retention-premium`
 
 ## Funding Rails
 
@@ -230,10 +244,14 @@ direct paid query execution.
 
 If x402 is enabled and the request has no `Authorization` header, the first
 unsigned query returns `402 Payment Required` with machine-readable payment
-requirements. When the caller also sends `X-Scry-Budget`, Scry treats it as an
-x402 funding hint subject to the configured base quantum. After settlement, the
-paid amount converts into paid balance. Scry queries spend Scry credits first
-and paid balance second; provider-backed work requires paid balance.
+requirements. The base x402 query price is `$0.03`, expressed as
+`30_000_000` nanodollars, and authorizes up to 20 seconds of execution. When the
+caller also sends `X-Scry-Budget`, Scry treats it as a funding hint and rounds
+up to whole `$0.03 / 20s` quanta. After settlement, the paid quantum is consumed
+for that query attempt and response headers/reporting use `billing_mode =
+x402_payment`. It is not reusable account topup; for repeated multi-endpoint
+work, use a personal Scry API key and fund the account through the normal topup
+rails.
 
 Minimal client shape:
 

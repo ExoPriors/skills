@@ -23,8 +23,9 @@ Before writing SQL:
    estimate semantics, health/status fields, and `vector_indexed` where
    applicable.
 3. If you need live discovery inside SQL, use `scry.queryable_relations`,
-   `scry.queryable_columns`, and `scry.queryable_functions`. These
-   permission-aware catalogs respect the current role's grants and RLS posture.
+   `scry.queryable_columns`, `scry.queryable_functions`, and
+   `scry.queryable_indexes`. These permission-aware catalogs respect the
+   current role's grants and RLS posture.
 4. Prefer source-native surfaces and `scry.source_records` when a corpus no
    longer lives canonically in `scry.entities`.
 5. Treat row counts, freshness, and coverage as separate claims.
@@ -44,6 +45,14 @@ FROM scry.queryable_columns
 WHERE qualified_name = 'scry.entities'
 ORDER BY ordinal_position
 LIMIT 200
+```
+
+```sql
+SELECT *
+FROM scry.explain_plan(
+  'SELECT id, title FROM scry.entities WHERE source = ''arxiv'' LIMIT 20'
+)
+LIMIT 1
 ```
 
 ## Core Views
@@ -164,6 +173,7 @@ union view over those records.
 | `scry.clearerthinking_sources` / `scry.clearerthinking_pages` | ClearerThinking source registry and landed page records. Use `scry.search_clearerthinking_pages(query_text, limit_n)` for bounded retrieval when available. |
 | `scry.github_documents` | GitHub document substrate over repository-adjacent text artifacts. Use `scry.search_github_documents(query_text, mode, limit_n)` before broad direct scans. |
 | `scry.epoch_ai_dataset_tables` / `scry.epoch_ai_dataset_rows` / `scry.epoch_ai_artifacts` | Epoch AI dataset table, row, and artifact surfaces. Use `scry.search_epoch_ai(query_text, result_limit)` for bounded discovery. |
+| `scry.breathe_literature` | BREATHE biomedical literature surface keyed by source document id, with title, abstract/body fields, authors, publication metadata, DOI/PMID/PMCID, license, category, and source snapshot metadata. |
 | `scry.lessonline_event_records` / `scry.lessonline_people` / `scry.lessonline_person_evidence` | LessOnline event-record and person-evidence substrate. Use event records for sessions, venues, reachable pages, schedule hosts, and authenticated event profile records; use people for deduped event-grounded names; use evidence rows to inspect `evidence_role`, `record_type`, `uri`, `source_url`, and source metadata before making person claims. |
 | `scry.lessonline_person_public_aliases` / `scry.lessonline_person_corpus_matches` / `scry.lessonline_person_research_frontier` / `scry.lessonline_person_cards` / `scry.lessonline_query_coverage` | LessOnline public writing index. Alias rows preserve evidence behind event names, profile display names, parenthetical handles, and candidate identity links; corpus-match rows index public writing candidates across corpora with `match_basis`, `confidence_tier`, and `review_state`; the frontier view shows per-person follow-through state; cards package event evidence, aliases, corpus-source counts, writing candidates, and queue state into one row per event-grounded person; coverage shows filled rows and remaining gaps. |
 | `scry.lessonline_person_research_queue` | Backing work queue for LessOnline person research. Prefer the read models above for retrieval. |
@@ -195,6 +205,7 @@ union view over those records.
 | `scry.discussion_messages` | Normalized union over mailing-list messages and forum posts with shared `source_class`, `collection_key`, `thread_key`, `message_key`, `archive_url`, and `content_risk` columns. |
 | `scry.forum_crawl_priority` | Crawl ordering for seeded/partial forum sites: demand-weighted by inbound URL mentions across the corpus and cost-discounted by estimated thread count, with `priority_score` plus landed thread/post counts. |
 | `scry.url_mentions` / `scry.url_mention_targets` / `scry.url_mention_host_edges` | Corpus-wide outbound URL mention edges extracted from source tables. `scry.url_mentions` is one row per (source, URL) edge with `mention_count` and first/last seen; `scry.url_mention_targets` aggregates per URL; `scry.url_mention_host_edges` aggregates source→host. Always filter by `url` or `target_host` (both indexed). |
+| `scry.public_expression_signal_candidates` / `scry.public_expression_signal_source_accounting` | Public-expression signal candidate rows plus source/status accounting. Use these to inspect surfaced candidates, judgement rollups, trigger families, sensitivity flags, and source-level candidate counts. |
 | `scry.openlibrary_editions` / `scry.openlibrary_works` / `scry.openlibrary_authors` | Canonical Open Library bibliographic substrates. |
 | `scry.gdelt_articles` | Canonical GDELT news-article substrate keyed by URL / GKG record pairs. Includes themes, tone, entity extraction, and publication time. |
 | `scry.who_iris_publications` | Canonical WHO IRIS publication substrate keyed by `handle`. Includes document type, authors, subjects, languages, publishers, and identifiers. |
@@ -246,6 +257,7 @@ union view over those records.
 | `scry.cnpj_reference_codes` | CNPJ reference code tables keyed by `(family, code)`: CNAE activity codes, registration-situation motives, municipalities, legal natures, countries, and partner qualifications with Portuguese descriptions. |
 | `scry.industry_lens_members` / `scry.industry_robotics_members` | Industry vertical membership surface: one row per recruited industry actor (company, person, webpage) per lens, with decision, confidence, tags, and website/twitter/ticker/CIK/SIC metadata. `scry.industry_robotics_members` filters to `lens_key = 'industry_robotics'`. |
 | `scry.industry_lens_events` / `scry.industry_robotics_events` | Per-member event stream for industry lenses (currently SEC filings): lens key, member key/title, event kind, event timestamp, title, `uri`, and source table/pk for provenance. `scry.industry_robotics_events` filters to `lens_key = 'industry_robotics'`. |
+| `scry.frontier_candidates` / `scry.frontier_prioritization` | Indexing-frontier proposal surfaces: raw candidate objectives plus judgement-derived priority scores and rater-disagreement fields for prioritizing what to index next. |
 | `scry.sirene_unites_legales` | France INSEE SIRENE legal-unit registry keyed by 9-digit `siren`. Denomination, NAF activity code and nomenclature, legal category, enterprise size category, administrative state, diffusion status, creation date, workforce bracket, ESS / société-à-mission flags, and headquarters NIC. |
 | `scry.sirene_etablissements` | French establishments keyed by 14-digit `siret` (one row per physical/legal establishment). Headquarters flag (`est_siege`), `enseigne`, NAF code, administrative state, creation date, workforce bracket, and full address fields (`code_postal`, voie fields). Joins to `scry.sirene_unites_legales` on `siren`. |
 | `scry.china_judgments` | Chinese court judgments keyed by `doc_id`: case number and name, court, region, case type, procedure stage, judgment and publish dates, parties, cause, legal basis, and full-text `content_text`. |
@@ -278,6 +290,7 @@ Source-local lexical helpers exist for many of these views:
 
 | Function | Notes |
 |----------|-------|
+| `scry.explain_plan(query_sql)` | Returns a one-row planning diagnostic for a SELECT/WITH query, including index-hit status, large sequential-scan hints, estimated cost, and index hints from `scry.queryable_indexes`. |
 | `scry.search_bluesky_posts(query_text, mode, limit_n)` | BM25 over Bluesky `payload` plus DID / handle / display-name fields. |
 | `scry.search_twitter_posts(query_text, mode, limit_n, start_ts, end_ts)` | BM25 over source-native Twitter/X tweet rows. Returns `content_text`, individual tweet identity, canonical URI, author fields, timestamps, and public observation provenance arrays. |
 | `scry.search_crawled_pages(query_text, mode, kinds, limit_n)` | BM25 over source-native crawled web pages, including Substack posts. For cross-source discovery that includes crawled pages, use `scry.search_federated(..., sources => ARRAY['crawled_url'])`. |
@@ -301,6 +314,7 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_huggingface_papers(query_text, mode, year_from, limit_n)` | BM25 over Hugging Face Paper Page summaries, AI summaries, titles, and author names. |
 | `scry.search_huggingface_discussions(query_text, mode, repo_types, statuses, limit_n)` | BM25 over discussion titles, concatenated thread payloads, repo ids, author display names, and status. |
 | `scry.huggingface_find_paper_artifacts(query_text, year_from, limit_n)` | Traverses paper hits back into linked Hub repos using `huggingface_repo_links`; it prefers direct arXiv/DOI and OpenAlex resolution before falling back to HF paper pages, so paper-to-artifact recovery does not depend on starting inside Hugging Face first. |
+| `scry.search_metaculus_questions(query_text, mode, limit_n)` | BM25 over Metaculus question titles/previews/status fields with forecast and resolution metadata. |
 | `scry.openalex_find_works(query, min_year, limit)` | Source-native OpenAlex work lookup over titles and DOIs with dedicated abstract payload link-through. |
 | `scry.search_mailing_list_messages(query_text, mode, list_keys, limit_n)` | BM25 over mailing-list message rows. |
 | `scry.search_forum_posts(query_text, mode, site_keys, limit_n, include_dangerous)` | BM25 over canonical forum posts keyed by site-specific `post_key`. Skips `content_risk='dangerous'` rows by default; set `include_dangerous => true` only for explicit dangerous-corpus work such as 4chan. |
@@ -316,11 +330,13 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_epstein_units(query_text, release_families, artifact_kinds, unit_kinds, date_from, date_to, limit_n)` | BM25 over serving Epstein units with filters for release family, artifact kind, unit kind, and retrieved-at date. |
 | `scry.search_europepmc_articles(query_text, mode, limit_n)` | BM25 over Europe PMC article titles, abstracts/payloads, authors, journal, DOI/PMID/PMCID, and terms. |
 | `scry.search_sec_edgar_filings(query_text, forms, ciks, limit_n)` | BM25 over SEC EDGAR filing payloads with optional form and CIK filters. |
+| `scry.public_expression_signal_recent(limit_n, min_score, include_sensitive)` / `scry.public_expression_signal_prefilter_candidates(...)` / `scry.public_expression_signal_recent_row_candidates(...)` / `scry.public_expression_signal_seed_matches(...)` / `scry.public_expression_signal_context(...)` | Public-expression signal helpers for recent candidate inspection, lexical prefiltering, seed matching, and context scoring. Use bounded limits and inspect sensitivity flags before drawing conclusions. |
 | `scry.search_compute_infra(query_text, result_limit)` | Full-text search (websearch syntax, English) over the synthesized title and `content_text` of `scry.compute_infra_dataset_rows`. Ranking is lexical only; verify numbers against `raw_row` and `source_url`. |
 | `scry.sec_edgar_company_filings(cik_or_ticker, forms, limit_n)` | Bounded SEC filing lookup by ticker or CIK, newest first, returning queue/content-stage fields for one company. |
 | `scry.search_pmc_articles(query_text, mode, limit_n)` | BM25 over PMC article payloads where the live schema advertises the PMC surface. |
 | `scry.search_reddit_clusters(query_text, limit_n)` | Reddit cluster discovery helper. |
 | `scry.search_reddit_hot_subreddits(query_text, limit_n)` | Hot-subreddit discovery helper over Reddit activity summaries. |
+| `scry.semantic_search(query_vec, embedding_policy, sources, kinds, limit_n, per_model_limit, chunk_level)` / `scry.semantic_rerank(query_vec, candidate_entity_ids, embedding_policy, limit_n, chunk_level)` | Policy-aware Voyage 4 semantic retrieval. Prefer `scry.semantic_rerank(...)` after a bounded lexical/source-native candidate set; use `scry.semantic_search(...)` for broad retrieval only after checking schema and index health. |
 
 ### SEC Quarterly Financials
 
