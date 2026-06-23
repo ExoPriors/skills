@@ -68,7 +68,7 @@ Load only what the task needs:
    `POST /v1/scry/route` with `{"question": "..."}` returns the best surface(s),
    the exact indexed `search_*` query to run, and cost warnings — use it instead
    of guessing across surfaces. Then use typed search for bounded candidate
-   discovery, source-native SQL/helpers for provenance-bearing corpus work, and
+   discovery, source-native SQL/helpers for source-visible corpus work, and
    stored `@handle` vectors for conceptual similarity, contrast, and drift.
    Prefer `scry.semantic_rerank(@handle, candidate_entity_ids, 'auto', limit_n)`
    after typed, lexical, or source-native candidate discovery for live

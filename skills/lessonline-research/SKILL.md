@@ -11,7 +11,7 @@ For LessOnline 2026, use `event_slug = 'lessonline-2026'`.
 
 ## What This Means
 
-LessOnline rows are provenance-bearing event evidence. A person row can be
+LessOnline rows are source-linked event evidence. A person row can be
 grounded by public schedule/page evidence, authenticated event profile evidence,
 or both. It is not a claim that Scry has a complete attendee directory.
 
