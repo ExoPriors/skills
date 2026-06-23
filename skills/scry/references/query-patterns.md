@@ -1129,8 +1129,10 @@ from exactly one of `sql`, `list_id`, or inline `entities`
 (`[{"id":"optional","text":"..."}]`); inline entities are caller-supplied
 items (drafts, plans, candidates) judged with the same lanes, recording
 caller-only evidence (`judgement_privacy` defaults to `private` and must
-not be `public`; `persist` and `cache_results` are corpus-only). Current allowed
-rerank model ids include `google/gemma-4-31b-it` (default; `gemma4:31b` alias,
+not be `public`; `persist` and `cache_results` are corpus-only). `topk.k`
+must be smaller than the candidate count; `k == n` returns the full set
+unordered rather than a ranking. Current allowed rerank model ids include
+`google/gemma-4-31b-it` (default; `gemma4:31b` alias,
 `google/gemma-4-31b-it-20260402` dated variant), `google/gemma-4-26b-a4b-it`,
 `anthropic/claude-haiku-4.5`, `openai/gpt-5.4-mini`, and
 `openai/gpt-5.4-nano`. Each model runs with judge-correct parameters
@@ -1138,7 +1140,9 @@ rerank model ids include `google/gemma-4-31b-it` (default; `gemma4:31b` alias,
 route exposes them); default per-entity rerank
 text is capped at 4000 characters. `/v1/scry/rerank` records a public
 judgement-run receipt and child pairwise judgement atoms by default. Set
-`judgement_privacy` to `private` or `self` for caller-only evidence. Check
+`judgement_privacy` to `private` or `self` for caller-only evidence. Treat
+pairwise rerank as one ordering signal; for subjective rankings, combine it
+with pointwise or listwise judging rather than relying on it alone. Check
 `GET /v1/scry/context` before long-running jobs because deployment policy can
 disable async public/private rerank lanes independently.
 

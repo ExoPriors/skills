@@ -193,13 +193,16 @@ Load only what the task needs:
 - Pairwise rerank judgement: `POST /v1/scry/rerank` with exactly one of
   `sql`, `list_id`, or inline `entities`
   (`[{"id":"optional","text":"..."}]` — judge your own items), plus
-  `attributes` and `topk`. Optional `attribute_perturbations` attaches aligned
-  or inverted prompt variants to a base attribute; the response includes a
-  `perturbation_report` with Spearman coherence between each variant and the
-  base attribute. It defaults to OpenRouter
-  `google/gemma-4-31b-it` / `gemma4:31b` and public judgement-run recording
-  for corpus-sourced runs; other maintained judge models (gemma-4-26b-a4b,
-  claude-haiku-4.5, gpt-5.4-nano/mini) are listed in
+  `attributes` and `topk` (`k` must be smaller than the candidate count;
+  `k` equal to the candidate count just confirms membership rather than
+  ordering). This route records pairwise judgement evidence, one signal among
+  several when ordering subjective lists. Optional `attribute_perturbations`
+  attaches aligned or inverted prompt variants to a base attribute; the response
+  includes a `perturbation_report` with Spearman coherence between each variant
+  and the base attribute. It defaults to OpenRouter `google/gemma-4-31b-it` /
+  `gemma4:31b` and public judgement-run recording for corpus-sourced runs; other
+  maintained judge models
+  (gemma-4-26b-a4b, claude-haiku-4.5, gpt-5.4-nano/mini) are listed in
   `references/query-patterns.md` §14.
   Use `judgement_privacy: "private"` or `"self"` for caller-only evidence;
   inline entities always record caller-only evidence (default `private`).
