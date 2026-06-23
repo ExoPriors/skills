@@ -66,10 +66,12 @@ Load only what the task needs:
 
 3. **Choose the surface deliberately.** When unsure where to look, route first:
    `POST /v1/scry/route` with `{"question": "..."}` returns the best surface(s),
-   the exact indexed `search_*` query to run, and cost warnings — use it instead
-   of guessing across surfaces. Then use typed search for bounded candidate
-   discovery, source-native SQL/helpers for source-visible corpus work, and
-   stored `@handle` vectors for conceptual similarity, contrast, and drift.
+   exact starter SQL, cost warnings, and an `investigation_plan` with decomposed
+   questions, evidence lanes, source annotations, coverage warnings, next
+   actions, and diligence guidance. Use it instead of guessing across surfaces.
+   Then use typed search for bounded candidate discovery, source-native
+   SQL/helpers for source-visible corpus work, and stored `@handle` vectors for
+   conceptual similarity, contrast, and drift.
    Prefer `scry.semantic_rerank(@handle, candidate_entity_ids, 'auto', limit_n)`
    after typed, lexical, or source-native candidate discovery for live
    policy-aware Voyage 4 retrieval across the high-fidelity and broad-coverage
@@ -173,8 +175,8 @@ Load only what the task needs:
 ## Routing Guide
 
 - Unsure where to look: `POST /v1/scry/route` with the question returns ranked
-  surfaces, the exact `search_*` query, and cost warnings. Use it before
-  guessing across surfaces.
+  surfaces, exact starter SQL, and an `investigation_plan`. Follow the evidence
+  lanes and coverage warnings before widening or synthesizing.
 - Fast keyword discovery: typed search, `scry.search_federated(...)`, or a
   source-native `scry.search_*` helper.
 - Specific source: use source filters, source-native tables, or source-native
