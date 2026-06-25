@@ -3,7 +3,7 @@
 Use this reference from the `/scry` skill when the user wants conceptual,
 semantic, or hybrid retrieval. Start with live context and schema:
 
-1. `GET /v1/scry/context?skill_generation=2026062202`
+1. `GET /v1/scry/context?skill_generation=2026062401`
 2. `GET /v1/scry/schema`
 3. `POST /v1/scry/embed` when you need a new concept handle
 4. `POST /v1/scry/query` with raw SQL and `Content-Type: text/plain`
@@ -308,7 +308,7 @@ counts per bucket and check source freshness before interpreting the distance.
   relation or `scry.entities_with_embeddings`.
 - Expecting every source row to have an embedding; check `scry.embedding_coverage`
   and filter `embedding_voyage4 IS NOT NULL`.
-- Running broad vector ordering before a cheap lexical/date/source probe.
+- Running broad vector ordering before a bounded lexical/date/source probe.
 - Requesting raw vector arrays; use distances and `@handle` references instead.
 - Treating anonymous handles as durable; use a personal key for long-running work.
 - Treating a compositional vector expression as a boolean filter, source filter,

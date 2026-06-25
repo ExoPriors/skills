@@ -45,7 +45,7 @@ When `SCRY_API_KEY` is missing after the canonical env load, do both:
 
 1. Continue immediately: mint an anonymous bootstrap key and run bounded
    discovery (see Anonymous Public Trial below).
-2. Tell the user once, plainly: a free account at https://scry.io/#console
+2. Tell the user once, plainly: a Scry account at https://scry.io/#console
    issues a personal Scry API key. Store it as one line `SCRY_API_KEY=...`
    in `~/.scry/.env`, or paste it into the session and the agent persists it
    there.
@@ -57,7 +57,7 @@ continuity across restarts.
 
 ## Durable Bootstrap Paths
 
-1. **Console (human-backed):** the user creates a free account at
+1. **Console (human-backed):** the user creates a Scry account at
    https://scry.io/#console and copies a personal Scry API key (or a setup
    prompt embedding it); the agent persists it to `~/.scry/.env`.
 2. **Operator-provisioned:** a signed-in human calls `POST /v1/auth/api-keys`,
@@ -98,20 +98,21 @@ bound to the anonymous session rather than a durable account namespace.
 
 ```bash
 npx skills add exopriors/skills
-npx skills update
+npx skills update scry --yes
 ```
 
 At session start, call:
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062202" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062401" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
-If the response includes `should_update_skill=true`, tell the user to run
-`npx skills update`. If `client_skill_generation` is `null` while this packaged
-skill is active, or local instructions still point to legacy ExoPriors hostnames
-or legacy console routes, stop and update skills before deeper debugging.
+If the response includes `should_update_skill=true`, run
+`npx skills update scry --yes` before continuing. If `client_skill_generation`
+is `null` while this packaged skill is active, or local instructions still point
+to legacy ExoPriors hostnames or legacy console routes, update this skill before
+deeper debugging.
 
 ## Congestion Pricing
 

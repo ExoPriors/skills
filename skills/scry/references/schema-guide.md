@@ -902,7 +902,7 @@ Key columns: `id` (`{site}:{post_id}`), `site`, `site_group`, `post_type`
 
 Filter by `site` (e.g., `stackoverflow`, `serverfault`, `math.stackexchange`) and
 `tags` (e.g., `'rust' = ANY(tags)`).
-Use `scry.stackexchange_site_status` for cheap coverage/freshness checks before
+Use `scry.stackexchange_site_status` for low-overhead coverage/freshness checks before
 running broad StackExchange lexical scans.
 
 ### Caselaw Views

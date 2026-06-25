@@ -13,7 +13,7 @@ over curated `scry.*` relations, and `POST /v1/scry/embed` to create semantic
 Use `GET /v1/stats`, `GET /v1/scry/context`, and `GET /v1/scry/schema` for live
 truth. Do not rely on static corpus counts or guessed schema.
 
-**Skill generation**: `2026062202`
+**Skill generation**: `2026062401`
 
 ## Reference Map
 
@@ -37,7 +37,7 @@ Load only what the task needs:
 1. **Handshake first.**
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062202" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062401" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
@@ -46,12 +46,12 @@ Load only what the task needs:
    gives you a Scry key for immediate use, first persist it there as
    `SCRY_API_KEY`, then use `$SCRY_API_KEY` in headers. A launch-directory
    `./.env` can supply project settings, but `~/.scry/.env` wins for the
-   durable Scry key. If `should_update_skill=true`, tell the user to run
-   `npx skills update`.
+   durable Scry key. If `should_update_skill=true`, run
+   `npx skills update scry --yes` before continuing.
 
    **No key set?** Do both, in order: mint an anonymous bootstrap key and
    start bounded discovery immediately (`POST /v1/scry/anonymous-key`, see
-   `references/access-and-runtime.md`), and tell the user once: a free
+   `references/access-and-runtime.md`), and tell the user once: a Scry
    account at https://scry.io/#console issues a personal Scry API key; store
    it as one line `SCRY_API_KEY=...` in `~/.scry/.env`, or paste it into the
    session and the agent persists it. Do not block discovery on signup, and
@@ -123,7 +123,7 @@ Load only what the task needs:
    `x-scry-priority-fee`, `x-scry-compute-units`, `x-scry-utilization`, and
    `x-scry-epoch`.
 
-6. **Every SQL query needs `LIMIT`.** Free personal keys start at 2,000
+6. **Every SQL query needs `LIMIT`.** Base personal keys start at 2,000
    standard rows, raw-vector responses start at 200 rows, and higher-authority
    lanes may reach the 10,000-row standard API ceiling. Treat the live schema,
    query response `max_rows`, and current key limits as the authority. Raw SQL

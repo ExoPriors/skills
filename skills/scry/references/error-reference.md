@@ -36,9 +36,9 @@ Triage order:
 If local skill instructions still mention legacy ExoPriors hostnames or
 legacy console routes, or if `/v1/scry/context` reports
 `client_skill_generation: null` while you're using the packaged Scry skill, stop
-and run `npx skills update` first.
+and run `npx skills update scry --yes` first.
 
-Funding recovery uses the same bootstrap paths as ordinary setup: a free
+Funding recovery uses the same bootstrap paths as ordinary setup: a Scry
 account and personal Scry API key from `https://scry.io/#console` for
 human-backed agents, `POST /v1/auth/agent/signup` for wallet-native agents,
 and `POST /v1/auth/api-keys` for operator-provisioned agents. Cards are a
@@ -216,7 +216,7 @@ responses.
 2. Add `WHERE source = '...'` to narrow scope
 3. Add date range filters (`original_timestamp >= '...'`)
 4. Reduce LIMIT
-5. Use `scry.search_federated(...)` or a source-native helper for a cheaper candidate fetch
+5. Use `scry.search_federated(...)` or a source-native helper for a lighter candidate fetch
 6. Run `/v1/scry/estimate` to check plan cost, suggested reserve, and `exposure_timeout_ms` before retrying
 7. If the error is `query_exposure_exhausted`, raise `X-Scry-Max-Exposure` only after confirming the broader query is actually worth the live price
 8. If the timeout names your `X-Scry-Max-Wait` (`limit_source: caller_max_wait`), the query exceeded the wait you chose, not a system limit — narrow it first; raise `X-Scry-Max-Wait` only when the longer wait is genuinely worth it to the user

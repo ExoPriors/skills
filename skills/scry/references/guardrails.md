@@ -13,7 +13,7 @@ Shared safety and operational rules for Scry-consuming skills.
 
 | Rule | Detail |
 |------|--------|
-| Context handshake | At session start, call `GET /v1/scry/context` and include `skill_generation` for packaged skills. Honor `should_update_skill`, check `client_skill_generation`, and use typed search, `scry.search_federated(...)`, or source-native `scry.search_*` helpers for lexical discovery. The `lexical_search.*` status fields are a separate diagnostic. If the response shows `client_skill_generation: null` while you're using packaged skills, or if local instructions still mention legacy ExoPriors hostnames or legacy console routes, tell the user to run `npx skills update` before more debugging. |
+| Context handshake | At session start, call `GET /v1/scry/context` and include `skill_generation` for packaged skills. Honor `should_update_skill`, check `client_skill_generation`, and use typed search, `scry.search_federated(...)`, or source-native `scry.search_*` helpers for lexical discovery. The `lexical_search.*` status fields are a separate diagnostic. If the response shows `client_skill_generation: null` while you're using packaged skills, or if local instructions still mention legacy ExoPriors hostnames or legacy console routes, run `npx skills update scry --yes` before more debugging. |
 | Schema first | Call `GET /v1/scry/schema` before constructing any SQL. For SQL-side discovery, query `scry.queryable_relations`, `scry.queryable_columns`, and `scry.queryable_functions` to inspect the queryable SQL schema. |
 | Operational status | If source-native helpers or curated views look degraded, call `GET /v1/scry/index-view-status` with any Scry key before assuming the query or schema is wrong. The `lexical_search.*` status fields are a separate diagnostic; check index-view-status before assuming lexical discovery is degraded. |
 | Clarify vague asks | If user intent is ambiguous, ask one short clarification question before expensive queries. |
@@ -27,7 +27,7 @@ Shared safety and operational rules for Scry-consuming skills.
 
 | Capability | Personal Scry API key | Notes |
 |---|---|---|
-| Max rows per query | 2,000 | Default interactive limit for a free personal Scry API key |
+| Max rows per query | 2,000 | Default interactive limit for a base personal Scry API key |
 | Max rows with raw vectors | 200 | Use `?include_vectors=1` only when you need raw vector rows in output |
 | Absolute API ceiling | 10,000 standard / 500 with vectors | Higher-authority lanes can reach this ceiling; ordinary agents should not assume it |
 | Bandwidth | 1 GB/day | Daily rolling budget on the key owner |

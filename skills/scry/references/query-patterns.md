@@ -45,7 +45,7 @@ LIMIT 50
 ### Lexical approximation loop for deep research
 
 For open questions, do not run one clever query and stop. Build a small ledger
-of competing lexical hypotheses, probe each one cheaply, then revise from the
+of competing lexical hypotheses, probe each one with bounded queries, then revise from the
 observed hit counts, timings, and sample rows.
 
 Each probe should record:
@@ -128,7 +128,7 @@ Iteration rule of thumb:
   a source-native helper.
 - slow but relevant: keep the angle, narrow its scope, and rerun before
   widening.
-- relevant and cheap: fan out adjacent terms, hydrate the best records, then
+- relevant and bounded: fan out adjacent terms, hydrate the best records, then
   decide whether semantic rerank or judgement adds information.
 
 ### Scoped to a specific forum
