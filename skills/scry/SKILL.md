@@ -13,7 +13,7 @@ over curated `scry.*` relations, and `POST /v1/scry/embed` to create semantic
 Use `GET /v1/stats`, `GET /v1/scry/context`, and `GET /v1/scry/schema` for live
 truth. Do not rely on static corpus counts or guessed schema.
 
-**Skill generation**: `2026062401`
+**Skill generation**: `2026063001`
 
 ## Reference Map
 
@@ -37,7 +37,7 @@ Load only what the task needs:
 1. **Handshake first.**
 
    ```bash
-   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062401" \
+   curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026063001" \
      -H "Authorization: Bearer $SCRY_API_KEY"
    ```
 
@@ -47,7 +47,9 @@ Load only what the task needs:
    `SCRY_API_KEY`, then use `$SCRY_API_KEY` in headers. A launch-directory
    `./.env` can supply project settings, but `~/.scry/.env` wins for the
    durable Scry key. If `should_update_skill=true`, run
-   `npx skills update scry --yes` before continuing.
+   `npx skills update scry --yes` before continuing. If you can run commands,
+   run it yourself rather than ask the user; report back only if the command is
+   unavailable or fails.
 
    **No key set?** Do both, in order: mint an anonymous bootstrap key and
    start bounded discovery immediately (`POST /v1/scry/anonymous-key`, see
@@ -80,8 +82,7 @@ Load only what the task needs:
    Hydrate typed-search records with `GET /v1/scry/search/records/{record_ref}`.
    For publication-first Parquet datasets, use `GET /v1/scry/datasets`,
    `GET /v1/scry/datasets/{id}`, and `POST /v1/scry/datasets/{id}/resolve`
-   before writing DuckDB SQL. The old shared BM25 diagnostic is not the
-   serving contract.
+   before writing DuckDB SQL.
    Treat embedding expressions as ranking hypotheses that need lexical,
    provenance, and coverage checks.
 

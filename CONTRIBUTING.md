@@ -49,15 +49,15 @@ The `skills/` directory in **exopriors-core** is the source of truth. This repo 
 **Sync script** (in exopriors-core):
 ```bash
 # Preview what would change
-./tools/sync-skills.sh
+./tools/sync_skills.sh
 
 # Sync, commit, and push to this repo
-./tools/sync-skills.sh --push
+./tools/sync_skills.sh --push
 ```
 
 **Drift detector** (in exopriors-core):
 ```bash
-./tools/skills-drift-check.sh
+./tools/skills_drift_check.sh
 ```
 
 Checks that constants, model tiers, SQL functions, and materialized views in the source code match what the skills claim. Also runs automatically as part of `./tools/docs_crud_audit.sh`.
@@ -68,7 +68,7 @@ If you need to sync manually without the script:
 
 1. Make changes in the exopriors-core repo (`skills/` directory)
 2. Verify against source code — especially constants and function signatures
-3. Run `./tools/skills-drift-check.sh` to catch drift
+3. Run `./tools/skills_drift_check.sh` to catch drift
 4. Copy `skills/` to this repo
 5. Commit and push both repos
 

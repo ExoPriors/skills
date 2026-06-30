@@ -104,15 +104,16 @@ npx skills update scry --yes
 At session start, call:
 
 ```bash
-curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026062401" \
+curl -s "https://api.scry.io/v1/scry/context?skill_generation=2026063001" \
   -H "Authorization: Bearer $SCRY_API_KEY"
 ```
 
 If the response includes `should_update_skill=true`, run
-`npx skills update scry --yes` before continuing. If `client_skill_generation`
-is `null` while this packaged skill is active, or local instructions still point
-to legacy ExoPriors hostnames or legacy console routes, update this skill before
-deeper debugging.
+`npx skills update scry --yes` before continuing. If you can run commands, run
+it yourself rather than ask the user; report back only if the command is
+unavailable or fails. If `client_skill_generation` is `null` while this packaged
+skill is active, or local instructions still point to legacy ExoPriors hostnames
+or legacy console routes, update this skill before deeper debugging.
 
 ## Congestion Pricing
 

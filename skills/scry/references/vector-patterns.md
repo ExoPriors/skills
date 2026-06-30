@@ -3,7 +3,7 @@
 Use this reference from the `/scry` skill when the user wants conceptual,
 semantic, or hybrid retrieval. Start with live context and schema:
 
-1. `GET /v1/scry/context?skill_generation=2026062401`
+1. `GET /v1/scry/context?skill_generation=2026063001`
 2. `GET /v1/scry/schema`
 3. `POST /v1/scry/embed` when you need a new concept handle
 4. `POST /v1/scry/query` with raw SQL and `Content-Type: text/plain`

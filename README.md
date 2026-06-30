@@ -51,7 +51,7 @@ Or just ask your agent: *"Search Scry for recent papers on mechanistic interpret
 
 ## Contributing
 
-The source of truth for these skills is the `skills/` directory in [exopriors-core](https://github.com/ExoPriors/exopriors-core). Changes should be made there and synced here via `tools/sync-skills.sh --push`. Direct edits to this repo will be overwritten on next sync.
+The source of truth for these skills is the `skills/` directory in [exopriors-core](https://github.com/ExoPriors/exopriors-core). Changes should be made there and synced here via `tools/sync_skills.sh --push`. Direct edits to this repo will be overwritten on next sync.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full sync workflow, source-of-truth file map, and content guidelines.
 

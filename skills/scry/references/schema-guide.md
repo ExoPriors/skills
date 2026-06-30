@@ -5,11 +5,7 @@ Reference guide for the documented `scry.*` surface. Treat
 live view/function availability and live column metadata. This guide provides
 context and query patterns that the schema endpoint alone cannot convey, but it
 may mention repo-defined surfaces that are not yet deployed on every public
-instance. When you need repo-side conformance proof instead of usage guidance,
-run `cd src/api && SCRY_API_KEY=... cargo run --features cli --bin scry-contract-audit -- --output json`;
-it checks that `/v1/scry/context` and `/v1/scry/schema` expose the same
-`truth_manifest` as the versioned content manifest and fails on non-pass drift
-by default.
+instance.
 
 ## How To Use This Reference
 
@@ -321,6 +317,7 @@ Source-local lexical helpers exist for many of these views:
 | `scry.search_forum_posts(query_text, mode, site_keys, limit_n, include_dangerous)` | BM25 over canonical forum posts keyed by site-specific `post_key`. Skips `content_risk='dangerous'` rows by default; set `include_dangerous => true` only for explicit dangerous-corpus work such as 4chan. |
 | `scry.search_discussions(query_text, mode, limit_n)` | Merges mailing-list and forum lexical hits into a normalized discussion result surface with shared collection/thread/message keys. |
 | `scry.search_packages(query_text, registries, limit_n)` | Cross-registry package search over npm, PyPI, crates.io, Go modules, NuGet, Maven Central, Hex.pm, Packagist, pub.dev, CocoaPods, conda-forge, JSR, and Homebrew. |
+| `scry.search_linkedin_profiles(query_text, mode, limit_n)` | BM25 over public LinkedIn profile seed/profile rows for identity research. |
 | `scry.social_search(query_text, mode, limit_n)` | Convenience union over the major social/post surfaces when you want a fast social-only lexical pass. |
 | `scry.search_stackexchange_questions(query_text, mode, sites, tags, limit_n, window_key)` | BM25 over StackExchange question windows. Default window: `recent`. Use `window_key='all'` to search all periods. |
 | `scry.search_stackexchange_answers(query_text, mode, sites, limit_n, window_key)` | BM25 over StackExchange answer windows. |
@@ -678,7 +675,7 @@ Three layers of author resolution, bottom to top:
 | `scry.person_vectors` / `scry.person_clusters` / `scry.person_cluster_memberships` | Vector and cluster read models over person judgements |
 | `scry.mv_author_profiles` | Per-source author stats aggregated from entity rows (threshold: >= 3 entities) |
 | `scry.mv_author_stats` | Author post counts and score aggregates |
-| `scry.author_linking_public_coverage` / `scry.author_linking_method_velocity` / `scry.author_counterpart_frontier_velocity` / `scry.author_linking_queue_throughput` | Author-linking coverage and throughput views for public identity work |
+| `scry.author_occurrences` / `scry.author_occurrence_people` / `scry.author_linking_source_native_coverage` / `scry.author_linking_public_coverage` / `scry.author_linking_method_velocity` / `scry.author_counterpart_frontier_velocity` / `scry.author_linking_queue_throughput` | Author occurrence, source-native coverage, method velocity, and throughput views for public identity work |
 | `scry.linkedin_profiles` / `scry.linkedin_profile_seeds` / `scry.linkedin_profile_crawl_attempts` | LinkedIn profile seed, profile, and crawl-attempt surfaces for public identity research |
 | `scry.ai_safety_candidate_crm` | AI-safety candidate CRM surface. Inspect live schema columns before broad joins. |
 | `scry.github_people` | GitHub-specific maintainer aggregates (stars, repos, comments) |
@@ -697,6 +694,7 @@ Public identity views contain the conservative verified-public link layer used f
 Common names produce false merges. When `display_name` is generic (e.g., "John Smith"), verify with secondary evidence (same bio, cross-linked profiles, overlapping topics).
 
 **Primary query path:** find the person in `scry.people`, inspect linked public accounts in `scry.person_accounts`, then query `scry.entities` by `author_person_id`.
+**Resolved-source rows:** `scry.person_source_rows(person_id, source_relations, limit_n)` returns bounded source-native rows for a resolved public person across author occurrence surfaces.
 
 **LessOnline person-writing path:** use `scry.search_lessonline(...)` for first-pass discovery. For a person-shaped result, open `scry.lessonline_person_cards`; when drilling in, read `scry.lessonline_person_evidence` to distinguish schedule/page evidence from authenticated event profile evidence, inspect `scry.lessonline_person_public_aliases`, then use `scry.search_lessonline_person_corpus_matches(...)` or `scry.lessonline_person_corpus_matches`. Use `match_basis`, `review_state`, and `confidence_tier` to separate event/profile evidence, research leads, and reviewed identity-backed matches.
 
@@ -1117,8 +1115,8 @@ then widen into richer SQL once you know the right corpus and filters.
 | Function | Description | Max limit |
 |----------|-------------|-----------|
 | `scry.search_federated(query_text, sources, kinds, limit_n, per_source_cap)` | Canonical source-scoped lexical shortlist helper across shared and source-native corpora | 200 |
-| `scry.search(query_text, mode, kinds, limit_n)` | Shared BM25 diagnostic helper over `content_text`; prefer `scry.search_federated(...)` | 100 |
-| `scry.search_ids(query, mode, kinds, limit_n)` | Shared BM25 diagnostic id helper over `content_text`; prefer `scry.search_federated(...)` | 2000 |
+| `scry.search(query_text, mode, kinds, limit_n)` | Shared lexical helper over `content_text`; prefer `scry.search_federated(...)` for source-scoped work | 100 |
+| `scry.search_ids(query, mode, kinds, limit_n)` | Shared lexical id helper over `content_text`; prefer `scry.search_federated(...)` for source-scoped work | 2000 |
 | `scry.search_reddit(query_text, mode, subreddits, kinds, limit_n, window_key)` | Ergonomic Reddit lexical search across posts/comments | 100 |
 | `scry.search_reddit_posts(query, subreddits, limit_n, window_key)` | Reddit post search | 50 per window |
 | `scry.search_reddit_comments(query, subreddits, limit_n, window_key)` | Reddit comment search | 50 per window |
@@ -1151,6 +1149,7 @@ registry functions for targeted lookups.
 | Function | Description |
 |----------|-------------|
 | `scry.search_packages(query_text, registries, limit_n)` | Unified cross-registry search. `registries` is a text array filter (e.g., `ARRAY['npm','pypi']`); NULL searches all. Returns `registry`, `package_name`, `description`, `original_author`, `latest_version`, `downloads_total`, `license`, `repository_url`, `score`. |
+| `scry.package_registry_author_rows` | Source-native package rows with `original_author`, content preview, URI, package metadata, and source timestamps for author-occurrence linking. |
 | `scry.search_npm_packages(query_text, mode, limit_n)` | npm packages |
 | `scry.search_pypi_packages(query_text, mode, limit_n)` | PyPI packages |
 | `scry.search_crates_io_packages(query_text, mode, limit_n)` | crates.io (Rust) |
