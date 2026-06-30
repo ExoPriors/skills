@@ -7,8 +7,10 @@ description: "Use Scry's agent-first research surface for public-corpus search, 
 
 Scry is a hosted, read-only research surface over the public Scry corpus. Use
 `POST /v1/scry/search` for typed discovery, `POST /v1/scry/query` for raw SQL
-over curated `scry.*` relations, and `POST /v1/scry/embed` to create semantic
-`@handle` vectors for SQL ordering and vector composition.
+over curated `scry.*` relations, `POST /v1/scry/deep-research/plan` when a
+portable client needs a bounded arXiv, Twitter/X, or custom-SQL research plan,
+and `POST /v1/scry/embed` to create semantic `@handle` vectors for SQL ordering
+and vector composition.
 
 Use `GET /v1/stats`, `GET /v1/scry/context`, and `GET /v1/scry/schema` for live
 truth. Do not rely on static corpus counts or guessed schema.

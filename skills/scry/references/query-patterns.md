@@ -25,6 +25,22 @@ pricing, receipts, and authorization.
 
 ---
 
+## 0. Deep-Research Planning API
+
+Use `POST /v1/scry/deep-research/plan` when a mobile client, agent workbench,
+or saved workflow needs a repeatable plan before SQL execution.
+
+- Endpoint: `/v1/scry/deep-research/plan`
+- Content type: `application/json`
+- Request keys: `question`, `workflow_id`, `sources`, `max_steps`, `depth`
+- Workflow IDs: `arxiv_literature`, `twitter_signal`, `custom_sql_research`
+- Response: endpoint sequence, typed-search request templates, SQL templates,
+  app-section field priorities, caveats, and continuation hints.
+
+The plan endpoint returns templates rather than results. Inspect the template,
+adjust dates or source filters when needed, then send selected SQL to
+`POST /v1/scry/query` as `text/plain`.
+
 ## 1. Lexical Search Patterns
 
 ### Basic source-scoped lexical search
