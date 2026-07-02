@@ -81,6 +81,7 @@ Load only what the task needs:
    policy-aware Voyage 4 retrieval across the high-fidelity and broad-coverage
    tiers. Use `scry.semantic_search(...)` for broad retrieval across the corpus
    when schema or index status reports the vector index ready.
+   The `lexical_search.*` fields in `/v1/scry/context` describe the old shared BM25 diagnostic path; they do not define typed search, `scry.search_federated(...)`, or source-native lexical helpers.
    Hydrate typed-search records with `GET /v1/scry/search/records/{record_ref}`.
    For publication-first Parquet datasets, use `GET /v1/scry/datasets`,
    `GET /v1/scry/datasets/{id}`, and `POST /v1/scry/datasets/{id}/resolve`
