@@ -108,7 +108,9 @@ Load only what the task needs:
    `POST /v1/scry/estimate/zero-retention`, then run
    `POST /v1/scry/query/zero-retention`; the response includes
    `retention_pricing`, costs 10x the ordinary priced query with a $0.25
-   minimum, and has no receipts or result replay. `GET /v1/scry/pricing` is
+   minimum, and has no receipts or result replay. On the x402 path the
+   challenge floors at 9 payment quanta ($0.27); x402 payments settle
+   on-chain and are publicly visible. `GET /v1/scry/pricing` is
    the live billing/market authority;
    authenticated queries have no daily quota. Use eager or patient mode to
    choose how you respond to congestion pricing; ordinary rate limits also
@@ -131,7 +133,10 @@ Load only what the task needs:
    standard rows, raw-vector responses start at 200 rows, and higher-authority
    lanes may reach the 10,000-row standard API ceiling. Treat the live schema,
    query response `max_rows`, and current key limits as the authority. Raw SQL
-   goes in a `Content-Type: text/plain` body, not JSON.
+   goes in a `Content-Type: text/plain` body, not JSON. `/v1/scry/query` also
+   accepts the HTTP `QUERY` method (RFC 10008) with identical behavior; on the
+   x402 path, retrying the same SQL within 10 minutes replays the stored
+   result instead of requiring a fresh payment.
 
 7. **Prefer source-native surfaces.** `scry.entities` is not the canonical home
    for every corpus. Prefer typed search, `scry.search_federated(...)`,
@@ -164,7 +169,12 @@ Load only what the task needs:
    `/v1/billing/auto-topup/eligibility`. Wallet agents can use
    `/v1/auth/agent/signup`; non-wallet agents can receive keys through
    `/v1/auth/api-keys`. Live funding rails include x402, browser Stripe
-   checkout, and crypto. `stripe_acp`, `ap2`, `visa_tap`, and
+   checkout, and crypto. An x402 settlement returns a one-time
+   `x-scry-key-claim` response header: exchange it within 1 hour at
+   `POST /v1/scry/x402/claim-key` for a durable API key on the same
+   wallet-backed account, or prepay balance with
+   `POST /v1/scry/x402/deposit` (amount from `X-Scry-Budget`, $1000 ceiling
+   per deposit). `stripe_acp`, `ap2`, `visa_tap`, and
    `mastercard_agent_pay` are control-plane/future rails. Check
    `funding.card_funding` before assuming card funding works.
 
