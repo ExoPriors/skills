@@ -274,7 +274,7 @@ live columns, health, and availability before querying them.
 | Family | Notes |
 |--------|-------|
 | `active_operation_*` / `operation_*` | Operator intent and operation state surfaces. |
-| `ai_philanthropy_*` | AI-philanthropy frontier evidence, actor, organization, research-signal, embedding, and harvest-health surfaces. |
+| `ai_philanthropy_*` | AI-philanthropy frontier evidence, actor, organization, research-signal, embedding, and ingest-health surfaces. |
 | `apisguru_*` / `arena_*` / `autocodebase_improvement_*` / `codebase_autophagy_*` / `llm_coding_alpha_*` | Software, API, codebase-improvement, and coding-alpha curation surfaces. |
 | `bls_*` / `fred_*` / `ecb_*` / `eurostat_*` / `treasury_fiscal_*` | Public economic and statistical time-series surfaces. |
 | `cfpb_*` / `fec_*` / `google_ads_transparency_center_*` / `google_political_ads_*` / `usaspending_*` / `samgov_*` | Public government, campaign-finance, ads-transparency, spending, and procurement surfaces. |
@@ -720,7 +720,7 @@ Common names produce false merges. When `display_name` is generic (e.g., "John S
 | `scry.ai_philanthropy_organization_signals` | Precomputed evidence-organization signal rows for the AI-philanthropy frontier |
 | `scry.ai_philanthropy_organization_candidates` | Aggregate organization and capital-allocation candidates derived from indexed AI-philanthropy evidence signals |
 | `scry.ai_philanthropy_organization_judgement_candidates` | Organization-linked first-class evidence targets queued for relevance and claim-unit judgement replay |
-| `scry.ai_philanthropy_harvest_health` | Freshness and coverage metrics for AI-philanthropy ingestion |
+| `scry.ai_philanthropy_ingest_health` | Freshness and coverage metrics for AI-philanthropy ingestion |
 | `scry.ai_philanthropy_embedding_coverage` | Per-evidence embedding and Reddit queue state for the AI-philanthropy frontier |
 | `scry.codebase_autophagy_sources` | Curated public sources for codebase-autophagy methods, including provenance, review state, latest judgement, and ranking fields |
 | `scry.codebase_autophagy_axes` | Independent judgement axes for the codebase-autophagy lens |
