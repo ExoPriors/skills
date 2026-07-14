@@ -8,13 +8,14 @@ description: "Use Scry's read-only ClickHouse/Nucleus research surface through /
 Scry exposes a read-only ClickHouse/Nucleus query surface. The live schema is
 the contract; static relation lists are only orientation.
 
-**Skill generation**: `2026071001`
+**Skill generation**: `2026071401`
 
 ## Workflow
 
-1. Load the durable key from `~/.scry/.env`, or mint a bounded anonymous key
-   with `POST /v1/scry/anonymous-key`.
-2. Call `GET /v1/scry/context?skill_generation=2026071001`.
+1. Load the durable key from `~/.scry/.env`. Context and schema are readable
+   without a credential; if no account key is available, stop before querying
+   and direct the user to `https://scry.io/#console`.
+2. Call `GET /v1/scry/context?skill_generation=2026071401`.
 3. Call `GET /v1/scry/schema` before writing SQL. Use only relations and helper
    functions returned there.
 4. Send one ClickHouse statement to `POST /v1/scry/query` with
@@ -26,6 +27,11 @@ Do not use engine catalogs, foreign-dialect casts or operators, compatibility
 helpers, or a fallback corpus database. Do not invent relations. Typed discovery remains
 available at `POST /v1/scry/search`, but SQL runs only through the canonical
 schema and query routes above.
+
+For multi-step research — several hypotheses, several sources, or any ask
+where missing vocabulary would silently distort the answer — follow
+`references/deep-research.md`: plan surfaces with `POST /v1/scry/route`, fan
+out lexical probes, keep a probe ledger, and end in a durable artifact.
 
 ## Registered surfaces
 
@@ -58,6 +64,8 @@ curl -s https://api.scry.io/v1/scry/query \
 
 ## References
 
+- `references/deep-research.md`: the multi-step research loop — surface
+  planning, lexical fanout, probe ledger, adjudication, continuation.
 - `references/schema-guide.md`: registered relations and columns.
 - `references/query-patterns.md`: bounded ClickHouse query patterns.
 - `references/vector-patterns.md`: registered vector helpers.
