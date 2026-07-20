@@ -127,4 +127,4 @@ LIMIT 50;
 3. Read `scry.lessonline_person_evidence` before making claims about the person.
 4. Inspect aliases and frontier rows for identity leads and open follow-ups.
 5. Use corpus-match rows before widening to federated or semantic Scry search.
-6. Cite event evidence rows, public URLs, corpus records, shares, or receipts.
+6. Cite event evidence rows, public URLs, corpus records, shares, or records.
