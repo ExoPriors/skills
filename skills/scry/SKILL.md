@@ -134,13 +134,6 @@ curl -s https://api.scry.io/v1/scry/query \
   `... WHERE original_author = {author:String} ... LIMIT 50`. Approved
   types: `String`, `UInt8..UInt64`, `Int8..Int64`, `Float32`, `Float64`,
   `Date`, `DateTime`. Keep `LIMIT` literal.
-- Backslashes in `String` parameter values: ClickHouse parses the value
-  in its escaped format, so a raw `\b` becomes a backspace byte and a
-  regex such as `\bRust\b` matches nothing. Double each backslash
-  (`\\bRust\\b`) or write the regex without backslashes
-  (`(^|[^a-z])Rust($|[^a-z])`). Inline string literals in the SQL body
-  already use literal escaping and do not have this problem. Verified
-  live 2026-08-07 (inline 7 hits, raw param 0, doubled param 7).
 - To keep a query, create a share: `POST /v1/scry/shares` with
   `{title, kind: "query", payload: {sql, params: [{name, type, default}],
   snapshot: {...}}}`. `title` is required, `snapshot` must be an object
