@@ -82,6 +82,7 @@ static text. Families your key can see include:
 
 | Relation | Purpose |
 | --- | --- |
+| `internet.text` | The unified lexical surface: one row per text document across all twelve text relations (reddit, twitter, hackernews, stackexchange, mastodon, crawl, internet documents, academic, forums, mailing lists, bluesky) with a shared token-indexed `search_text_lc` — start corpus-wide lexical questions here and hydrate per-relation detail via the `relation` column |
 | `hackernews.items` | Hacker News items with source identity and timestamps |
 | `reddit.comments` | Full-retention Reddit comments |
 | `reddit.posts` | Full-retention Reddit submissions; comment tree joins via link_id = concat('t3_', id) |
@@ -89,7 +90,7 @@ static text. Families your key can see include:
 | `embeddings.forum_posts` | ANN-ranked Voyage-4 forum chunks |
 | `forums.posts` | Primary forum corpus (LessWrong, EA Forum, and many more); enumerate with `SELECT source, count() FROM forums.posts GROUP BY source` before any community-scoped question. EA Forum depth lives in `internet.documents` (source = 'eaforum') |
 | `internet.documents` | Federated internet text across many sources, one row per document, karma/quality fields; the /search record_ref resolver; enumerate with `SELECT source, count() … GROUP BY source` |
-| `bluesky.posts` | Source-native Bluesky posts: at_uri key, author_did identity (key on DID — author_handle is unreliable), payload text; no text index — scope or budget full-text scans; read the coverage block for declared holes |
+| `bluesky.posts` | Source-native Bluesky posts: at_uri key, author_did identity (key on DID — author_handle is unreliable), payload text; token search via `hasToken(lower(payload), …)` or through `internet.text`; read the coverage block for declared holes |
 | `embeddings.bluesky_posts` | ANN-ranked Voyage-4 Bluesky chunks; hydrate via bluesky.posts.at_uri |
 | `mastodon.posts` | Deduplicated Mastodon posts |
 | `mastodon.profiles` | Deduplicated Mastodon profiles |
