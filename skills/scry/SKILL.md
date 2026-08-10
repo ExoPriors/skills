@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026080401`
+**Skill generation**: `2026081001`
 
 ## Workflow
 
@@ -17,11 +17,18 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?skill_generation=2026080401`.
+2. Call `GET /v1/scry/context?skill_generation=2026081001`.
 3. Call `GET /v1/scry/schema` before writing SQL. Use only relations and helper
    functions returned there. Read each relation's `query_guidance` block —
    `filter_columns_first`, `indexed_predicates`, `coverage_note` — before
    writing the first predicate: it names the indexed access paths.
+   The full document is large: once candidate relations are known, fetch
+   only their contracts with `GET /v1/scry/schema?relation=<name>[,<name>]`
+   (also exposed as the MCP `scry_schema` tool's `relation` argument).
+   Never guess column names from memory of similar sources — a wrong
+   column returns the relation's real column roster in the error, so one
+   failed query self-corrects in one step; an unknown relation returns
+   the nearest registered names.
 4. Send one SQL statement to `POST /v1/scry/query` with
    `Content-Type: text/plain`.
 5. Semantic search: mint a named query vector with `POST /v1/scry/embed`
