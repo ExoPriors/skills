@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081002`
+**Skill generation**: `2026081003`
 
 ## Workflow
 
@@ -17,18 +17,20 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?skill_generation=2026081002`.
-3. Call `GET /v1/scry/schema` before writing SQL. Use only relations and helper
-   functions returned there. Read each relation's `query_guidance` block —
-   `filter_columns_first`, `indexed_predicates`, `coverage_note` — before
-   writing the first predicate: it names the indexed access paths.
-   The full document is large: once candidate relations are known, fetch
-   only their contracts with `GET /v1/scry/schema?relation=<name>[,<name>]`
-   (also exposed as the MCP `scry_schema` tool's `relation` argument).
-   Never guess column names from memory of similar sources — a wrong
-   column returns the relation's real column roster in the error, so one
-   failed query self-corrects in one step; an unknown relation returns
-   the nearest registered names.
+2. Call `GET /v1/scry/context?skill_generation=2026081003`.
+3. Discover in two cheap steps before writing SQL. First
+   `GET /v1/scry/schema?mode=index` — the compact catalog of every
+   relation's description and coverage extent — to pick candidates from
+   your research question. Then fetch only their full contracts with
+   `GET /v1/scry/schema?relation=<name>[,<name>]` (both also exposed as
+   the MCP `scry_schema` tool's `mode` and `relation` arguments). Use only
+   relations and helper functions returned there, and read each relation's
+   `query_guidance` block — `filter_columns_first`, `indexed_predicates`,
+   `coverage_note` — before writing the first predicate: it names the
+   indexed access paths. Never guess column names from memory of similar
+   sources — a wrong column returns the relation's real column roster in
+   the error, so one failed query self-corrects in one step; an unknown
+   relation returns the nearest registered names.
 4. Send one SQL statement to `POST /v1/scry/query` with
    `Content-Type: text/plain`.
 5. Semantic search: mint a named query vector with `POST /v1/scry/embed`
@@ -41,6 +43,13 @@ orientation.
    JOIN); hydrate companion text in a second query.
 6. Keep every query bounded with `LIMIT`. Start at 20 and widen only after
    inspecting row shape, provenance, and source coverage.
+   Token search speed is governed by the rarest token: in
+   `hasToken`/`hasAllTokens` filters include at least one distinctive
+   token (a name, identifier, or unusual word) — all-common-word token
+   sets scan a large share of the table and run 30-60s. A slow query's
+   response carries a `performance_note` naming the fix. For broad
+   topical questions with only common words, use the embeddings helpers
+   instead.
 7. Parse results from `rows`, not a `data` key: each row is
    `{"$untrusted": {"display": ..., "exact_b64u": ...}}` — decode
    `exact_b64u` (base64url JSON array, values in column order) for exact
