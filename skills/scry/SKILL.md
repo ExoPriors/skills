@@ -18,7 +18,7 @@ orientation.
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
 2. Call `GET /v1/scry/context?skill_generation=2026081003`.
-3. Discover in two cheap steps before writing SQL. First
+3. Discover in two small steps before writing SQL. First
    `GET /v1/scry/schema?mode=index` — the compact catalog of every
    relation's description and coverage extent — to pick candidates from
    your research question. Then fetch only their full contracts with
