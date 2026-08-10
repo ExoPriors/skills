@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081006`
+**Skill generation**: `2026081005`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081006`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081005`.
 3. Discover in two small steps before writing SQL. First
    `GET /v1/scry/schema?mode=index` — the compact catalog of every
    relation's description and coverage extent — to pick candidates from
@@ -262,20 +262,6 @@ curl -s https://api.scry.io/v1/scry/query \
 - For published Parquet dataset artifacts, inspect
   `GET /v1/datasets/catalog` and `GET /v1/datasets/{dataset_id}`. These are
   artifact metadata routes, not a corpus SQL fallback.
-- To order retrieved rows by an attribute you can describe, `POST
-  /v1/scry/rerank` with `documents: [{id,text}]` (2..=1000) and an
-  `instruction` — the instruction is the point: "rank by methodological
-  rigor" re-sorts by that attribute, not generic relevance. Tiers:
-  `fast` (local, ~100ms, $0, default), `quality` (best
-  instruction-following, still $0), `hosted` (scores long documents in
-  full, per-token cost in `usage.cost_nanodollars`); `model` pins an
-  exact lane. Scores are monotonic ranking signals, not calibrated
-  probabilities, and are not comparable across models. Each tier
-  degrades down a lane chain; identity order plus a `degraded_reason`
-  means no lane was available — the endpoint never reorders silently.
-  The live tier contract is `offerings.rerank` on `GET /v1/scry/context`;
-  for judgement-grade pairwise comparisons beyond reranking, that
-  offering points at `POST /v1/judgements/runs`.
 
 ## Output
 
