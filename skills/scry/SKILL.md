@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081004`
+**Skill generation**: `2026081005`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?skill_generation=2026081004`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081005`.
 3. Discover in two small steps before writing SQL. First
    `GET /v1/scry/schema?mode=index` — the compact catalog of every
    relation's description and coverage extent — to pick candidates from
