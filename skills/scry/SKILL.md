@@ -9,15 +9,16 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081003`
+**Skill generation**: `2026081004`
 
 ## Workflow
 
-1. Load the durable key from `~/.scry/.env`. Context is readable without a
+1. Load the durable key from `~/.config/scry/env` (legacy `~/.scry/.env`
+   still honored). Context is readable without a
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?skill_generation=2026081003`.
+2. Call `GET /v1/scry/context?skill_generation=2026081004`.
 3. Discover in two small steps before writing SQL. First
    `GET /v1/scry/schema?mode=index` — the compact catalog of every
    relation's description and coverage extent — to pick candidates from
@@ -130,7 +131,10 @@ name.
 
 ```bash
 set -a
-[ -f "$HOME/.scry/.env" ] && . "$HOME/.scry/.env"
+_scry_env="${XDG_CONFIG_HOME:-$HOME/.config}/scry/env"
+[ -f "$_scry_env" ] && . "$_scry_env"
+[ ! -f "$_scry_env" ] && [ -f "$HOME/.scry/.env" ] && . "$HOME/.scry/.env"
+unset _scry_env
 set +a
 
 curl -s https://api.scry.io/v1/scry/schema \
