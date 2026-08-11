@@ -116,6 +116,7 @@ static text. Families your key can see include:
 | `academic.papers` | Full text of academic papers, keyed by DOI |
 | `embeddings.academic_paper_chunks` | Voyage-4-nano full-text paper chunks |
 | `agents.skills` | Parsed SKILL.md documents from public agent-skill repositories |
+| `github.documents` | Live GitHub repo document corpus: READMEs, docs, and budgeted source files, keyed `<owner>/<repo>:<path>` |
 | `mailing_lists.messages` | Mailing-list and Usenet archive messages |
 | `mailing_lists.catalog` | Per-list index: list_key, landed counts, first/last message times — start here to find a list or newsgroup |
 | `stackexchange.posts` | Stack Exchange questions and answers across landed sites |
