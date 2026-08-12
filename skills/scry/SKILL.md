@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081006`
+**Skill generation**: `2026081201`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081006`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081201`.
 3. Discover in two small steps before writing SQL. First
    `GET /v1/scry/schema?mode=index` — the compact catalog of every
    relation's description and coverage extent — to pick candidates from
@@ -263,7 +263,18 @@ curl -s https://api.scry.io/v1/scry/query \
 - For published Parquet dataset artifacts, inspect
   `GET /v1/datasets/catalog` and `GET /v1/datasets/{dataset_id}`. These are
   artifact metadata routes, not a corpus SQL fallback.
-- To order retrieved rows by an attribute you can describe, `POST
+- To sort a query's rows by an attribute you can describe, send
+  `x-scry-rerank: <ranking directive>` on `POST /v1/scry/query` — one
+  call, rows come back re-ordered by the directive ("most
+  methodologically rigorous first"), local lanes, $0. Companions:
+  `x-scry-rerank-column` names the text column (auto when exactly one
+  String column is in the result), `x-scry-rerank-tier: fast|quality`
+  (default fast), `x-scry-rerank-top: N` keeps the head. The envelope's
+  `rerank` block carries `{applied, model, column, scores}` (scores
+  aligned to returned row order) — or the exact reason rows stayed in
+  SQL order; a rerank failure never fails the billed query.
+- To re-order documents you already hold (or to use the hosted
+  long-document tier), `POST
   /v1/scry/rerank` with `documents: [{id,text}]` (2..=1000) and an
   `instruction` — the instruction is the point: "rank by methodological
   rigor" re-sorts by that attribute, not generic relevance. Tiers:
