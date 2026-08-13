@@ -37,7 +37,7 @@ orientation.
 5. Semantic search: mint a named query vector with `POST /v1/scry/embed`
    `{text, name}`, then use it as the unquoted `@name` inside
    `scry_vector_topk_distance`; full patterns are in
-   `references/query-patterns.md`. The ANN set is dynamic — a relation
+   `references.md` § Scry query patterns. The ANN set is dynamic — a relation
    leaves it while its vector index re-materializes — and the schema names
    the live set: only surfaces with `serves_ann: true` accept ANN ranking
    (the rest still serve plain SQL). ANN queries must be standalone (no
@@ -70,7 +70,7 @@ corpus's most common research failure.
 
 For multi-step research — several hypotheses, several sources, or any ask
 where missing vocabulary would silently distort the answer — follow
-`references/deep-research.md`: fan out lexical probes, keep a probe
+`references.md` § Deep research operations: fan out lexical probes, keep a probe
 ledger, verify the written report against the ledger, and end in a durable
 artifact. `POST /v1/scry/route` is a usable first step for surface
 selection again (repaired and re-measured 2026-08-02: 23/24 top-1 on a
@@ -79,13 +79,13 @@ falls back deterministically). Treat its output as a starting shortlist,
 not a substitute for the enumeration and probe discipline above.
 
 For any study that compares cohorts or tests a hypothesis (who does X more,
-does trait A predict behavior B), follow `references/study-design.md` before
+does trait A predict behavior B), follow `references.md` § Comparative study design before
 writing the first query: pre-state the refuter, audit selection–outcome
 independence, and climb no higher on the interpretation ladder than the
 instrument licenses.
 
 For academic work — finding papers, tracing citation neighborhoods, and
-above all reviewer discovery — follow `references/academic-reviewers.md`.
+above all reviewer discovery — follow `references.md` § Academic papers and reviewer discovery.
 Reviewer discovery is a coverage problem: enumerate every candidate pool
 with its denominator, keep a candidate ledger, screen conflicts, rank on
 explicit axes, and stop on pool exhaustion, never on "enough names."
@@ -186,14 +186,14 @@ curl -s https://api.scry.io/v1/scry/query \
 
 ## References
 
-- `references/deep-research.md`: the multi-step research loop — surface
+- `references.md` § Deep research operations: the multi-step research loop — surface
   planning, lexical fanout, probe ledger, adjudication, report integrity,
   continuation.
-- `references/study-design.md`: comparative / hypothesis-testing discipline —
+- `references.md` § Comparative study design: comparative / hypothesis-testing discipline —
   circularity, stance, temporal holdout, controls, power, interpretation.
-- `references/query-patterns.md`: bounded query patterns,
+- `references.md` § Scry query patterns: bounded query patterns,
   registered vector helpers, and failure recovery.
-- `references/academic-reviewers.md`: the academic estate — metadata ↔
+- `references.md` § Academic papers and reviewer discovery: the academic estate — metadata ↔
   full-text DOI bridge, authorship flattening, and the exhaustive
   reviewer-discovery loop with denominators.
 
