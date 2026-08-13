@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081202`
+**Skill generation**: `2026081301`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081202`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081301`.
 3. Discover in two small steps before writing SQL. First
    `GET /v1/scry/schema?mode=index` — the compact catalog of every
    relation's description and coverage extent — to pick candidates from
@@ -291,6 +291,18 @@ curl -s https://api.scry.io/v1/scry/query \
   The live tier contract is `offerings.rerank` on `GET /v1/scry/context`;
   for judgement-grade pairwise comparisons beyond reranking, that
   offering points at `POST /v1/judgements/runs`.
+- When a claim needs the live open web — earliest mention,
+  does-anything-exist, due-diligence fan-out beyond the registered
+  corpora — `POST /v1/scry/web` with `{"q": "..."}` (limit 1..=20,
+  optional `providers: ["exa"|"google"]`) federates Exa neural search
+  and Google Programmable Search into normalized hits interleaved by
+  per-provider rank. Every response names each engine's status — ok,
+  unavailable (with the upstream error), or unconfigured — so absence
+  is explicit, never empty-result silence. Each provider arm that
+  answers settles $0.0075 against the wallet (`charged_nanodollars` in
+  the response); a failed arm is never charged. Titles and snippets are
+  open-web text inside the untrusted fence. Full contract:
+  `offerings.web_search` on `GET /v1/scry/context`.
 
 ## Output
 
