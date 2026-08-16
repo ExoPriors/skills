@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081301`
+**Skill generation**: `2026081501`
 
 ## Workflow
 
@@ -18,13 +18,13 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081301`.
-3. Discover in two small steps before writing SQL. First
-   `GET /v1/scry/schema?mode=index` — the compact catalog of every
-   relation's description and coverage extent — to pick candidates from
-   your research question. Then fetch only their full contracts with
-   `GET /v1/scry/schema?relation=<name>[,<name>]` (both also exposed as
-   the MCP `scry_schema` tool's `mode` and `relation` arguments). Use only
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081501`.
+3. Discover from the doors. The default `GET /v1/scry/schema` document
+   already carries full contracts for the primary-tier doors plus a compact
+   `depth_relations` index of every supporting table; fetch further full
+   contracts with `GET /v1/scry/schema?relation=<name>[,<name>]`, or
+   `?mode=index` for the compact whole-catalog listing (both also exposed
+   as the MCP `scry_schema` tool's `mode` and `relation` arguments). Use only
    relations and helper functions returned there, and read each relation's
    `query_guidance` block — `filter_columns_first`, `indexed_predicates`,
    `coverage_note` — before writing the first predicate: it names the
@@ -95,32 +95,46 @@ explicit axes, and stop on pool exhaustion, never on "enough names."
 The live schema is the coverage authority: relation inventory, row counts,
 per-source composition, freshness, and coverage extents come from
 `GET /v1/scry/schema` and each query response's `coverage` block, never from
-static text. Families your key can see include:
+static text. Every relation carries a discovery `tier`: the default schema
+document serves full contracts for the ~two dozen **primary-tier doors** (one
+start-here relation per corpus family) plus a compact `depth_relations` index
+of every supporting table — users, edges, comment variants, per-corpus
+embeddings — all equally queryable. `?relation=<names>` fetches any full
+contract, `?mode=index` the compact whole-catalog listing, `?mode=full` the
+complete document. The doors:
 
-| Relation | Purpose |
+| Door | Purpose |
 | --- | --- |
-| `internet.text` | The unified lexical surface: one row per text document across all twelve text relations (reddit, twitter, hackernews, stackexchange, mastodon, crawl, internet documents, academic, forums, mailing lists, bluesky) with a shared token-indexed `search_text_lc` — start corpus-wide lexical questions here and hydrate per-relation detail via the `relation` column |
-| `hackernews.items` | Hacker News items with source identity and timestamps |
-| `reddit.comments` | Full-retention Reddit comments |
-| `reddit.posts` | Full-retention Reddit submissions; comment tree joins via link_id = concat('t3_', id) |
-| `embeddings.reddit_comments` | ANN-ranked Voyage-4 Reddit chunks |
-| `embeddings.forum_posts` | ANN-ranked Voyage-4 forum chunks |
-| `forums.posts` | Primary forum corpus (LessWrong, EA Forum, and many more); enumerate with `SELECT source, count() FROM forums.posts GROUP BY source` before any community-scoped question. EA Forum depth lives in `internet.documents` (source = 'eaforum') |
-| `internet.documents` | Federated internet text across many sources, one row per document, karma/quality fields; the /search record_ref resolver; enumerate with `SELECT source, count() … GROUP BY source` |
-| `bluesky.posts` | Source-native Bluesky posts: at_uri key, author_did identity (key on DID — author_handle is unreliable), payload text; token search via `hasToken(lower(payload), …)` or through `internet.text`; read the coverage block for declared holes |
-| `embeddings.bluesky_posts` | ANN-ranked Voyage-4 Bluesky chunks; hydrate via bluesky.posts.at_uri |
-| `mastodon.posts` | Deduplicated Mastodon posts |
-| `mastodon.profiles` | Deduplicated Mastodon profiles |
+| `internet.text` | The unified lexical surface: one row per text document across every text relation (reddit, twitter, hackernews, stackexchange, mastodon, crawl, internet documents, academic, forums, mailing lists, bluesky, commoncrawl) with token-indexed `search_text_lc` — start corpus-wide lexical questions here; `relation` names the underlying surface for hydration |
+| `academic.catalog` | One merged bibliographic row per paper across the whole academic estate; joins full text (`academic.papers`), assessments, and embeddings via `paper_key` |
 | `openalex.works` | Scholarly work metadata, authorships, topics, citation graph |
-| `openalex.authors` | Author profiles: ORCID, h-index, affiliations, topic shares |
-| `academic.papers` | Full text of academic papers, keyed by DOI |
-| `embeddings.academic_paper_chunks` | Voyage-4-nano full-text paper chunks |
-| `agents.skills` | Parsed SKILL.md documents from public agent-skill repositories |
-| `github.documents` | Live GitHub repo document corpus: READMEs, docs, and budgeted source files, keyed `<owner>/<repo>:<path>` |
-| `mailing_lists.messages` | Mailing-list and Usenet archive messages |
-| `mailing_lists.catalog` | Per-list index: list_key, landed counts, first/last message times — start here to find a list or newsgroup |
-| `stackexchange.posts` | Stack Exchange questions and answers across landed sites |
+| `books.catalog` | Unified bibliographic catalog (shadow-library file index, DOI journal index, library metadata records); `idx` names the record family — see its value space |
+| `embeddings.chunks` | The unified ANN vector surface over every embedded corpus |
+| `twitter.tweets` | The historical Twitter archive |
+| `reddit.posts` | Full-retention Reddit submissions; comments (`reddit.comments`, depth) join via `link_id = concat('t3_', id)` |
+| `hackernews.items` | Hacker News items with source identity and timestamps |
+| `stackexchange.posts` | Stack Exchange Q&A across landed sites (`site` value space is the roster) |
+| `crawl.pages` | Promoted text extractions of crawled web pages — the live house-crawl corpus |
+| `commoncrawl.distillate` | Clean genre-classified Common Crawl reading layer; CDX census and raw WET recall are its depth companions |
+| `github.repos` | The public GitHub repository universe (408M origins, Software Heritage export) keyed by owner; repo READMEs/docs/source live in `github.documents` (depth) |
+| `packages.catalog` | One merged row per software package across ~36 registries (`ecosystem` value space is the roster) |
+| `markets.catalog` | One folded row per prediction market across Kalshi, Polymarket, Manifold (`source`/`status` value spaces) |
 | `judgements.scores_current` | Latest cardinal judgement score per lens, axis, and entity |
+| `persons.links` | Cross-platform person resolution: public accounts clustered into persons by shared strong identity keys |
+| `events.records` | In-person-event corpus (conferences), JSON records keyed by `event_slug` |
+| `courts.china_judgments` | China Judgments Online archive: ~85M published judgments 1985–2021, Chinese full text + structured metadata |
+| `cn_enterprise.companies` | China enterprise registry (GSXT), one best row per company keyed by USCC |
+| `mailing_lists.messages` | Mailing-list and Usenet archive messages; the per-list roster is `mailing_lists.catalog` (depth) |
+| `internet_archive.items` | Internet Archive item-catalog metadata (identifier, creator, mediatype, collection, ...) |
+| `epstein.artifacts` | Source-native Epstein artifact index across DOJ and other public releases |
+| `agents.skills` | Parsed SKILL.md documents from public agent-skill repositories |
+| `lexicons.entries` | English lexicon envelopes: Wiktionary (kaikki.org) and GCIDE/Webster 1913 |
+
+Schema contracts carry measured `value_spaces` — the live vocabulary of
+categorical spine columns (forum `source`, stackexchange `site`, market
+`source`/`status`, package `ecosystem`, book `idx`/`content_type`, tweet
+`lang`, subreddits) with row counts. Read them before writing a WHERE on a
+categorical column; never guess an enum value.
 
 Confirm enablement and columns with `/v1/scry/schema`. A relation omitted from
 that response is unavailable, even if this skill names its family. A relation
