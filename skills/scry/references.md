@@ -253,7 +253,7 @@ accounts get suspended) and by crawl selection of the corpus.
 Call `GET /v1/scry/schema`, choose an enabled registered relation, then send one
 bounded SQL statement to `POST /v1/scry/query`.
 
-> **Twitter corpus access:** `twitter.tweets` and `twitter.token_search` are
+> **Historical Twitter archive access:** `twitter.tweets` and `twitter.token_search` are
 > not available to public keys — a query naming them is refused at admission.
 > The patterns transfer unchanged to other text-indexed relations (e.g.
 > `reddit.comments`, `forums.posts`).
@@ -465,7 +465,7 @@ ORDER BY item_count DESC
 LIMIT 20
 ```
 
-### Twitter corpus (offline for public keys)
+### Historical Twitter archive (offline for public keys)
 
 `twitter.tweets`, `twitter.token_search`, and `twitter.vector_search` are
 offline for public keys. Treat a refusal as unavailability and use another
