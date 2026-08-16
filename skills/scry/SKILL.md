@@ -108,7 +108,7 @@ complete document. The doors:
 | `internet.text` | The unified lexical surface: one row per text document across every text relation (reddit, twitter, hackernews, stackexchange, mastodon, crawl, internet documents, academic, forums, mailing lists, bluesky, commoncrawl) with token-indexed `search_text_lc` — start corpus-wide lexical questions here; `relation` names the underlying surface for hydration |
 | `academic.catalog` | One merged bibliographic row per paper across the whole academic estate; joins full text (`academic.papers`), assessments, and embeddings via `paper_key` |
 | `openalex.works` | Scholarly work metadata, authorships, topics, citation graph |
-| `books.catalog` | Unified bibliographic catalog (shadow-library file index, DOI journal index, library metadata records); `idx` names the record family — see its value space |
+| `books.catalog` | Unified bibliographic catalog (file-backed book index, DOI journal index, library metadata records); `idx` names the record family — see its value space |
 | `embeddings.chunks` | The unified ANN vector surface over every embedded corpus |
 | `twitter.tweets` | The historical Twitter archive |
 | `reddit.posts` | Full-retention Reddit submissions; comments (`reddit.comments`, depth) join via `link_id = concat('t3_', id)` |
@@ -217,8 +217,8 @@ curl -s https://api.scry.io/v1/scry/query \
 - Account and market state: `GET /v1/scry/account`, `GET /v1/scry/pricing`,
   `GET /v1/scry/price`, `GET /v1/scry/price/history`,
   `GET /v1/scry/price/stream`.
-- Per-query cost arrives in the query response body: `burden_nanodollars`
-  (the raw machine-rate meter your query consumed) beside
+- Per-query charges arrive in the query response body: `burden_nanodollars`
+  (the metered burden of your query) beside
   `spend_nanodollars` (what you actually paid under the fairness charge
   law — can exceed the raw meter for heavy identities), plus `duration_ms`, `read_rows`,
   `read_bytes`, and `record_id`. `billing_mode` names the regime:
@@ -247,12 +247,12 @@ curl -s https://api.scry.io/v1/scry/query \
   ones — `subreddit = 'MachineLearning'` vs `'machinelearning'` is the
   classic silent zero.
 - Pricing is fair, not capped: charges engage only under measured
-  congestion, and what you pay is the raw machine-rate meter times a
+  congestion, and what you pay is the metered burden times a
   fairness weight over your own rolling-week (continuously decayed)
   usage — 1× for light use, rising quadratically past the free band to
-  at most 8× for identities monopolizing the box. Light research stays
-  near raw cost (a modest query is fractions of a cent); sustained
-  hammering pays a premium that grows with how hard you hammer. The
+  at most 8× for identities monopolizing the box. Light research pays
+  the base rate; sustained hammering pays a premium that grows with how
+  hard you hammer. The
   full law — rates, bands, and the operator's current price multiplier
   — is published as `charge_law` on `GET /v1/scry/pricing`. Off-peak
   research costs least (slack is free).
