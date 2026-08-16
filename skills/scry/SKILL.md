@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081501`
+**Skill generation**: `2026081502`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081501`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081502`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -116,6 +116,7 @@ complete document. The doors:
 | `stackexchange.posts` | Stack Exchange Q&A across landed sites (`site` value space is the roster) |
 | `crawl.pages` | Promoted text extractions of crawled web pages — the live house-crawl corpus |
 | `commoncrawl.distillate` | Clean genre-classified Common Crawl reading layer; CDX census and raw WET recall are its depth companions |
+| `social.posts` | Six frozen fringe-platform archives (voat, parler, gab, telegram, discord, truth_social) as one relation — always filter `platform`; profiles/edges/community directories are its depth companions (`social.users`/`edges`/`communities`) |
 | `github.repos` | The public GitHub repository universe (408M origins, Software Heritage export) keyed by owner; repo READMEs/docs/source live in `github.documents` (depth) |
 | `packages.catalog` | One merged row per software package across ~36 registries (`ecosystem` value space is the roster) |
 | `markets.catalog` | One folded row per prediction market across Kalshi, Polymarket, Manifold (`source`/`status` value spaces) |
