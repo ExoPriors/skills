@@ -471,6 +471,34 @@ LIMIT 20
 offline for public keys. Treat a refusal as unavailability and use another
 registered text-indexed relation.
 
+### Twitter follow graph
+
+One edge set, two physical orderings, one denominator table. Filter the
+side the relation is keyed on; handle predicates use the lowercase `*_lc`
+columns (bloom-indexed):
+
+```sql
+-- whom does @sama follow (twitter.following is keyed follower-first)
+SELECT followee_id, followee_handle, last_observed
+FROM twitter.following
+WHERE follower_handle_lc = 'sama'
+ORDER BY last_observed DESC LIMIT 50
+
+-- who, among the walked seeds, follows @karpathy (keyed followee-first)
+SELECT follower_id, follower_handle
+FROM twitter.followers
+WHERE followee_handle_lc = 'karpathy' LIMIT 50
+
+-- was this seed's list actually walked, and how completely?
+SELECT handle, captured, declared, coverage_ratio, last_observed
+FROM twitter.follow_coverage
+WHERE direction = 'following' AND handle_lc = 'sama'
+```
+
+The follower side is exactly the ~33k walked seeds (`twitter.follow_coverage`
+is their roster); the followee side is anyone a seed follows. Absence of an
+edge is evidence only for a seed with high `coverage_ratio`.
+
 ### Reddit comments
 
 ```sql
