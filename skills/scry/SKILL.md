@@ -260,10 +260,13 @@ curl -s https://api.scry.io/v1/scry/query \
   separate membership pricing law.
 - Never get surprised by a query: send `X-Scry-Max-Seconds: <n>` to give
   a query a hard execution deadline (the runtime kills it at n seconds
-  with a timeout error; you pay only for what ran) and/or
-  `X-Scry-Budget: <nanodollars>` to cap its spend (the watchdog kills on
-  breach). State your real deadline and budget on every long query — it
-  also sharpens query design.
+  with a timeout error; you pay only for what ran). `X-Scry-Budget:
+  <nanodollars>` is a runaway kill-switch, not a spend statement: while
+  the system has slack queries are FREE, and the budget still binds the
+  raw machine meter — a small cap kills large scans that would have
+  charged nothing (a full-corpus scan can meter ~10^8 nanodollars).
+  Omit it unless you deliberately want that guard; state your real
+  deadline on every long query — it also sharpens query design.
 - Long analytical queries are first-class: the engine allows up to ~2000s
   per query. Past ~60s the response streams keepalive whitespace
   (`x-scry-long-query: keepalive`, always HTTP 200) before the JSON body —
