@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081701`
+**Skill generation**: `2026081702`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081701`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081702`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -55,6 +55,22 @@ orientation.
    `{"$untrusted": {"display": ..., "exact_b64u": ...}}` — decode
    `exact_b64u` (base64url JSON array, values in column order) for exact
    values. A client that reads `data` sees false empty results.
+
+## Memory
+
+Scry hosts one cross-platform memory document per account
+(`GET`/`POST /v1/scry/memory`; MCP `scry_memory_read`/`scry_memory_write`):
+markdown, default slug `main`, 64KB, shared by every agent and harness the
+user connects. At session start read it alongside context (version 0 +
+empty content = none yet). At session end, consolidate durable user
+preferences — including what worked against Scry: relations, query
+patterns, vector handles — back into it under a `## Scry usage` heading.
+Writes are whole-document compare-and-swap on `if_version`; a 409 returns
+the current head — merge into it and retry. Keep it compressed: the cap is
+the decay function. If the document is empty and the user's local agent
+memory holds durable preferences, you may offer — once, and only with the
+user's explicit approval — to consolidate them into Scry memory so they
+travel across platforms. Encrypted at rest server-side.
 
 Do not use engine catalogs, foreign-dialect casts or operators, compatibility
 helpers, or a fallback corpus database. Do not invent relations. Typed discovery remains
@@ -345,6 +361,25 @@ curl -s https://api.scry.io/v1/scry/query \
   The live tier contract is `offerings.rerank` on `GET /v1/scry/context`;
   for judgement-grade pairwise comparisons beyond reranking, that
   offering points at `POST /v1/judgements/runs`.
+- For "what does the fresh web say about X since my cutoff", `POST
+  /v1/scry/brief` (MCP: `scry_brief`) with `{"question": "...",
+  "known_after": "<RFC 3339 or YYYY-MM-DD>", "k": 1..12}` returns 8-12
+  dated verbatim passages `{title, true_as_of, quote, source_url,
+  relevance}` from a rolling ~45-day crawl of allowlisted
+  high-information sources (major news, AI-lab and government
+  announcement pages, primary technical sources). A brief is retrieval,
+  never generation: quotes are verbatim page text inside the untrusted
+  fence, `true_as_of` is the crawl-observation time (an upper bound on
+  when the fact became public), and composition is deterministic —
+  semantic match, local rerank, exact-duplicate collapse, at most two
+  passages per host, one representative per probable event.
+  `known_after` states temporal eligibility (only pages first observed
+  after it are returned — set it to your knowledge cutoff); it does not
+  model what you know. Empty results carry a `coverage_note`; a
+  `degraded_reason` of ANN order means the rerank lanes were down, not
+  that relevance is meaningless. For anything older than the fresh
+  window, exhaustive coverage, or lexical/entity lookups, use
+  `/v1/scry/search` or SQL instead.
 - When a claim needs the live open web — earliest mention,
   does-anything-exist, due-diligence fan-out beyond the registered
   corpora — `POST /v1/scry/web` with `{"q": "..."}` (limit 1..=20,
