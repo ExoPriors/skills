@@ -271,6 +271,11 @@ curl -s https://api.scry.io/v1/scry/query \
   `empty_result_note` text itself weakens in this state). Polling for
   data that has not landed yet? `extent.max` tells you the corpus right
   edge — poll the schema's lightweight coverage, not your full query.
+  `extent.newest_event_at` carries that same edge as a full UTC
+  timestamp — the newest landed entry's own event time. Precision
+  follows the extent column: second precision on scan-basis relations;
+  Date columns (and parts-basis date metadata) resolve to midnight, so
+  check `extent.basis` before reading the clock part as exact.
 - Schema entries for major categorical columns carry `value_spaces`: the
   measured top values (with row counts over a recent sample, plus
   `sample_rows` as the share denominator and `cardinality_in_sample`).
