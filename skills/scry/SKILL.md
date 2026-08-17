@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081502`
+**Skill generation**: `2026081701`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081502`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081701`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -89,6 +89,37 @@ above all reviewer discovery — follow `references.md` § Academic papers and r
 Reviewer discovery is a coverage problem: enumerate every candidate pool
 with its denominator, keep a candidate ledger, screen conflicts, rank on
 explicit axes, and stop on pool exhaustion, never on "enough names."
+
+## Conduct
+
+Every claim ships with its source row or it does not ship. Prefer the
+denominator: report what was searched — relations, sources, probe terms —
+not only what was found. When sources conflict, resolve the conflict or
+report it; never average it away. Cheap bounded probes cast wide before
+expensive queries close. Done means the written answer is checked against
+the queries that actually ran.
+
+## Lexical range
+
+Embeddings are for missing vocabulary. When you know the words — names,
+handles, idioms, error strings, catchphrases — token search composed with
+plain SQL is sharper and faster, and it composes further: GROUP BY, joins,
+and window functions turn retrieval into measurement. The corpus is a
+programmable instrument; the searches worth running are the ones only you
+would think to compose. Shapes that reward that creativity:
+
+- Earliest attestation: `hasToken(search_text_lc, 'term')` on
+  `internet.text` ordered by `original_timestamp ASC` — when and where a
+  phrase first appeared.
+- An author's written history: one handle across reddit, HN, and mailing
+  lists over two decades (`original_author` on `internet.text`), drift
+  measured with `countIf` per year.
+- Co-occurrence archaeology: `hasAllTokens` with two rare tokens and a
+  date bound — who put two ideas together first.
+- Relations as instruments: citation neighborhoods (`openalex.works`),
+  cross-platform identity (`persons.links`), thread structure
+  (`reddit.comments` joined via `link_id`) — walkable graphs beside the
+  text.
 
 ## Registered surfaces
 
