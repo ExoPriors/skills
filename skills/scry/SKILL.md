@@ -95,7 +95,7 @@ explicit axes, and stop on pool exhaustion, never on "enough names."
 Every claim ships with its source row or it does not ship. Prefer the
 denominator: report what was searched — relations, sources, probe terms —
 not only what was found. When sources conflict, resolve the conflict or
-report it; never average it away. Cheap bounded probes cast wide before
+report it; never average it away. Small bounded probes cast wide before
 expensive queries close. Done means the written answer is checked against
 the queries that actually ran.
 
