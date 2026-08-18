@@ -536,6 +536,56 @@ curl -s https://api.scry.io/v1/scry/vectors \
 
 Use the stored name as the unquoted handle `@my_query` in SQL.
 
+#### Writing the query text: exuberance wins
+
+Embedding search rewards the opposite instinct from keyword search:
+spend words. The model places your text in the same space as the
+corpus's own paragraphs, so a thin stub names a direction while a rich
+passage names a location. Most weak semantic recall traces to thin
+query text, not to the index. Slow down, get creative, and be
+maximalist about phrasings — probes are cheap and composition is free.
+
+- **Write the passage you hope to find, not the question you hold.**
+  The nearest neighbors of a question are other questions. "why did
+  Usenet decline?" retrieves people asking; "the September that never
+  ended: AOL's 1993 gateway flooded Usenet with newcomers faster than
+  its norms could absorb them" retrieves people answering. Draft the
+  found paragraph — assert, name names, date it, claim the mechanism —
+  and embed that.
+- **Vividness is signal, not noise.** Concrete nouns, named actors,
+  mechanisms, era diction, even emotional register all position the
+  vector. "distributed systems debugging" is a genre; "the replica
+  went split-brain at 3am and the on-call engineer traced it to a
+  fencing token nobody renewed" is a place in that genre.
+- **Fan out registers, one handle per phrasing.** The same idea lives
+  in many dialects — academic abstract, forum vernacular, journalist's
+  lede, practitioner war story, a primary source's own period diction —
+  and each phrasing lands in a different neighborhood of the corpus.
+  Mint `@x_academic`, `@x_forum`, `@x_news`, run each, union the
+  retrievals.
+- **Centroid the phrasings into one anchor.** `POST /v1/scry/embed`
+  `{"expression": "scry_centroid([@x_academic, @x_forum, @x_news])",
+  "name": "x"}` saves the mean direction — more robust than any single
+  phrasing. The response's `input_similarity` diagnostics confirm the
+  phrasings cohere around one concept, or reveal you minted two
+  different ideas.
+- **Sharpen polysemy by contrast.** When the word is ambiguous, embed
+  what you mean and what you don't, then compose
+  `scry_contrast_axis_balanced(@meant, @not_meant)` and rank along the
+  axis (§ Composing embeddings into saved handles).
+- **Poles beat definitions.** A vivid exemplar marks a direction better
+  than a dictionary definition: hunting for burnout narratives, embed
+  an unmistakable one, not "employee burnout".
+- **Steal the corpus's vocabulary back.** The best rows of a first
+  probe carry the words the community actually uses — re-embed with
+  the corpus's own diction and probe again.
+
+The stopping rule is the lexical one (§ Lexical fanout): keep minting
+while fresh phrasings surface fresh neighborhoods; two rounds of
+nothing new is the stop, never a fixed probe count. And the same
+maximalism drives token search — insider jargon, misspellings,
+per-source dialects, era vocabulary.
+
 #### Embedding corpus catalog
 
 The live schema is the authority for which embedding relations exist, their

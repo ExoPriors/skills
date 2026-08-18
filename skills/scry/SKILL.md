@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081702`
+**Skill generation**: `2026081800`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081702`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081800`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -37,7 +37,10 @@ orientation.
 5. Semantic search: mint a named query vector with `POST /v1/scry/embed`
    `{text, name}`, then use it as the unquoted `@name` inside
    `scry_vector_topk_distance`; full patterns are in
-   `references.md` § Scry query patterns. The same endpoint takes
+   `references.md` § Scry query patterns. Query text craft dominates
+   every other parameter: embed answer-shaped, exuberant passages —
+   the paragraph you hope to find — never keyword stubs, and fan out
+   registers (`references.md` § Writing the query text). The same endpoint takes
    `{expression, name}` to compose stored handles (contrast axes,
    centroids, debiasing) into a new saved handle with diagnostics —
    see `references.md` § Composing embeddings into saved handles and
