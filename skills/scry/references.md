@@ -543,7 +543,7 @@ spend words. The model places your text in the same space as the
 corpus's own paragraphs, so a thin stub names a direction while a rich
 passage names a location. Most weak semantic recall traces to thin
 query text, not to the index. Slow down, get creative, and be
-maximalist about phrasings — probes are cheap and composition is free.
+maximalist about phrasings — probes are quick and composition is free.
 
 - **Write the passage you hope to find, not the question you hold.**
   The nearest neighbors of a question are other questions. "why did
