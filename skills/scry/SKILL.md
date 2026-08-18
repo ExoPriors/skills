@@ -168,7 +168,7 @@ complete document. The doors:
 | `packages.catalog` | One merged row per software package across ~36 registries (`ecosystem` value space is the roster) |
 | `markets.catalog` | One folded row per prediction market across Kalshi, Polymarket, Manifold (`source`/`status` value spaces) |
 | `judgements.scores_current` | Latest cardinal judgement score per lens, axis, and entity |
-| `persons.links` | Cross-platform person resolution: public accounts clustered into persons by shared strong identity keys — open today to showcase premier functionality for high-stakes philanthropy; likely to become a private (operator-approved) relation later |
+| `persons.links` | Cross-platform person resolution: public accounts clustered into persons by shared strong identity keys — open today, likely private (operator-approved) later |
 | `events.records` | In-person-event corpus (conferences), JSON records keyed by `event_slug` |
 | `courts.china_judgments` | China Judgments Online archive: ~85M published judgments 1985–2021, Chinese full text + structured metadata |
 | `cn_enterprise.companies` | China enterprise registry (GSXT), one best row per company keyed by USCC |
