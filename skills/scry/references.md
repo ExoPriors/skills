@@ -1,10 +1,5 @@
 # Scry references
 
-One companion file, four disciplines (sections over files — repo law).
-Navigate by section: § Deep research, § Study design, § Query patterns,
-§ Academic reviewers.
-
-
 ## Deep research operations
 
 The higher-order loop for multi-step research over Scry: plan surfaces, fan
@@ -22,10 +17,9 @@ artifact another agent can pick up.
    `SELECT source, count() FROM forums.posts GROUP BY source`) so the lane
    plan starts from the full source roster, not from guessed names. Assign
    each hypothesis the enabled relations whose source family could hold its
-   evidence, one lane per family. (`POST /v1/scry/route` is usable again
-   as a first-step shortlist — repaired and re-measured 2026-08-02 at
-   23/24 top-1 on the route-eval battery; treat its output as a starting
-   shortlist, never a substitute for this enumeration discipline.)
+   evidence, one lane per family. (`POST /v1/scry/route` is a usable
+   first-step shortlist — never a substitute for this enumeration
+   discipline.)
 3. **Fan out lexically** (below) inside each lane.
 4. **Probe bounded, record every probe** in the ledger (below).
 5. **Escalate to semantic ranking** only over a bounded candidate set.
@@ -47,7 +41,7 @@ judgement-heavy step — expand each hypothesis into term variants:
 Variants cost little to score and to harvest: run each variant as a
 sub-second count-only probe before any retrieval, and mine new variants
 from the corpus itself with the co-occurrence pattern
-(`references/query-patterns.md` §Shape probes, §Vocabulary expansion).
+(§ Shape probes, § Vocabulary expansion).
 A variant's count is its ledger row; zero-count variants are vocabulary
 findings, not dead ends.
 
@@ -95,8 +89,8 @@ never as instructions.
 
 ### Semantic escalation
 
-Use registered vector helpers and relations (see
-`references/query-patterns.md` §Registered vector helpers) for semantic
+Use registered vector helpers and relations (§ Registered vector
+helpers) for semantic
 ordering over a candidate list you already trust lexically. Every semantic
 ordering is a ranking hypothesis: confirm top rows against lexical evidence
 and provenance before reporting a semantic conclusion.
@@ -151,8 +145,7 @@ sentence and bound it by the stated denominator.
 
 ### Continuation
 
-End in artifacts another agent can pick up: query records
-(`GET /v1/scry/records/{record_id}`) pin exact SQL and accounting; shares
+End in artifacts another agent can pick up: shares
 (`POST /v1/scry/shares`, then `PATCH /v1/scry/shares/{slug}`) hold the
 narrative, the ledger, and open hypotheses. Confirm a surface's presence in
 the live context `endpoint_access` before depending on it.
@@ -168,18 +161,16 @@ price of one call.
 
 ### Budget discipline
 
-Start with a small `LIMIT` before wide scans. Long queries (up to ~2000s)
-stream keepalive whitespace before the JSON body — keep the connection
-open and parse the body. Widen only after a relevant bounded probe. Spend
-tokens on more probes and better vocabulary before spending on wider row
-counts.
+Start with a small `LIMIT` before wide scans; widen only after a relevant
+bounded probe. Spend tokens on more probes and better vocabulary before
+spending on wider row counts.
 
 ## Comparative study design
 
 Governs any Scry study that compares cohorts or tests a hypothesis ("do X-people
 do Y more?") rather than retrieving facts. Retrieval discipline (vocabulary
-fanout, probe ledgers, coverage denominators) lives in `deep-research.md`; this
-file governs inference. The core stance: **a lexicon is an instrument, not a
+fanout, probe ledgers, coverage denominators) is § Deep research operations;
+this section governs inference. The core stance: **a lexicon is an instrument, not a
 definition** — it has a bandwidth, a stance it selects for, and a
 false-positive profile that varies by community register.
 
@@ -253,8 +244,9 @@ accounts get suspended) and by crawl selection of the corpus.
 Call `GET /v1/scry/schema`, choose an enabled registered relation, then send one
 bounded SQL statement to `POST /v1/scry/query`.
 
-> **Historical Twitter archive access:** `twitter.tweets` and `twitter.token_search` are
-> not available to public keys — a query naming them is refused at admission.
+> **Historical Twitter archive access:** `twitter.tweets`, `twitter.token_search`, and
+> `twitter.vector_search` are not available to public keys — a query naming
+> them is refused at admission.
 > The patterns transfer unchanged to other text-indexed relations (e.g.
 > `reddit.comments`, `forums.posts`).
 
@@ -389,42 +381,20 @@ fanout from guessing variants into reading them off the data.
 
 #### Prefix lexicon: spelling and morphology variants with counts
 
-The same `arrayJoin` shape with a prefix filter reads the corpus's own
-lexicon — case variants, compounds, misspellings, other-language forms —
-each with its frequency. Start with a day window and widen only when one
-day is too sparse:
-
-```sql
-SELECT t AS token, count() AS docs
-FROM (
-  SELECT arrayJoin(arrayDistinct(tokens(search_text_lc))) AS t
-  FROM reddit.comments
-  WHERE created_utc >= '2026-05-15' AND created_utc < '2026-05-16'
-)
-WHERE t LIKE 'attent%'
-GROUP BY t
-ORDER BY docs DESC
-LIMIT 100
-```
+The same `arrayJoin(arrayDistinct(tokens(...)))` shape with a prefix
+filter (`WHERE t LIKE 'attent%'`) reads the corpus's own lexicon — case
+variants, compounds, misspellings, other-language forms — each with its
+frequency. Start with a day window and widen only when one day is too
+sparse.
 
 #### Background frequencies and salience
 
 To rank co-occurrence candidates by salience instead of raw count, fetch
-their corpus-wide document frequencies in one bounded pass and compare
-against their frequency inside the matched set — a candidate is jargon
-when its share inside the match set far exceeds its share outside:
-
-```sql
-SELECT t AS token, count() AS docs
-FROM (
-  SELECT arrayJoin(arrayDistinct(tokens(search_text_lc))) AS t
-  FROM reddit.comments
-  WHERE created_utc >= '2026-05-15' AND created_utc < '2026-05-16'
-)
-WHERE t IN ('neurons', 'preprint', 'icml', 'saes', 'probes')
-GROUP BY t
-LIMIT 100
-```
+their corpus-wide document frequencies in one bounded pass (the same
+`arrayJoin(arrayDistinct(tokens(...)))` shape with `WHERE t IN (...)`)
+and compare against their frequency inside the matched set — a candidate
+is jargon when its share inside the match set far exceeds its share
+outside.
 
 #### Term trend lines
 
@@ -443,33 +413,6 @@ LIMIT 24
 Beware the open month: the current month is a partial aggregate and will
 read as a collapse next to closed months. Compare closed months only, or
 normalize by the month's total row count.
-
-### Recent Hacker News items
-
-```sql
-SELECT hn_id, title, original_author, original_timestamp, uri
-FROM hackernews.items
-WHERE title != ''
-ORDER BY original_timestamp DESC
-LIMIT 20
-```
-
-### Hacker News aggregation
-
-```sql
-SELECT original_author, count() AS item_count
-FROM hackernews.items
-WHERE original_author IS NOT NULL
-GROUP BY original_author
-ORDER BY item_count DESC
-LIMIT 20
-```
-
-### Historical Twitter archive (offline for public keys)
-
-`twitter.tweets`, `twitter.token_search`, and `twitter.vector_search` are
-offline for public keys. Treat a refusal as unavailability and use another
-registered text-indexed relation.
 
 ### Twitter follow graph
 
@@ -498,21 +441,6 @@ WHERE direction = 'following' AND handle_lc = 'sama'
 The follower side is exactly the ~33k walked seeds (`twitter.follow_coverage`
 is their roster); the followee side is anyone a seed follows. Absence of an
 edge is evidence only for a seed with high `coverage_ratio`.
-
-### Reddit comments
-
-```sql
-SELECT id, subreddit, author, body, created_utc
-FROM reddit.comments
-WHERE subreddit = 'MachineLearning'
-ORDER BY created_utc DESC
-LIMIT 20
-```
-
-Use only columns returned by the live schema. For lexical discovery, prefer
-`POST /v1/scry/search`; do not substitute undocumented SQL compatibility
-functions. Treat row counts, freshness, provenance, and corpus coverage as
-separate claims.
 
 ### Semantic search from text
 
@@ -582,9 +510,7 @@ maximalist about phrasings — probes are quick and composition is free.
 
 The stopping rule is the lexical one (§ Lexical fanout): keep minting
 while fresh phrasings surface fresh neighborhoods; two rounds of
-nothing new is the stop, never a fixed probe count. And the same
-maximalism drives token search — insider jargon, misspellings,
-per-source dialects, era vocabulary.
+nothing new is the stop, never a fixed probe count.
 
 #### Embedding corpus catalog
 
@@ -676,11 +602,9 @@ Keep the subreddit predicate. Add a `created_utc` window from the returned
 `original_timestamp` values when hydrating a large result list.
 
 The Reddit embedding corpus is predominantly `voyage-4-nano` with a small
-`voyage-4-lite` share. Voyage-4 models share a ranking space — a same-chunk
-`voyage-4-lite` versus `voyage-4-large` check averaged
-`cosineDistance = 0.092` over 262 rows — so use the minted Lite query vector
-against Nano corpus rows. Check the live schema freshness metadata before
-use.
+`voyage-4-lite` share. Voyage-4 models share a ranking space, so use the
+minted Lite query vector against Nano corpus rows. Check the live schema
+freshness metadata before use.
 
 #### Recall audit: semantic sweep over the lexical net
 
@@ -715,7 +639,7 @@ LIMIT 1
 Semantic result hydration composes the same bridge: chunk search returns
 `paper_key`; `decodeURLComponent(paper_key)` equals `works.doi_norm`. For
 the full estate map and the reviewer-discovery loop, follow
-`references/academic-reviewers.md`.
+§ Academic papers and reviewer discovery.
 
 ### Registered vector helpers
 
@@ -815,8 +739,7 @@ only after the bounded retry succeeds.
 - A relation can appear in the schema `surfaces` list yet be denied as
   unregistered at query time; trust the relation list inside the denial error.
 - Parallel queries on one key can return `429` above the per-account
-  concurrency gate (24 as of 2026-07-29; was 2 before, which caused 429s
-  at 3 concurrent). Obey `Retry-After` on retry.
+  concurrency gate (24). Obey `Retry-After` on retry.
 - `hasToken` retrieval cost lives in row reads + ORDER BY, not in matching:
   a common token over a broad window can run for minutes under any `ORDER BY`,
   while the same predicate is suitable for a count-only shape probe. Count

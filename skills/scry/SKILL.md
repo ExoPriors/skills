@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081800`
+**Skill generation**: `2026081801`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081800`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081801`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -96,10 +96,8 @@ where missing vocabulary would silently distort the answer — follow
 `references.md` § Deep research operations: fan out lexical probes, keep a probe
 ledger, verify the written report against the ledger, and end in a durable
 artifact. `POST /v1/scry/route` is a usable first step for surface
-selection again (repaired and re-measured 2026-08-02: 23/24 top-1 on a
-24-question battery; deterministic fast path plus a model lane that
-falls back deterministically). Treat its output as a starting shortlist,
-not a substitute for the enumeration and probe discipline above.
+selection; treat its output as a starting shortlist, not a substitute
+for the enumeration and probe discipline above.
 
 For any study that compares cohorts or tests a hypothesis (who does X more,
 does trait A predict behavior B), follow `references.md` § Comparative study design before
@@ -189,7 +187,9 @@ Schema contracts carry measured `value_spaces` — the live vocabulary of
 categorical spine columns (forum `source`, stackexchange `site`, market
 `source`/`status`, package `ecosystem`, book `idx`/`content_type`, tweet
 `lang`, subreddits) with row counts. Read them before writing a WHERE on a
-categorical column; never guess an enum value.
+categorical column; never guess an enum value —
+`subreddit = 'MachineLearning'` vs `'machinelearning'` is the classic
+silent zero.
 
 Confirm enablement and columns with `/v1/scry/schema`. A relation omitted from
 that response is unavailable, even if this skill names its family. A relation
@@ -229,8 +229,7 @@ curl -s https://api.scry.io/v1/scry/query \
   regex such as `\bRust\b` matches nothing. Double each backslash
   (`\\bRust\\b`) or write the regex without backslashes
   (`(^|[^a-z])Rust($|[^a-z])`). Inline string literals in the SQL body
-  already use literal escaping and do not have this problem. Verified
-  live 2026-08-07 (inline 7 hits, raw param 0, doubled param 7).
+  already use literal escaping and do not have this problem.
 - To keep a query, create a share: `POST /v1/scry/shares` with
   `{title, kind: "query", payload: {sql, params: [{name, type, default}],
   snapshot: {...}}}`. `title` is required, `snapshot` must be an object
@@ -252,19 +251,6 @@ curl -s https://api.scry.io/v1/scry/query \
   through the full metered pipeline as the caller: normal authentication,
   validation, and billing. Values that are not supplied use the declared
   defaults.
-
-## References
-
-- `references.md` § Deep research operations: the multi-step research loop — surface
-  planning, lexical fanout, probe ledger, adjudication, report integrity,
-  continuation.
-- `references.md` § Comparative study design: comparative / hypothesis-testing discipline —
-  circularity, stance, temporal holdout, controls, power, interpretation.
-- `references.md` § Scry query patterns: bounded query patterns,
-  registered vector helpers, and failure recovery.
-- `references.md` § Academic papers and reviewer discovery: the academic estate — metadata ↔
-  full-text DOI bridge, authorship flattening, and the exhaustive
-  reviewer-discovery loop with denominators.
 
 ## Adjacent runtime surfaces
 
@@ -299,25 +285,11 @@ curl -s https://api.scry.io/v1/scry/query \
   follows the extent column: second precision on scan-basis relations;
   Date columns (and parts-basis date metadata) resolve to midnight, so
   check `extent.basis` before reading the clock part as exact.
-- Schema entries for major categorical columns carry `value_spaces`: the
-  measured top values (with row counts over a recent sample, plus
-  `sample_rows` as the share denominator and `cardinality_in_sample`).
-  Write equality predicates against these observed values, never guessed
-  ones — `subreddit = 'MachineLearning'` vs `'machinelearning'` is the
-  classic silent zero.
 - Pricing is fair, not capped: charges engage only under measured
-  congestion, and what you pay is the metered burden times a
-  fairness weight over your own rolling-week (continuously decayed)
-  usage — 1× for light use, rising quadratically past the free band to
-  at most 8× for identities monopolizing the box. Light research pays
-  the base rate; sustained hammering pays a premium that grows with how
-  hard you hammer. The
-  full law — rates, bands, and the operator's current price multiplier
-  — is published as `charge_law` on `GET /v1/scry/pricing`. Off-peak
+  congestion, weighted by your own rolling-week usage. The full law —
+  rates, bands, and the operator's current price multiplier — is
+  published as `charge_law` on `GET /v1/scry/pricing`. Off-peak
   research costs least (slack is free).
-- Membership is a flat monthly auto-top-up into the same prepaid balance.
-  It uses the same meter and charge law as every other query, with no
-  separate membership pricing law.
 - Never get surprised by a query: send `X-Scry-Max-Seconds: <n>` to give
   a query a hard execution deadline (the runtime kills it at n seconds
   with a timeout error; you pay only for what ran). `X-Scry-Budget:
@@ -333,10 +305,8 @@ curl -s https://api.scry.io/v1/scry/query \
   parse the body, not the status, on that path. Keep the connection open;
   do not set client timeouts below your query's real budget.
 - When results must survive the current session, create a share. Record
-  read-back (`GET /v1/scry/records/{record_id}`) is currently dark — the
-  endpoint answers a deterministic 503 refusal; `record_id` is still worth
-  preserving as the durable identifier for when a successor record store
-  mounts.
+  read-back (`GET /v1/scry/records/{record_id}`) is dark (deterministic
+  503); preserve `record_id` as the durable identifier.
 - For published Parquet dataset artifacts, inspect
   `GET /v1/datasets/catalog` and `GET /v1/datasets/{dataset_id}`. These are
   artifact metadata routes, not a corpus SQL fallback.
@@ -348,8 +318,8 @@ curl -s https://api.scry.io/v1/scry/query \
   scalar String column is in the result), `x-scry-rerank-tier:
   fast|quality` (default fast), `x-scry-rerank-top: N` keeps the head.
   Non-ASCII directives ride the same header as
-  `b64u:<base64url(utf-8)>`; through MCP, `scry_query` takes `rerank`,
-  `rerank_column`, `rerank_tier`, `rerank_top` arguments directly. The
+  `b64u:<base64url(utf-8)>`; the MCP `scry_query` tool takes the same
+  controls as direct arguments. The
   envelope's `rerank` block carries `{applied, model, column, scores}`
   (scores aligned to returned row order) — or the exact reason rows
   stayed in SQL order; a rerank failure never fails the billed query.
@@ -357,17 +327,14 @@ curl -s https://api.scry.io/v1/scry/query \
   long-document tier), `POST
   /v1/scry/rerank` with `documents: [{id,text}]` (2..=1000) and an
   `instruction` — the instruction is the point: "rank by methodological
-  rigor" re-sorts by that attribute, not generic relevance. Tiers:
-  `fast` (local, ~100ms, $0, default), `quality` (best
-  instruction-following, still $0), `hosted` (scores long documents in
-  full, per-token cost in `usage.cost_nanodollars`); `model` pins an
-  exact lane. Scores are monotonic ranking signals, not calibrated
-  probabilities, and are not comparable across models. Each tier
-  degrades down a lane chain; identity order plus a `degraded_reason`
-  means no lane was available — the endpoint never reorders silently.
-  The live tier contract is `offerings.rerank` on `GET /v1/scry/context`;
-  for judgement-grade pairwise comparisons beyond reranking, that
-  offering points at `POST /v1/judgements/runs`.
+  rigor" re-sorts by that attribute, not generic relevance. Tiers `fast`
+  (default, $0) / `quality` ($0) / `hosted` (long documents, per-token
+  cost); the live tier contract is `offerings.rerank` on
+  `GET /v1/scry/context`. Scores are monotonic ranking signals, not
+  calibrated probabilities, and are not comparable across models. A
+  degraded tier returns identity order plus a `degraded_reason` — never
+  a silent reorder. For judgement-grade pairwise comparisons beyond
+  reranking, the offering points at `POST /v1/judgements/runs`.
 - For "what does the fresh web say about X since my cutoff", `POST
   /v1/scry/brief` (MCP: `scry_brief`) with `{"question": "...",
   "known_after": "<RFC 3339 or YYYY-MM-DD>", "k": 1..12}` returns 8-12
@@ -377,9 +344,8 @@ curl -s https://api.scry.io/v1/scry/query \
   announcement pages, primary technical sources). A brief is retrieval,
   never generation: quotes are verbatim page text inside the untrusted
   fence, `true_as_of` is the crawl-observation time (an upper bound on
-  when the fact became public), and composition is deterministic —
-  semantic match, local rerank, exact-duplicate collapse, at most two
-  passages per host, one representative per probable event.
+  when the fact became public), and composition is deterministic
+  (duplicate collapse, at most two passages per host).
   `known_after` states temporal eligibility (only pages first observed
   after it are returned — set it to your knowledge cutoff); it does not
   model what you know. Empty results carry a `coverage_note`; a
