@@ -674,7 +674,7 @@ Vector SQL uses registered helpers advertised by `GET /v1/scry/schema`:
 - base algebra: `scry_vec_dot`, `scry_cosine_similarity`, `scry_vector_norm`,
   `scry_unit_vector`, `scry_scale_vector`, `scry_project_onto`,
   `scry_debias_vector`, `scry_debias_removed_fraction`, `scry_debias_safe`,
-  `scry_contrast_axis`, and `scry_contrast_axis_balanced`
+  `scry_contrast_axis`, `scry_contrast_axis_balanced`, and `scry_centroid`
 - ranking: `scry_vector_topk_distance`
 - diagnostics: `scry_axis_diagnostics`, `scry_debias_audit`,
   `scry_handle_matrix`, and `scry_seed_centroid`
@@ -698,6 +698,41 @@ table is queryable.
 Vectors are ranking hypotheses. Check nearest rows against lexical evidence,
 provenance, source coverage, and the intended concept before reporting a
 semantic conclusion.
+
+### Composing embeddings into saved handles
+
+`POST /v1/scry/embed` takes `{expression, name}` as the alternative to
+`{text, name}`: the expression is the same scry_* vector algebra over your
+stored `@handles`, evaluated server-side through the query validator, and the
+result is saved as a reusable handle. The expression becomes the handle's
+`source_text`, so saved compositions carry their own provenance. The response
+returns diagnostics by default — norm, cosine similarity to every input
+handle, and warnings — and refuses degenerate results (NULL from the noise
+floor, norm ≤ 0.01, near-duplicate of an input) with the reason instead of
+storing them.
+
+Workflow discipline: run the matching diagnostic first, follow its
+`recommendation`, then save. `GET /v1/scry/schema` serves the canonical
+recipes as `vector_recipes`. The core pairs:
+
+| goal | diagnostic first | then compose |
+| --- | --- | --- |
+| contrast axis A vs B | `scry_axis_diagnostics(@pos, @neg)` | `scry_contrast_axis_balanced(@pos, @neg)` |
+| concept centroid | `scry_seed_centroid([@s1, @s2, @s3])` | `scry_centroid([@s1, @s2, @s3])` |
+| remove a nuisance | `scry_debias_audit(@axis, @topic)` | `scry_debias_safe(@axis, @topic)` |
+| shared component | `scry_cosine_similarity(@topic, @axis)` | `scry_project_onto(@topic, @axis)` |
+| compare candidates | `scry_handle_matrix([@a, @b, @c])` | keep the healthy one, delete the rest |
+
+```bash
+curl -s https://api.scry.io/v1/scry/embed \
+  -H "Authorization: Bearer $SCRY_API_KEY" \
+  -H "Content-Type: application/json" \
+  --data '{"expression":"scry_contrast_axis_balanced(@pos, @neg)","name":"my_axis"}'
+```
+
+A composed handle ranks rows exactly like a minted one:
+`scry_vector_topk_distance(embedding_voyage4, @my_axis)`. Composition costs
+no embedding tokens.
 
 ### Failure recovery
 

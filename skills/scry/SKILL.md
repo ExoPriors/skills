@@ -37,7 +37,11 @@ orientation.
 5. Semantic search: mint a named query vector with `POST /v1/scry/embed`
    `{text, name}`, then use it as the unquoted `@name` inside
    `scry_vector_topk_distance`; full patterns are in
-   `references.md` § Scry query patterns. The ANN set is dynamic — a relation
+   `references.md` § Scry query patterns. The same endpoint takes
+   `{expression, name}` to compose stored handles (contrast axes,
+   centroids, debiasing) into a new saved handle with diagnostics —
+   see `references.md` § Composing embeddings into saved handles and
+   the schema's `vector_recipes`. The ANN set is dynamic — a relation
    leaves it while its vector index re-materializes — and the schema names
    the live set: only surfaces with `serves_ann: true` accept ANN ranking
    (the rest still serve plain SQL). ANN queries must be standalone (no
