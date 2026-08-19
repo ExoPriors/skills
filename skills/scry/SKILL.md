@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081801`
+**Skill generation**: `2026081802`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081801`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081802`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -83,6 +83,20 @@ Do not use engine catalogs, foreign-dialect casts or operators, compatibility
 helpers, or a fallback corpus database. Do not invent relations. Typed discovery remains
 available at `POST /v1/scry/search`, but SQL runs only through the canonical
 schema and query routes above.
+
+Typed-search `query` speaks a full lexical language: bare words AND
+together; `"exact phrase"`; `a OR b`; `-term` / `-"phrase"` exclusion;
+`( )` grouping; `/pattern/` regex over full text (case-insensitive,
+negatable; RE2 dialect plus lookaround and backreferences, which are
+verified app-side — pair them with concrete literals; every pattern needs
+a 3+-char literal run somewhere to prune by index — `/gpt-?4o/` prunes,
+bare `/[0-9]+/` cannot); `word*` wildcards; and
+`a NEAR b` / `a NEAR/50 b` proximity (uppercase NEAR; matches both orders
+within N characters, default 100, max 1000; operands may be words, quoted
+phrases, `/regex/`, or `(x OR y)` groups). Unanchored substrings and CJK
+terms search whole through trigram indexes — no word boundaries needed.
+The response's `query_plan` (`ignored`, `clamped`, kept terms) is ground
+truth for whether operators did what you meant.
 
 Any community- or venue-scoped question starts from an enumerated source
 set: run the inexpensive partition-enumeration query on the candidate relations
