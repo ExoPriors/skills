@@ -98,7 +98,10 @@ within N characters, default 100, max 1000; operands may be words, quoted
 phrases, `/regex/`, or `(x OR y)` groups). Unanchored substrings and CJK
 terms search whole through trigram indexes — no word boundaries needed.
 The response's `query_plan` (`ignored`, `clamped`, kept terms) is ground
-truth for whether operators did what you meant.
+truth for whether operators did what you meant, and each result's
+`snippet_matches` / `title_matches` carry char-offset `[start, end)` spans
+where your terms matched the served snippet and title (empty can mean the
+match lies deeper in the document than the snippet window).
 
 Any community- or venue-scoped question starts from an enumerated source
 set: run the inexpensive partition-enumeration query on the candidate relations
