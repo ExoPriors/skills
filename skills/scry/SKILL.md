@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081901`
+**Skill generation**: `2026081902`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081901`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081902`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -107,6 +107,12 @@ leave-one-out form (phrases and negations intact); when that fills the
 page, `candidate_set.degraded_reason` reports
 `zero_results_relaxed_to: <query>` — relaxed rows are never presented as
 exact matches.
+
+Guiding knobs beyond the query text: `snippet_chars` (64-1200, default
+240) widens each result's served context window; `max_per_source` (>=1)
+caps any one source's share of the page; `limit`, `sources`, `kinds`,
+`from`/`to` bound the pool. In-query, `NEAR/50` sets the proximity window
+in characters and `"phrase"~3` the slop window in words.
 
 Any community- or venue-scoped question starts from an enumerated source
 set: run the inexpensive partition-enumeration query on the candidate relations
