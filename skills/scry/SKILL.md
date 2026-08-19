@@ -101,7 +101,12 @@ The response's `query_plan` (`ignored`, `clamped`, kept terms) is ground
 truth for whether operators did what you meant, and each result's
 `snippet_matches` / `title_matches` carry char-offset `[start, end)` spans
 where your terms matched the served snippet and title (empty can mean the
-match lies deeper in the document than the snippet window).
+match lies deeper in the document than the snippet window). A query that
+would return zero results retries once with a strictly weaker
+leave-one-out form (phrases and negations intact); when that fills the
+page, `candidate_set.degraded_reason` reports
+`zero_results_relaxed_to: <query>` — relaxed rows are never presented as
+exact matches.
 
 Any community- or venue-scoped question starts from an enumerated source
 set: run the inexpensive partition-enumeration query on the candidate relations
