@@ -93,7 +93,7 @@ a 3+-char literal run somewhere to prune by index — `/gpt-?4o/` prunes,
 bare `/[0-9]+/` cannot); `word*` wildcards; `word~1` fuzzy
 (the one-edit Levenshtein neighborhood of a 4-24 char word — typo-tolerant
 matching; bare `~` means `~1`, larger asks clamp to 1 with a note; words
-of 7+ chars prune by trigram index, shorter fuzzy terms only filter and
+of 6+ chars prune by trigram index, shorter fuzzy terms only filter and
 need an exact term alongside); `"exact phrase"~3` slop
 (phrase words in order, at most N intervening words between neighbors,
 max 50); and
