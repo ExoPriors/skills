@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081903`
+**Skill generation**: `2026081904`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081903`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081904`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -91,10 +91,10 @@ negatable; RE2 dialect plus lookaround and backreferences, which are
 verified app-side — pair them with concrete literals; every pattern needs
 a 3+-char literal run somewhere to prune by index — `/gpt-?4o/` prunes,
 bare `/[0-9]+/` cannot); `word*` wildcards; `word~1` fuzzy
-(the one-edit Levenshtein neighborhood of a 4-24 char word — typo-tolerant
-matching; bare `~` means `~1`, larger asks clamp to 1 with a note; words
-of 6+ chars prune by trigram index, shorter fuzzy terms only filter and
-need an exact term alongside); `"exact phrase"~3` slop
+(typo-tolerant: a 4-24 char word resolves against the corpus vocabulary
+into its real one-edit word forms and searches as their OR —
+`query_plan.clamped` echoes the forms chosen; bare `~` means `~1`,
+larger asks clamp to 1 with a note); `"exact phrase"~3` slop
 (phrase words in order, at most N intervening words between neighbors,
 max 50); and
 `a NEAR b` / `a NEAR/50 b` proximity (uppercase NEAR; matches both orders
