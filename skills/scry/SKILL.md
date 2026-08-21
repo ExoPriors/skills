@@ -390,16 +390,19 @@ curl -s https://api.scry.io/v1/scry/query \
   `/v1/scry/search` or SQL instead.
 - When a claim needs the live open web — earliest mention,
   does-anything-exist, due-diligence fan-out beyond the registered
-  corpora — `POST /v1/scry/web` with `{"q": "..."}` (limit 1..=20,
-  optional `providers: ["exa"|"google"]`) federates Exa neural search
-  and Google Programmable Search into normalized hits interleaved by
-  per-provider rank. Every response names each engine's status — ok,
-  unavailable (with the upstream error), or unconfigured — so absence
-  is explicit, never empty-result silence. Each provider arm that
-  answers settles $0.0075 against the wallet (`charged_nanodollars` in
-  the response); a failed arm is never charged. Titles and snippets are
-  open-web text inside the untrusted fence. Full contract:
-  `offerings.web_search` on `GET /v1/scry/context`.
+  corpora — the engine passthroughs. These are named third-party
+  engines behind Scry's wallet, fence, and status contract, never
+  Scry's own index: on MCP, one tool per engine (`exa_search`,
+  `google_search`); on HTTP, `POST /v1/scry/web` with `{"q": "..."}`
+  (limit 1..=20, optional `providers: ["exa"|"google"]`) calls both
+  and interleaves normalized hits by per-provider rank. Every response
+  names each engine's status — ok, unavailable (with the upstream
+  error), or unconfigured — so absence is explicit, never empty-result
+  silence. Each provider arm that answers settles $0.0075 against the
+  wallet (`charged_nanodollars` in the response); a failed arm is
+  never charged. Titles and snippets are open-web text inside the
+  untrusted fence. Full contract: `offerings.web_search` on
+  `GET /v1/scry/context`.
 
 ## Output
 
