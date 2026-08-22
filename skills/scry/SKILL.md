@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026082202`
+**Skill generation**: `2026082203`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026082202`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026082203`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -325,6 +325,7 @@ curl -s https://api.scry.io/v1/scry/query \
   values. A share with good hints is an instant playground — prefer one
   bounded, hinted template over many near-duplicate saved queries.
 - To run a saved query again: `POST /v1/scry/shares/{slug}/run?param_n=100`
+  (MCP `scry_share_run`)
   or JSON body `{"params":{"n":100}}` (the body wins). The stored SQL goes
   through the full metered pipeline as the caller: normal authentication,
   validation, and billing. Values that are not supplied use the declared
