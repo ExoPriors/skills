@@ -239,6 +239,117 @@ aggression, sarcasm, and concern trolling are invisible to overt lexicons, so
 probe further. Scope every conclusion by moderation survivorship (hostile
 accounts get suspended) and by crawl selection of the corpus.
 
+## Orthogonal enumeration
+
+The ask: "diverse sources on X", "what other communities discuss Y",
+"angles I'm not seeing", "more hypotheses", "phrasings for the embedding
+probe". The failure: one stream of recall, anchored on its first three
+items, reported as coverage. The fix is § Deep research operations with
+the possibility space made explicit — a field, covered, with a
+denominator — in four steps.
+
+### 1. Frame
+
+State the deliverable (source families? probe phrasings? rival
+hypotheses?) and what a strong member must satisfy. Separate hard
+constraints (converge on them last) from the open space (diverge over it
+first). If the open space is a measured column, go to the roster; if it
+is not, build a field.
+
+### 2. Roster
+
+When the space is a categorical spine column, enumerate it rather than
+recall it: the schema's `value_spaces` are the roster for most spines,
+and a GROUP BY is the roster for the rest.
+
+```sql
+SELECT source, count() AS n FROM forums.posts GROUP BY source ORDER BY n DESC
+SELECT relation, count() AS n FROM internet.text WHERE hasToken(search_text_lc, 'ipfs') GROUP BY relation ORDER BY n DESC
+```
+
+Diverse across a roster means spread, not top-N: one member per family
+or per size band (the long tail is where the unexpected lives), and let
+the corpus draw the order where you would otherwise pick favourites:
+
+```sql
+SELECT source FROM forums.posts GROUP BY source ORDER BY rand() LIMIT 12
+```
+
+Report the roster size beside the chosen members: "12 of 61 forum
+sources, one per size decile" is a denominator; "a diverse set of
+forums" is not.
+
+### 3. Field
+
+When no column names the space, name the axes yourself. An axis changes
+the mechanism of a candidate, not its adjective — if you cannot say what
+an axis changes about the output, cut it. For "diverse sources or angles
+on X" these usually earn their place:
+
+- venue family — forum; mailing list or Usenet; academic; code and issue
+  trackers; social; news and blogs; markets; government and legal
+- era — before the thing existed; first contact; mature; after a failure
+- stance — builder, critic, user, bystander, regulator, competitor
+- register — insider jargon; vernacular; journalistic; primary-source
+  period diction; machine-readable (logs, code, data)
+- scale — one person; a small group; an institution; a field; a society
+- inversion — the party who would never discuss it; the medium that
+  blocks it; the cost that filters who still comes
+
+Two to six values per axis; drop incoherent conjunctions explicitly.
+Cover the cells: exhaustive when the product is small (about a dozen),
+otherwise draw cells with corpus entropy — the model cannot make a random
+choice, and a hand-picked subset is the mode again:
+
+```sql
+SELECT arrayElement(['forum','mailing list','academic','social','news','code'], 1 + rand() % 6) AS venue,
+       arrayElement(['builder','critic','user','bystander','regulator'], 1 + rand() % 5) AS stance,
+       arrayElement(['jargon','vernacular','journalistic','period'], 1 + rand() % 4) AS register
+FROM forums.posts LIMIT 8
+```
+
+Any registered relation serves as the row source; `LIMIT 8` reads one
+granule. Generate one candidate per cell, from the cell alone — a source
+family, a probe phrasing, a hypothesis — and before proposing it list
+five properties the conjunction implies (who writes there, in what
+words, what they take for granted, what they would never say, when). In
+a multi-agent harness, one fresh context per cell; in one context, write
+each cell's candidate before reading the next and never revise an
+earlier cell in light of a later one. A candidate any cell would have
+produced is the mode leaking back: drop it and redraw.
+
+### 4. Converge
+
+Apply the hard constraints last. Deduplicate by the dimension that
+changed, not by surface wording. Turn each surviving direction into a
+count-first probe (§ Shape probes) with a ledger row: cell, candidate,
+relation, probe, count. Report the grid — cells drawn, cells that
+yielded, cells that came back empty — as the denominator of "diverse".
+Two consecutive rounds of fresh cells with nothing new is the stop.
+
+### The outsized endpoint
+
+`POST /v1/creativity/outsized` runs the divergent half of steps 3–4 as a
+black box, for an open-ended brief where you want a field wider than one
+context produces:
+
+```
+POST /v1/creativity/outsized
+{"brief": "Enumerate orthogonal source families and probe phrasings for <X>: for each, the community that would hold it, the words it would use, and the register to embed.", "shots": 12}
+```
+
+`brief` is at most 16 KB; `shots` is 4–24 (default 12). The response
+carries `field: [{id, text}]` — one independent candidate per surviving
+shot, each written from its own server-drawn cell on its own small model
+— a consolidated `nugget` (`consolidated: false` when the consolidation
+pass failed; the field still stands), `shots: {requested, returned,
+failed}`, `usage: {input_tokens, output_tokens, cost_usd}`, and
+`elapsed_ms`. On MCP the same call is `scry_creativity {brief, shots}`.
+It settles against the account's Scry balance only (a caller-supplied
+provider key is refused: the fleet stays a black box), takes one to four
+minutes, and is marked experimental. Treat the candidates as directions
+to probe, never as findings: step 4 still runs, and only rows ship.
+
 ## Scry query patterns (ClickHouse SQL dialect)
 
 Call `GET /v1/scry/schema`, choose an enabled registered relation, then send one

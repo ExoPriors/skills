@@ -1,6 +1,6 @@
 ---
 name: scry
-description: "Use Scry's read-only SQL research surface through /v1/scry/schema and /v1/scry/query. Use for bounded SQL over registered public-corpus relations, source provenance, and registered vector helpers."
+description: "Use Scry's read-only SQL research surface through /v1/scry/schema and /v1/scry/query. Use for bounded SQL over registered public-corpus relations, source provenance, and registered vector helpers. Also use when a research ask wants diverse, varied, or orthogonal sources, angles, hypotheses, or probe phrasings — the skill carries the enumeration discipline and the /v1/creativity/outsized fan-out."
 ---
 
 # Scry Skill
@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026081904`
+**Skill generation**: `2026082201`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026081904`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026082201`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -176,6 +176,45 @@ would think to compose. Shapes that reward that creativity:
   cross-platform identity (`persons.links`), thread structure
   (`reddit.comments` joined via `link_id`) — walkable graphs beside the
   text.
+
+## Diversity
+
+An ask for *diverse*, *varied*, *unexpected*, or *orthogonal* sources,
+communities, angles, hypotheses, or probe phrasings — or simply *more
+creative* — is a coverage problem, not a writing problem. A list written
+in one breath anchors on its own first items, and a tuned model's first
+items are the mode; temperature does not repair that, and neither does
+asking yourself to be creative. Change the ask instead (`references.md`
+§ Orthogonal enumeration carries the procedure and the SQL):
+
+- **Roster before imagination.** Where the space is a measured value
+  space — forum `source`, subreddits, stackexchange `site`, `relation` on
+  `internet.text`, package `ecosystem` — the diverse set is the roster
+  *covered*, not recalled: one GROUP BY enumerates it, choose across it,
+  and report what was left out.
+- **Field before list.** Where the space is open — angles, registers,
+  hypotheses, communities no column names — write 3–6 axes that change
+  the *mechanism* of a candidate (venue family, era, stance, register,
+  scale, inversion), 2–6 values each, and cover the cells. One candidate
+  per cell, written from that cell's conjunction alone, before looking at
+  the others. The grid is the denominator: report which cells yielded and
+  which came back empty.
+- **Entropy from outside the model.** You cannot make a random choice;
+  the corpus can. `ORDER BY rand()` over a roster, `rand() %` over an
+  axis to draw cells, a seeded `cityHash64` for a reproducible
+  permutation — take order and seeds from a query, never from your own
+  preference.
+- **Outsized fan-out is an endpoint.** `POST /v1/creativity/outsized`
+  `{"brief": "...", "shots": 4..24}` (MCP `scry_creativity`) runs the
+  whole campaign server-side — an explicit possibility space, server
+  entropy, one fresh small-model context per cell, an
+  enumeration-before-proposal gate, one consolidation pass — and returns
+  `field` (the independent candidates) and a `nugget`. Brief it for
+  *directions*, not answers: "enumerate orthogonal source families /
+  probe phrasings / hypotheses for X, each with the community that would
+  hold it and the words it would use" — then run each direction as a
+  bounded count-first probe. The endpoint proposes; the corpus decides.
+  Wallet-funded, one to four minutes, experimental.
 
 ## Registered surfaces
 
