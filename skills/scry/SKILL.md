@@ -9,7 +9,7 @@ Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026082201`
+**Skill generation**: `2026082202`
 
 ## Workflow
 
@@ -18,7 +18,7 @@ orientation.
    credential; schema, stats, and queries require your key. If no account
    key is available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026082201`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026082202`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
@@ -130,8 +130,8 @@ For multi-step research — several hypotheses, several sources, or any ask
 where missing vocabulary would silently distort the answer — follow
 `references.md` § Deep research operations: fan out lexical probes, keep a probe
 ledger, verify the written report against the ledger, and end in a durable
-artifact. `POST /v1/scry/route` is a usable first step for surface
-selection; treat its output as a starting shortlist, not a substitute
+artifact. `POST /v1/scry/route` (MCP `scry_route`; `mode` plan /
+inspire / compose) is a usable first step for surface selection; treat its output as a starting shortlist, not a substitute
 for the enumeration and probe discipline above.
 
 For any study that compares cohorts or tests a hypothesis (who does X more,
@@ -304,7 +304,8 @@ curl -s https://api.scry.io/v1/scry/query \
   (`\\bRust\\b`) or write the regex without backslashes
   (`(^|[^a-z])Rust($|[^a-z])`). Inline string literals in the SQL body
   already use literal escaping and do not have this problem.
-- To keep a query, create a share: `POST /v1/scry/shares` with
+- To keep a query, create a share: `POST /v1/scry/shares` (MCP
+  `scry_share_create`) with
   `{title, kind: "query", payload: {sql, params: [{name, type, default}],
   snapshot: {...}}}`. `title` is required, `snapshot` must be an object
   (use `{}` when there is nothing to freeze), and each declared parameter
@@ -328,7 +329,8 @@ curl -s https://api.scry.io/v1/scry/query \
 
 ## Adjacent runtime surfaces
 
-- Account and market state: `GET /v1/scry/account`, `GET /v1/scry/pricing`,
+- Account and market state: `GET /v1/scry/account` (MCP `scry_account`),
+  `GET /v1/scry/pricing`,
   `GET /v1/scry/price`, `GET /v1/scry/price/history`,
   `GET /v1/scry/price/stream`.
 - Per-query charges arrive in the query response body: `burden_nanodollars`
@@ -399,7 +401,7 @@ curl -s https://api.scry.io/v1/scry/query \
   stayed in SQL order; a rerank failure never fails the billed query.
 - To re-order documents you already hold (or to use the hosted
   long-document tier), `POST
-  /v1/scry/rerank` with `documents: [{id,text}]` (2..=1000) and an
+  /v1/scry/rerank` (MCP `scry_rerank`) with `documents: [{id,text}]` (2..=1000) and an
   `instruction` — the instruction is the point: "rank by methodological
   rigor" re-sorts by that attribute, not generic relevance. Tiers `fast`
   (default, $0) / `quality` ($0) / `hosted` (long documents, per-token
