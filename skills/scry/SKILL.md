@@ -111,6 +111,18 @@ page, `candidate_set.degraded_reason` reports
 `zero_results_relaxed_to: <query>` — relaxed rows are never presented as
 exact matches.
 
+The same grammar compiles for the SQL plane: `POST /v1/scry/compile`
+(MCP `scry_compile`) with `q` and a registered `relation` returns
+`compiled.where` — the ranked lane's own index-engaging predicates bound
+to that relation's live text indexes (token postings, trigram/2-gram
+substring, regex behind a literal prefilter, `after:`/`author:`/`source:`
+on the relation's columns) — plus `compiled.sql`/`count_sql` to run as-is,
+per-leaf `leaves[].{plane,index,prunes,exact}`, and `notes` naming every
+operator the relation cannot express. Paste the WHERE into any shape
+(`count() … GROUP BY`, `HAVING`, joins, `extractAll` histograms); add
+`explain: true` for ClickHouse's index analysis (parts/granules kept per
+engaged index) before spending. Without `relation` it is a pure parse.
+
 Guiding knobs beyond the query text: `snippet_chars` (64-1200, default
 240) widens each result's served context window; `max_per_source` (>=1)
 caps any one source's share of the page; `limit`, `sources`, `kinds`,
