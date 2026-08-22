@@ -327,7 +327,7 @@ changed, not by surface wording. Turn each surviving direction into a
 count-first probe (§ Shape probes) with a ledger row: cell, candidate,
 relation, probe, count. Report the grid — cells drawn, cells that
 yielded, cells that came back empty — as the denominator of "diverse".
-Two consecutive rounds of fresh cells with nothing new is the stop.
+The stopping rule is § Lexical fanout's.
 
 ### The outsized endpoint
 

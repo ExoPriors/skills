@@ -215,13 +215,10 @@ asking yourself to be creative. Change the ask instead (`references.md`
   probe phrasings / hypotheses for X, each with the community that would
   hold it and the words it would use" — then run each direction as a
   bounded count-first probe. Pass `"field": "inquiry"` for research
-  briefs — its axes are venue, era, stance, register, scale, inversion,
-  the same ones as the field step above; the default `artifact` bank
-  (form, stance, audience, scale) is built for deliverables and turns a
-  research brief about half into costume. The roster and field steps
-  remain the primary instrument; the endpoint is the wide net behind
-  them. The endpoint proposes; the corpus decides. Wallet-funded, about
-  two minutes, experimental.
+  briefs (the default `artifact` bank is for deliverables; the
+  measurement is in `references.md` § The outsized endpoint). The roster
+  and field steps remain the primary instrument; the endpoint is the
+  wide net behind them. Wallet-funded, about two minutes, experimental.
 
 ## Registered surfaces
 
