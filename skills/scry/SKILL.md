@@ -197,8 +197,9 @@ asking yourself to be creative. Change the ask instead (`references.md`
   the *mechanism* of a candidate (venue family, era, stance, register,
   scale, inversion), 2–6 values each, and cover the cells. One candidate
   per cell, written from that cell's conjunction alone, before looking at
-  the others. The grid is the denominator: report which cells yielded and
-  which came back empty.
+  the others. The grid is the denominator — but only for independent
+  shots (one fresh context per cell, or the endpoint below): a single
+  context walking the cells is a list, and a list reports no coverage.
 - **Entropy from outside the model.** You cannot make a random choice;
   the corpus can. `ORDER BY rand()` over a roster, `rand() %` over an
   axis to draw cells, a seeded `cityHash64` for a reproducible
@@ -213,8 +214,14 @@ asking yourself to be creative. Change the ask instead (`references.md`
   *directions*, not answers: "enumerate orthogonal source families /
   probe phrasings / hypotheses for X, each with the community that would
   hold it and the words it would use" — then run each direction as a
-  bounded count-first probe. The endpoint proposes; the corpus decides.
-  Wallet-funded, one to four minutes, experimental.
+  bounded count-first probe. Its axes are artifact-shaped (form, stance,
+  audience, scale), so on a research brief roughly half the field is
+  costume: read the nugget's `## Span` for content mechanisms
+  (communities, motives, eras, legal/technical/economic angles) and drop
+  register-only entries. The roster and field steps above are the primary
+  instrument for source enumeration; the endpoint is the wide net behind
+  them. The endpoint proposes; the corpus decides. Wallet-funded, about
+  two minutes, experimental.
 
 ## Registered surfaces
 

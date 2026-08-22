@@ -315,7 +315,9 @@ five properties the conjunction implies (who writes there, in what
 words, what they take for granted, what they would never say, when). In
 a multi-agent harness, one fresh context per cell; in one context, write
 each cell's candidate before reading the next and never revise an
-earlier cell in light of a later one. A candidate any cell would have
+earlier cell in light of a later one — and label the result honestly: a
+single-context walk is a list, not a covered field, so report its grid
+as what you tried, never as coverage. A candidate any cell would have
 produced is the mode leaking back: drop it and redraw.
 
 ### 4. Converge
@@ -349,6 +351,19 @@ It settles against the account's Scry balance only (a caller-supplied
 provider key is refused: the fleet stays a black box), takes one to four
 minutes, and is marked experimental. Treat the candidates as directions
 to probe, never as findings: step 4 still runs, and only rows ship.
+
+Know the instrument. Its axes are fixed and artifact-shaped (lever,
+scale, time, inversion, audience, form, stance — built for rules,
+objects, scenes, clauses), so a research brief gets a field where about
+half the shots are costume. Measured 2026-08-22 on the Usenet brief
+above: 12/12 shots, 103 s, $0.026; the nugget's `## Span` listed six
+content mechanisms worth probing (a six-community taxonomy with each
+group's causal theory and vocabulary, an adversarial "who benefits"
+audit, a legal/jurisdictional frame, absence-as-data, structural
+predation, temporal drift) beside six register costumes (domestic
+ritual, liturgical, hive analogy, parable for a child). Read for
+content, discard costume, and keep the roster and field steps as the
+primary instrument; the endpoint is the wide net behind them.
 
 ## Scry query patterns (ClickHouse SQL dialect)
 
