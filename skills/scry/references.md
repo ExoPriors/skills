@@ -337,10 +337,14 @@ context produces:
 
 ```
 POST /v1/creativity/outsized
-{"brief": "Enumerate orthogonal source families and probe phrasings for <X>: for each, the community that would hold it, the words it would use, and the register to embed.", "shots": 12}
+{"brief": "Enumerate orthogonal source families and probe phrasings for <X>: for each, the community that would hold it, the words it would use, and the register to embed.", "shots": 12, "field": "inquiry"}
 ```
 
-`brief` is at most 16 KB; `shots` is 4–24 (default 12). The response
+`brief` is at most 16 KB; `shots` is 4–24 (default 12); `field` picks
+the axis bank — `inquiry` (venue, era, stance, register, scale,
+inversion) for research direction, `artifact` (the default: lever,
+scale, time, inversion, audience, form, stance) for deliverables. The
+response
 carries `field: [{id, text}]` — one independent candidate per surviving
 shot, each written from its own server-drawn cell on its own small model
 — a consolidated `nugget` (`consolidated: false` when the consolidation
@@ -352,18 +356,17 @@ provider key is refused: the fleet stays a black box), takes one to four
 minutes, and is marked experimental. Treat the candidates as directions
 to probe, never as findings: step 4 still runs, and only rows ship.
 
-Know the instrument. Its axes are fixed and artifact-shaped (lever,
-scale, time, inversion, audience, form, stance — built for rules,
-objects, scenes, clauses), so a research brief gets a field where about
-half the shots are costume. Measured 2026-08-22 on the Usenet brief
-above: 12/12 shots, 103 s, $0.026; the nugget's `## Span` listed six
-content mechanisms worth probing (a six-community taxonomy with each
-group's causal theory and vocabulary, an adversarial "who benefits"
-audit, a legal/jurisdictional frame, absence-as-data, structural
-predation, temporal drift) beside six register costumes (domestic
-ritual, liturgical, hive analogy, parable for a child). Read for
-content, discard costume, and keep the roster and field steps as the
-primary instrument; the endpoint is the wide net behind them.
+Know the instrument. The artifact bank is built for rules, objects,
+scenes, and clauses; run on a research brief it returns a field about
+half costume (measured 2026-08-22 on the Usenet brief above, 12/12
+shots, 103 s, $0.026: a six-community taxonomy, a who-benefits audit,
+and a legal frame beside a child's parable, a hive analogy, and a
+"domestic ritual"). `field: "inquiry"` exists for exactly that reason —
+its axes change who holds a direction, when, at what scale, and from
+which side, not how it is voiced. Either way, read the nugget's `## Span`
+for content mechanisms, discard register-only entries, and keep the
+roster and field steps as the primary instrument; the endpoint is the
+wide net behind them.
 
 ## Scry query patterns (ClickHouse SQL dialect)
 

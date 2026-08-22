@@ -214,12 +214,12 @@ asking yourself to be creative. Change the ask instead (`references.md`
   *directions*, not answers: "enumerate orthogonal source families /
   probe phrasings / hypotheses for X, each with the community that would
   hold it and the words it would use" — then run each direction as a
-  bounded count-first probe. Its axes are artifact-shaped (form, stance,
-  audience, scale), so on a research brief roughly half the field is
-  costume: read the nugget's `## Span` for content mechanisms
-  (communities, motives, eras, legal/technical/economic angles) and drop
-  register-only entries. The roster and field steps above are the primary
-  instrument for source enumeration; the endpoint is the wide net behind
+  bounded count-first probe. Pass `"field": "inquiry"` for research
+  briefs — its axes are venue, era, stance, register, scale, inversion,
+  the same ones as the field step above; the default `artifact` bank
+  (form, stance, audience, scale) is built for deliverables and turns a
+  research brief about half into costume. The roster and field steps
+  remain the primary instrument; the endpoint is the wide net behind
   them. The endpoint proposes; the corpus decides. Wallet-funded, about
   two minutes, experimental.
 
