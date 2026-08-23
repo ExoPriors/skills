@@ -122,6 +122,23 @@ operator the relation cannot express. Paste the WHERE into any shape
 (`count() … GROUP BY`, `HAVING`, joins, `extractAll` histograms); add
 `explain: true` for ClickHouse's index analysis (parts/granules kept per
 engaged index) before spending. Without `relation` it is a pure parse.
+`relation: "*"` sweeps instead: the line compiled against every
+registered relation carrying a text plane, and `counts: true` runs each
+compiled count bounded (readonly, 8s/relation) — one call for the
+expression's distribution across the whole estate, denominators
+included (`sweep[]` count-descending, `sweep_skipped[]` naming the
+relations with no text plane).
+
+The grammar is also a first-class SQL operand: inside any
+`POST /v1/scry/query` statement, `scry_lex('<line>')` expands
+server-side into exactly the predicate `scry_compile` would return for
+the statement's one registered relation — so
+`WHERE scry_lex('"scaling laws" -toy')`,
+`countIf(scry_lex('/GPT-[0-9]/')) AS hits`, and GROUP-BY histograms
+over a lexical cohort are plain SQL. An optional second argument pins
+the text expression (`scry_lex('rust', title)`); an operator the
+relation cannot express is a hard error, never a silent drop. At most 8
+calls per statement; one registered relation per statement.
 
 Guiding knobs beyond the query text: `snippet_chars` (64-1200, default
 240) widens each result's served context window; `max_per_source` (>=1)
