@@ -146,7 +146,7 @@ Reuse shared term instruments with `scry_recipe('<slug>'[, text])` for
 membership and `scry_recipe_score('<slug>'[, text])` for token-weighted
 score. Discover them with MCP `scry_recipes`; publish a complete measured
 version with `scry_recipe_write` and the returned head version as
-`if_version`. Write a recipe when you derived at least five surface forms,
+`if_version`. Derive candidates read-only with `scry_recipe_derive`, then curate noise, measure the instrument, and publish through `scry_recipe_write`. Write a recipe when you derived at least five surface forms,
 or when a polarity instrument survives reading 20 matches per cohort.
 Read those matches before publishing, keep provenance and measurements
 with the terms, and treat the stance as part of the recipe's identity.
