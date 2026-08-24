@@ -366,6 +366,87 @@ for content mechanisms, discard register-only entries, and keep the
 roster and field steps as the primary instrument; the endpoint is the
 wide net behind them.
 
+## What lexical search makes possible
+
+Read this when a question looks like it needs a model and might not. The
+text indexes (`hasToken`/`hasAnyTokens` posting lists, trigram n-grams for
+substrings and regex prefilters) answer over hundreds of millions of rows
+in seconds, and every answer carries a denominator. That combination —
+speed plus a count you can defend — is what makes the shapes below
+possible at all. Each one is a plain SQL statement; nothing here needs an
+embedding until the last rung.
+
+### The ladder of abstraction
+
+Climb it; most questions resolve before the top.
+
+1. **Token** — `hasToken(search_text_lc, 'mechinterp')`. One word, one
+   posting list, sub-second anywhere.
+2. **Phrase and proximity** — `scry_lex('"scaling laws"')`,
+   `scry_lex('interpretability NEAR/50 circuits')`: recall on tokens,
+   decide on positions.
+3. **Pattern** — `scry_lex('/GPT-[0-9]+(\.[0-9]+)?/')`: a regex over the
+   whole estate, prefiltered by its required literals so the index still
+   prunes; `scry_compile` with `explain: true` prices it before you spend.
+4. **Recipe** — `scry_recipe('mech_interp')`: every surface form someone
+   already derived and measured, as one operand; `scry_recipe_score
+   ('vader_polarity')` as a per-row weighted signal. Recipes are what turn
+   a vocabulary you found into an instrument others reuse.
+5. **Cohort** — a recipe or lex line as a *selector*: authors, threads,
+   days that match, then measure something else about them
+   (§ Comparative study design owns the discipline).
+6. **Time series** — the same predicate under `GROUP BY
+   toStartOfMonth(...)`: a term's birth date, its peak, its decay. Every
+   concept has one; `mechinterp` did not exist in 2019.
+7. **Estate sweep** — `scry_compile` with `relation: "*"` and `counts:
+   true`: where a vocabulary lives across every corpus, with per-relation
+   denominators, in one call. This is the "which community talks like
+   this" question answered without reading anything.
+8. **Semantic escalation** — only now: `scry_embed` neighbors to find the
+   vocabulary you could not guess, fed back down the ladder as tokens.
+
+### The ladder of proof
+
+Each rung above can be asserted at several strengths; name the one you
+are at.
+
+- **Existence** — one row with a source id. Enough for "this was said".
+- **Count with denominator** — `countIf(scry_lex(...)) / count()` inside
+  a window and a source. Enough for "how common".
+- **Rate against a control** — the same predicate over a hash slice
+  (`intHash64(author_id) % 20 = 0`) or a disjoint window. Enough for
+  "more than baseline".
+- **Temporal holdout** — select in window 1, measure in window 2.
+  Enough for a trait claim.
+- **Read matches** — twenty rows per cohort, false positives counted,
+  row ids kept. Without this rung a lexicon is a guess with a number
+  on it; with it the number has a precision. Recipes store this rung.
+
+### Wild things that are already routine
+
+- **Who said it first** — `min(original_timestamp)` over a phrase across
+  every relation: the earliest use of a coinage in 200M documents, in
+  one sweep, with the row to cite.
+- **Jargon salience by community** — a term's share inside a source ÷
+  its share in the estate (§ Vocabulary expansion). Ranks a community's
+  private vocabulary without a model.
+- **Stance inversion** — the same topic under two stance recipes
+  (`empathy_broadcast` vs `empathy_accusation`) gives opposite reply
+  hostility; a topic lexicon alone would have averaged the sign away.
+- **Vocabulary birth and death** — monthly rates for a recipe's terms
+  one by one: which surface form is winning (`sae` overtaking `sparse
+  autoencoder`), which is dying.
+- **Cross-corpus migration** — the month a term first appears in each
+  relation, ordered: LessWrong → arXiv → Hacker News → Reddit is a
+  measurable diffusion path, not a story.
+- **Blind-band honesty** — a recipe declares what it cannot see
+  (sarcasm, passive aggression); an absence claim is scoped to the band
+  automatically instead of overreaching.
+- **Derivation from the corpus itself** — prefix lexicon + co-occurrence
+  salience + embedding neighbors, seeded from an index-engaging term,
+  yields the variant list in seconds; curate, measure, publish as a
+  recipe. Ten SQL calls today, one `scry_recipe_derive` call next.
+
 ## Scry query patterns (ClickHouse SQL dialect)
 
 Call `GET /v1/scry/schema`, choose an enabled registered relation, then send one
