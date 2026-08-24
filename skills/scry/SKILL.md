@@ -140,6 +140,17 @@ the text expression (`scry_lex('rust', title)`); an operator the
 relation cannot express is a hard error, never a silent drop. At most 8
 calls per statement; one registered relation per statement.
 
+## Lexical recipes
+
+Reuse shared term instruments with `scry_recipe('<slug>'[, text])` for
+membership and `scry_recipe_score('<slug>'[, text])` for token-weighted
+score. Discover them with MCP `scry_recipes`; publish a complete measured
+version with `scry_recipe_write` and the returned head version as
+`if_version`. Write a recipe when you derived at least five surface forms,
+or when a polarity instrument survives reading 20 matches per cohort.
+Read those matches before publishing, keep provenance and measurements
+with the terms, and treat the stance as part of the recipe's identity.
+
 Guiding knobs beyond the query text: `snippet_chars` (64-1200, default
 240) widens each result's served context window; `max_per_source` (>=1)
 caps any one source's share of the page; `limit`, `sources`, `kinds`,
