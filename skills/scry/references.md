@@ -457,6 +457,99 @@ are at.
   yields the variant list in seconds; curate, measure, publish as a
   recipe. Ten SQL calls today, one `scry_recipe_derive` call next.
 
+## The quantifier chain — operators search forgot
+
+Web search trained everyone to ask one shape of question: *which
+documents match P*. SQL over the estate answers questions with a second
+variable quantified — authors, threads, communities, time, the graph —
+and every predicate below may be a token, a phrase, a `NEAR` window, or
+a `scry_recipe(...)`. Each rung is one subquery; `IN (subquery)` on the
+bloom-indexed author/id columns keeps them sub-second when the inner set
+is bounded. Measured shapes, 2026-08-24:
+
+**Rung 0 — document.** `WHERE P(d)`. What search does.
+
+**Rung 1 — within-author, elsewhere (∃).** Documents by people who have
+said Q *anywhere*, including another relation:
+
+```sql
+SELECT count() AS n, uniq(author) AS authors FROM reddit.posts
+WHERE subreddit = 'MachineLearning' AND created_utc >= '2025-01-01'
+  AND author IN (SELECT original_author FROM hackernews.items
+                 WHERE hasToken(search_text_lc, 'interpretability'))
+```
+38 posts by 9 authors, 1.0 s. Recipes ride multi-relation statements
+with the text column explicit: `scry_recipe('slug', search_text_lc)`.
+
+**Rung 1′ — within-author, never (∄).** Said X, never said Y — always
+with the denominator:
+
+```sql
+SELECT countIf(said_y = 0) AS x_never_y, count() AS x_total FROM (
+  SELECT author, countIf(hasToken(search_text_lc, 'alignment')) AS said_y
+  FROM reddit.posts WHERE subreddit = 'MachineLearning' AND created_utc >= '2024-01-01'
+    AND author IN (SELECT DISTINCT author FROM reddit.posts
+                   WHERE subreddit = 'MachineLearning' AND created_utc >= '2024-01-01'
+                     AND hasToken(search_text_lc, 'interpretability'))
+  GROUP BY author)
+```
+176 of 195 r/ML interpretability-mentioners never wrote "alignment"
+there. An absence claim without `x_total` is not a finding.
+
+**Rung 2 — counting quantifiers.** Habitual (`HAVING count() >= N`),
+sustained (`uniq(toStartOfMonth(t)) >= N`), ratio (`avg(score_x) /
+avg(score_y)`), majority (`countIf(P) > count() / 2`). 6,170 reddit
+authors have ≥5 `mech_interp`-matching posts since 2025 — and that
+number is the lesson: a concept recipe curated on LessWrong (circuits,
+steering, probes) is noisy on reddit. Measure a recipe on the relation
+you quantify over before trusting the count.
+
+**Rung 3 — temporal order.** First mention per author (adoption curve:
+`min(t) GROUP BY author`, then bucket the minima); sequence (`minIf(t,
+X) < minIf(t, Y)` per author — who was skeptical *before* convinced);
+pre/post (cohort fixed at T₀, measured at T₁); sign-flip (a recipe score
+crossing zero between periods). These are the arcs — conversion,
+radicalization, adoption — that no per-document search can see.
+
+**Rung 4 — thread and audience.** The *audience* of P, not its
+speakers: comments under posts matching P.
+
+```sql
+SELECT count() AS comments, uniq(author) AS commenters FROM reddit.comments
+WHERE created_utc >= '2026-01-01'
+  AND link_id IN (SELECT concat('t3_', id) FROM reddit.posts
+                  WHERE created_utc >= '2026-01-01' AND subreddit = 'MachineLearning'
+                    AND scry_recipe('mech_interp', search_text_lc))
+```
+1,075 comments by 405 commenters, 6.6 s. Rung 1 with recipes on both
+sides — hedged reddit posts by people who wrote with `certainty` on HN
+— returns 36,148 posts by 6,138 people in 33 s. HN threads chain the same way through `parent_hn_id` / `story_hn_id`.
+Audience quantifiers compose with rung 1: *people who replied to X and
+later posted Y themselves*.
+
+**Rung 5 — community-conditioned.** P where P is rare (surprise), P's
+share inside a source ÷ its share in the estate (salience, § Vocabulary
+expansion), P under the community's own polarity lexicon
+(`socialsent_*`). The same words mean different things in different
+rooms; this rung says which room.
+
+**Rung 6 — graph.** People followed by people who say P
+(`twitter.following` / `twitter.followers`); people who are the same
+person on another platform (`persons.links`) — the cross-source person
+contrast in § What lexical search makes possible.
+
+**Rung 7 — provenance.** Documents whose *links* match P — `outbound_url`
+/ domain predicates on reddit and HN, tweets pointing at papers whose
+text matches Q — joined through the URL, not the prose. HN items
+linking arxiv whose text says "interpretability": 32 items by 28
+posters, 0.2 s.
+
+Rungs stack: *comments (4) by habitual (2) HN-interpretability people (1)
+who hedge more than they did last year (3, recipe)* is four subqueries
+and one afternoon. Two disciplines hold across the chain: every
+quantifier over authors carries its denominator, and every recipe in a
+multi-relation statement names its text column.
+
 ## The recipe shelf
 
 `GET /v1/scry/recipes` (MCP `scry_recipes`) is the live catalog; this
