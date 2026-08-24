@@ -447,6 +447,54 @@ are at.
   yields the variant list in seconds; curate, measure, publish as a
   recipe. Ten SQL calls today, one `scry_recipe_derive` call next.
 
+## The recipe shelf
+
+`GET /v1/scry/recipes` (MCP `scry_recipes`) is the live catalog; this
+table is the shelf as measured on lesswrong 2026-01-01.. (2026-08-24).
+`match` = share of documents containing ≥1 term; `score` = mean
+`scry_recipe_score` over a 200-hit sample (weighted token recipes only).
+
+| slug | kind | terms | what it is | match | score |
+|---|---|---|---|---|---|
+| `mech_interp` | concept | 14 | mechanistic-interpretability surface forms, token + phrase | 0.044 | +0.009 |
+| `vader_polarity` | affect | 7,234 | social-media valence, -4..+4 human means (MIT) | 0.953 | +0.051 |
+| `afinn_polarity` | affect | 3,351 | microblog valence, signed integers -5..+5 (Apache-2.0) | 0.936 | +0.036 |
+| `hu_liu_polarity` | affect | 6,775 | opinion words ±1, review register (free w/ attribution) | 0.930 | +0.016 |
+| `hu_liu_positive` | affect | 2,005 | positive half, membership | 0.870 | — |
+| `hu_liu_negative` | affect | 4,776 | negative half, membership | 0.782 | — |
+| `labmt_happiness` | affect | 10,091 | word happiness norms, centered happs-5 (CC-BY) | 0.9996 | +0.368 |
+| `emoji_polarity` | affect | 751 | emoji sentiment, phrase form, weights are reader data (CC BY-SA) | 0.009 | — |
+
+Choosing:
+
+- **Selector vs scorer.** match near 0 (`mech_interp`) is a selector —
+  put it in WHERE. match near 1 (`labmt_happiness`, whose vocabulary is
+  the common tongue) is a scorer — it meters every document; apply the
+  hedonometer lens (drop |w|<1 terms) on read. The polarity lexicons sit
+  between: WHERE-able on small corpora, scorers on large ones.
+- **Polarity on general prose**: `vader_polarity` first (widest coverage,
+  slang included), `afinn_polarity` when you want small and legible.
+  `hu_liu_*` for opinion/review registers and membership cohorts.
+- **`emoji_polarity` is corpus-diagnostic**: 0.9% on lesswrong; expect
+  real rates on social corpora. Phrase-form, so `scry_recipe_score`
+  ignores it — read the stored weights yourself.
+- **All the seeds are overt-band**: blind to negation, sarcasm, and
+  domain reversal by construction, and each recipe's `options.blind_to`
+  says so. Scope absence claims to the band.
+- **`scry_recipe_score` re-tokenizes every row it touches** — always
+  bound it with a sampled subquery (`... WHERE scry_recipe('slug') LIMIT
+  200`), never a bare full-relation aggregate.
+- **Derive before you hand-write**: `scry_recipe_derive(seeds, relation,
+  source)` returns prefix-lexicon and co-occurrence candidates with
+  relation-wide denominators. Sort co-occurrence candidates by
+  `salience`, not `df_matched` — df ranking surfaces stopwords. Curate,
+  read matches, then publish with `scry_recipe_write`.
+- **Stance is identity**: the same word list under a different reading
+  contract is a different recipe, not a new version.
+
+License-gated families (NRC, LIWC, SentiStrength data, SenticNet) are
+deliberately absent — tracked in `future-ideal-obligations.toml`.
+
 ## Scry query patterns (ClickHouse SQL dialect)
 
 Call `GET /v1/scry/schema`, choose an enabled registered relation, then send one

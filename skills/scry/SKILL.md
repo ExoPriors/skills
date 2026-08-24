@@ -150,6 +150,8 @@ version with `scry_recipe_write` and the returned head version as
 or when a polarity instrument survives reading 20 matches per cohort.
 Read those matches before publishing, keep provenance and measurements
 with the terms, and treat the stance as part of the recipe's identity.
+The seeded shelf and choosing guidance live in `references.md` § The
+recipe shelf.
 
 Guiding knobs beyond the query text: `snippet_chars` (64-1200, default
 240) widens each result's served context window; `max_per_source` (>=1)
