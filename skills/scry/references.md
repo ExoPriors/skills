@@ -442,6 +442,16 @@ are at.
 - **Blind-band honesty** — a recipe declares what it cannot see
   (sarcasm, passive aggression); an absence claim is scoped to the band
   automatically instead of overreaching.
+- **Cross-source person contrast** — the same person, different
+  vocabulary in different venues. `persons.links` joins platform
+  accounts under a `person_id` (deterministic public keys only); group
+  each side by author with a recipe score, join on the linked pair.
+  Measured 2026-08-24: of 502 persons active on both reddit and Hacker
+  News, mean hedging density is 2x higher on HN (0.0035 vs 0.0018) —
+  register belongs to the venue, and per-person outliers who flip the
+  gradient are individually retrievable. Same shape works for any
+  recipe pair: certainty-at-work vs apology-at-home, jargon on one
+  platform vs plain speech on another.
 - **Derivation from the corpus itself** — prefix lexicon + co-occurrence
   salience + embedding neighbors, seeded from an index-engaging term,
   yields the variant list in seconds; curate, measure, publish as a
@@ -491,6 +501,27 @@ Choosing:
   read matches, then publish with `scry_recipe_write`.
 - **Stance is identity**: the same word list under a different reading
   contract is a different recipe, not a new version.
+
+The **epistemic/logical tranche** (original curation, CC0 — no upstream
+license): these read the *reasoning register* of text rather than its
+topic or valence, and their cross-corpus contrasts are the point.
+Measured lesswrong-2026 vs reddit-2026H2 match rates:
+
+| slug | kind | reads | lesswrong | reddit |
+|---|---|---|---|---|
+| `hedging` | stance | epistemic softening (maybe/arguably/"i could be wrong") | 0.658 | 0.100 |
+| `certainty` | stance | epistemic hardening (obviously/undoubtedly/"no question") | 0.272 | 0.067 |
+| `absolutist` | register | black-and-white thinking (Al-Mosaiwi & Johnstone 2018) | 0.466 | 0.187 |
+| `causal_reasoning` | structural | argument connectives (therefore/"it follows that") | 0.328 | 0.048 |
+| `disagreement` | stance | overt refutation (strawman/"doesn't follow") | 0.157 | 0.013 |
+| `evidence_citing` | stance | appeals to data/studies ("peer reviewed"/"effect size") | 0.313 | 0.028 |
+| `gratitude` | affect | expressed appreciation | 0.096 | 0.040 |
+| `apology` | stance | self-repair ("i was wrong"/"i stand corrected") | 0.032 | 0.009 |
+
+LessWrong hedges in 66% of posts vs reddit's 10%, evidence-cites 11x
+more, and overtly disagrees 13x more — the register instruments rank
+communities before any per-document reading. Pair `hedging` against
+`certainty` for an epistemic-humility ratio per cohort.
 
 **The `socialsent_*` family** (16 recipes, ~4,900 terms each, PDDL) is
 the community-conditioned reddit formula: SentProp-induced polarity per
