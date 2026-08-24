@@ -517,6 +517,10 @@ Measured lesswrong-2026 vs reddit-2026H2 match rates:
 | `evidence_citing` | stance | appeals to data/studies ("peer reviewed"/"effect size") | 0.313 | 0.028 |
 | `gratitude` | affect | expressed appreciation | 0.096 | 0.040 |
 | `apology` | stance | self-repair ("i was wrong"/"i stand corrected") | 0.032 | 0.009 |
+| `question_asking` | stance | help-seeking ("does anyone know"/eli5) | 0.259 | 0.135 |
+| `hype_promotion` | register | marketing superlatives ("game changer"; LLM-slop proxy) | 0.037 | 0.004 |
+| `urgency_alarm` | register | time pressure/threat framing ("act now"/imminent) | 0.100 | 0.026 |
+| `complaint` | stance | consumer grievance (scam/"waste of money") | 0.050 | 0.013 |
 
 LessWrong hedges in 66% of posts vs reddit's 10%, evidence-cites 11x
 more, and overtly disagrees 13x more — the register instruments rank
