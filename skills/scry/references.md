@@ -492,6 +492,18 @@ Choosing:
 - **Stance is identity**: the same word list under a different reading
   contract is a different recipe, not a new version.
 
+**The `socialsent_*` family** (16 recipes, ~4,900 terms each, PDDL) is
+the community-conditioned reddit formula: SentProp-induced polarity per
+subreddit register, where the same word can flip sign across
+communities. Each is measured on its own community (reddit.posts, 2026
+window); the mean hit scores already rank registers plausibly —
+politics -0.097, leagueoflegends -0.118, offmychest -0.078 vs
+askscience +0.169, minecraft +0.106. Use the recipe whose community
+matches the cohort under study; for a subreddit outside the 16, the
+remaining 234 SocialSent lexicons load the same way (fetch + publish
+pattern in the campaign scratch dir). Induced from 2014 comments —
+treat drifted slang with the temporal-holdout rung.
+
 License-gated families (NRC, LIWC, SentiStrength data, SenticNet) are
 deliberately absent — tracked in `future-ideal-obligations.toml`.
 
