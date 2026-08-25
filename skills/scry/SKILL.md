@@ -157,18 +157,25 @@ plane-by-plane operator map — quorum and frequency gates, named
 quantifiers, Allen span relations, life-history regex, epistemic
 operator families — is `references.md` § The operator space.
 
-Composing recipes is plain SQL, because each call expands to a boolean:
-difference `scry_recipe('hedging') AND NOT scry_recipe('certainty')`,
-intersection `scry_recipe('a') AND scry_recipe('b')`, exclusive-or
-`scry_recipe('a') != scry_recipe('b')`, and the contrast ratio
-`countIf(scry_recipe('a')) / countIf(scry_recipe('b'))` per cohort,
-which cancels base rates. A `NOT` alone constrains nothing the index can
-prune — keep a positive recipe or `scry_lex` leaf beside it so the
-negation rides the residual. Disjointness of two instruments is a
-property to measure, not assume: `countIf(scry_recipe('a') AND
-scry_recipe('b'))` beside each count says how much they overlap on the
-relation you quantify over, and a stance pair that overlaps heavily is
-one recipe with a missing stance.
+Composing recipes has an operand: `scry_recipe('a - b')` difference,
+`scry_recipe('a & b')` intersection, `scry_recipe('a ^ b')`
+exclusive-or — whitespace around the operator, one operator kind per
+call (chains like `a - b - c` fine, mixing refused), `^` takes exactly
+two operands, and `scry_recipe_score` scores one slug at a time. The
+expansion keeps a positive index-engaging leaf in front by
+construction, so the `NOT` inside `-`/`^` rides the residual. The same
+booleans remain writable by hand (`scry_recipe('hedging') AND NOT
+scry_recipe('certainty')`), and the contrast ratio
+`countIf(scry_recipe('a')) / countIf(scry_recipe('b'))` per cohort
+cancels base rates. A composition worth reusing gets published as its
+own recipe (`derived_from` naming the algebra) — that also makes it
+scoreable. Terms may carry `form: "regex"` (RE2, compiled to
+`match()`): give a regex-bearing recipe token or phrase recall leaves
+beside the patterns or it evaluates as a scan. Disjointness of two
+instruments is a property to measure, not assume: `countIf(
+scry_recipe('a & b'))` beside each count says how much they overlap on
+the relation you quantify over, and a stance pair that overlaps heavily
+is one recipe with a missing stance.
 
 Guiding knobs beyond the query text: `snippet_chars` (64-1200, default
 240) widens each result's served context window; `max_per_source` (>=1)

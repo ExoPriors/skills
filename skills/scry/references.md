@@ -817,8 +817,50 @@ Ethics: the sensitive instruments (`catastrophizing`, `loneliness`,
 screening or targeting tool for individuals"` in the catalog. Honor it:
 aggregate, trend, and compare cohorts; do not rank or flag people.
 
-License-gated families (NRC, LIWC, SentiStrength data, SenticNet) are
-deliberately absent — tracked in `future-ideal-obligations.toml`.
+The **reasoning-register tranche** (original curation, CC0) reads *how
+a text claims to know* — evidentiality, counterfactuals, owned belief,
+staked predictions. All overt-band selectors. Measured lesswrong-2026
+vs reddit-2026H2 match rates:
+
+| slug | reads | lesswrong | reddit |
+|---|---|---|---|
+| `counterfactual` | history run otherwise ("had it not been"/"in a world where") | 0.037 | 0.002 |
+| `conditional_reasoning` | explicit if-then/unless structure (density) | 0.077 | 0.004 |
+| `reportative` | knowledge by hearsay ("according to"/reportedly) | 0.036 | 0.003 |
+| `inferential` | knowledge by deduction ("must have"/presumably) | 0.034 | 0.0006 |
+| `sensory_evidence` | firsthand witness ("i saw"/"with my own eyes") | 0.013 | 0.006 |
+| `speculation` | marked guessing ("my hunch"/"if i had to guess") | 0.055 | 0.001 |
+| `report_factual` | observed outcome ("we found that"/"was measured") | 0.023 | 0.0006 |
+| `belief_attribution` | owned belief ("i think that"/imho — the anti-certainty) | — | 0.006 |
+| `crux_language` | disagreement tech ("my crux"/steelman/"would update if") | 0.014 | 0.00005 |
+| `bet_stake` | money offered on a claim ("i'd bet"/"put money on") | 0.004 | 0.0005 |
+| `credence_numeric` | numeric credence (regex: "90% confident", "p(x) = .7", odds) | 0.020 | 0.0005 |
+
+`credence_numeric` is the first regex-form recipe (form: "regex"
+compiles to `match()`; its token leaves credence/brier carry the
+recall). Composites these license: **evidential mix** =
+reportative : inferential : sensory per source ranks a community by how
+it knows what it claims (lesswrong is inference-heavy at 2.6:1 over
+sensory; reddit is sensory-first at 10:1 over inferential);
+**calibration** = `credence_numeric & prediction_stake` per cohort;
+**counterfactual density** per community — the lesswrong:reddit ratio
+is ~20:1, the register gap itself being the instrument.
+
+Beside it, four **orientation families** (density instruments — compare
+scores across cohorts, membership is near-universal by design for the
+pronoun pair): `self_reference` (i-words, lw 0.78 / rd 0.42) vs
+`group_reference` (we-words, 0.39 / 0.077) — the i:we ratio;
+`past_focus` (0.105 / 0.029) vs `future_focus` (0.321 / 0.084) — the
+orientation ratio; `politeness_formulae` (0.103 / 0.059);
+`profanity_strong` (0.018 / 0.027 — the one instrument where reddit
+out-rates lesswrong) tiered against `profanity_mild` (0.017 / 0.008).
+
+Still gated on machinery: `modal_epistemic` vs `modal_deontic` (same
+words split by scope — needs the proximity operator), full would-have
+counterfactual syntax and if…then spans (need more regex members).
+License-gated families (NRC, LIWC, SentiStrength data, SenticNet, MFD
+2.0 unverified) are deliberately absent — tracked in
+`future-ideal-obligations.toml`.
 
 ## Scry query patterns (ClickHouse SQL dialect)
 
