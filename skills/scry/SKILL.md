@@ -144,7 +144,9 @@ calls per statement; one registered relation per statement.
 
 Reuse shared term instruments with `scry_recipe('<slug>'[, text])` for
 membership and `scry_recipe_score('<slug>'[, text])` for token-weighted
-score. Discover them with MCP `scry_recipes`; publish a complete measured
+score. Use `scry_recipe_density('<slug>'[, text])` for weighted term
+occurrences per 1,000 characters across token, phrase, and regex members.
+Discover them with MCP `scry_recipes`; publish a complete measured
 version with `scry_recipe_write` and the returned head version as
 `if_version`. Derive candidates read-only with `scry_recipe_derive`, then curate noise, measure the instrument, and publish through `scry_recipe_write`. Write a recipe when you derived at least five surface forms,
 or when a polarity instrument survives reading 20 matches per cohort.
@@ -161,7 +163,7 @@ Composing recipes has an operand: `scry_recipe('a - b')` difference,
 `scry_recipe('a & b')` intersection, `scry_recipe('a ^ b')`
 exclusive-or — whitespace around the operator, one operator kind per
 call (chains like `a - b - c` fine, mixing refused), `^` takes exactly
-two operands, and `scry_recipe_score` scores one slug at a time. The
+two operands, and score/density each measure one slug at a time. The
 expansion keeps a positive index-engaging leaf in front by
 construction, so the `NOT` inside `-`/`^` rides the residual. The same
 booleans remain writable by hand (`scry_recipe('hedging') AND NOT

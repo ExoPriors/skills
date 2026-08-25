@@ -390,7 +390,9 @@ Climb it; most questions resolve before the top.
    prunes; `scry_compile` with `explain: true` prices it before you spend.
 4. **Recipe** — `scry_recipe('mech_interp')`: every surface form someone
    already derived and measured, as one operand; `scry_recipe_score
-   ('vader_polarity')` as a per-row weighted signal. Recipes are what turn
+   ('vader_polarity')` as a per-row token-weighted signal, or
+   `scry_recipe_density('hedging')` as weighted occurrences per 1,000
+   characters across every member form. Recipes are what turn
    a vocabulary you found into an instrument others reuse.
 5. **Cohort** — a recipe or lex line as a *selector*: authors, threads,
    days that match, then measure something else about them
@@ -447,10 +449,10 @@ are at.
   accounts under a `person_id` (deterministic public keys only); group
   each side by author with a recipe score, join on the linked pair.
   Measured 2026-08-24: of 502 persons active on both reddit and Hacker
-  News, mean hedging density is 2x higher on HN (0.0035 vs 0.0018) —
-  register belongs to the venue, and per-person outliers who flip the
-  gradient are individually retrievable. Same shape works for any
-  recipe pair: certainty-at-work vs apology-at-home, jargon on one
+  News, mean token-weighted hedging score is 2x higher on HN (0.0035 vs
+  0.0018) — register belongs to the venue, and per-person outliers who
+  flip the gradient are individually retrievable. Same shape works for
+  any recipe pair: certainty-at-work vs apology-at-home, jargon on one
   platform vs plain speech on another.
 - **Derivation from the corpus itself** — prefix lexicon + co-occurrence
   salience + embedding neighbors, seeded from an index-engaging term,
@@ -592,11 +594,13 @@ recall leaf:
   `countMatchesCaseInsensitive(text, 'term') >= n` — "about X", not
   "mentions X".
 
-**4. Score plane.** Match/score decoupling is native here: WHERE gates,
-ORDER BY scores, and the two never need to agree (Indri `#filreq`).
-Graded negation beats hard NOT when the exclusion is soft — demote by
-subtracting: `scry_recipe_score('a') - 0.5*scry_recipe_score('b')` (ES
-`boosting`). Soft-AND over m weak signals = sum of indicators with a
+**4. Score and density planes.** Match/measurement decoupling is native
+here: WHERE gates, ORDER BY scores, and the two never need to agree
+(Indri `#filreq`). Graded negation beats hard NOT when the exclusion is
+soft — demote by subtracting: `scry_recipe_score('a') -
+0.5*scry_recipe_score('b')` (ES `boosting`). Compare register across
+different document lengths with `scry_recipe_density`, not document
+membership. Soft-AND over m weak signals = sum of indicators with a
 threshold, the continuous cousin of quorum.
 
 **5. Quantifier plane.** The whole monadic zoo — every / some / no /
@@ -702,13 +706,16 @@ Choosing:
   `hu_liu_*` for opinion/review registers and membership cohorts.
 - **`emoji_polarity` is corpus-diagnostic**: 0.9% on lesswrong; expect
   real rates on social corpora. Phrase-form, so `scry_recipe_score`
-  ignores it — read the stored weights yourself.
+  ignores it; `scry_recipe_density` counts its weighted occurrences.
 - **All the seeds are overt-band**: blind to negation, sarcasm, and
   domain reversal by construction, and each recipe's `options.blind_to`
   says so. Scope absence claims to the band.
 - **`scry_recipe_score` re-tokenizes every row it touches** — always
   bound it with a sampled subquery (`... WHERE scry_recipe('slug') LIMIT
   200`), never a bare full-relation aggregate.
+- **`scry_recipe_density` counts every member pattern over every row it
+  touches** — bound its input cohort or window; it does not add a hidden
+  membership predicate or engage the text index.
 - **Derive before you hand-write**: `scry_recipe_derive(seeds, relation,
   source)` returns prefix-lexicon and co-occurrence candidates with
   relation-wide denominators. Sort co-occurrence candidates by
@@ -842,9 +849,9 @@ within matched length buckets the LW:reddit `conditional_reasoning`
 gap is 2.8–4x, not the ~20x the aggregates suggest (reddit's
 aggregate is dominated by 79M sub-500-char posts), and common recipes
 saturate on long documents (`hedging` hits 0.996 of 8k+ LW posts,
-destroying discrimination there). Compare cohorts within length
-buckets or as within-source ratios; occurrence-density normalization
-(per kilotoken) is move 5 in the execplan.
+destroying discrimination there). Compare with
+`scry_recipe_density('<slug>')`, or keep membership cohorts within
+length buckets or as within-source ratios.
 
 `credence_numeric` is the first regex-form recipe (form: "regex"
 compiles to `match()`; its token leaves credence/brier carry the
