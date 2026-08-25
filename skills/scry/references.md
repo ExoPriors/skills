@@ -851,7 +851,13 @@ aggregate is dominated by 79M sub-500-char posts), and common recipes
 saturate on long documents (`hedging` hits 0.996 of 8k+ LW posts,
 destroying discrimination there). Compare with
 `scry_recipe_density('<slug>')`, or keep membership cohorts within
-length buckets or as within-source ratios.
+length buckets or as within-source ratios. Density (measured on the
+same windows, occurrences per 1k chars, avg by length bucket S/M/L/XL):
+conditional_reasoning LW 0.053/0.069/0.063/0.037 vs reddit
+0.004/0.017/0.016/0.015 — flat in length where membership exploded,
+no saturation (hedging density 1.9 on the same LW cohort membership
+saturates at 0.996), and the honest cross-source gap reads ~2.5–4x
+bucket-matched (short-post reddit lower still).
 
 `credence_numeric` is the first regex-form recipe (form: "regex"
 compiles to `match()`; its token leaves credence/brier carry the
