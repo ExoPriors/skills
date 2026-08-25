@@ -550,6 +550,128 @@ and one afternoon. Two disciplines hold across the chain: every
 quantifier over authors carries its denominator, and every recipe in a
 multi-relation statement names its text column.
 
+## The operator space
+
+The quantifier chain is one column of a larger map. Every search operator
+is an arrow between sorts — term → span → doc → thread → author → cohort →
+community → time → graph — and enumerating by signature is what makes the
+space finite and the gaps visible. Four literatures were paneled to fill
+it (raw surveys with citations:
+`~/Projects/scratch/operator-space-2026-08-25/`): the operator-richest
+query languages ever built (INQUERY/Indri, Westlaw/Lexis, CQP, Lucene
+spans, Sphinx, Xapian, PubMed), formal algebras (generalized quantifiers,
+Allen intervals, temporal logic, relational division, Kleene algebra),
+stance linguistics (Hyland, Appraisal, factuality, modality,
+evidentiality), and the LLM-era retrieval literature. The planes below are
+the deduplicated result, each with its idiom on this surface. Everything
+here rides plain SQL — only table functions are gated, so `groupArray`,
+`sequenceMatch`, `windowFunnel`, `match` all pass the validator.
+
+**1. Term forms.** Tokens, phrases, `/regex/`, `word~1` fuzzy, substrings
+— and recipes are this surface's synonym operator (Indri `#syn`), with
+weights (`#wsyn`). The PubMed lesson: every automatic expansion needs an
+off-switch — when a stem or recipe expansion misleads, drop to quoted
+phrase or a narrower recipe rather than fighting the expansion.
+
+**2. Windows and spans.** `NEAR/k` (unordered, characters) and
+`"phrase"~n` slop exist; ordered/directional proximity, sentence scope,
+and span algebra (containing/before/overlaps — ES `intervals` is the
+model) are not yet operators. Short ordered windows can ride re2:
+`match(text, '(?i)trigger(\\W+\\w+){0,5}\\W+response')`. The
+recipe-proximity operator (`hedge within k tokens of a prediction`) is
+planned — `docs/execplans/lexical_recipes.md`.
+
+**3. Doc booleans, quorum, frequency.** Boolean composition is § Composing
+recipes (SKILL). Two gates the professional languages kept and consumer
+search lost, both expressible today as residuals behind an index-engaging
+recall leaf:
+- **quorum** (Sphinx `"…"/3`): ≥k distinct recipe terms present —
+  `arrayCount(t -> has([...terms...], t), arrayDistinct(tokens(text))) >= k`
+  — a far sharper selector than any-token membership for broad recipes;
+- **atleast** (Westlaw `ATLEASTn`): one term repeated ≥n times —
+  `countMatchesCaseInsensitive(text, 'term') >= n` — "about X", not
+  "mentions X".
+
+**4. Score plane.** Match/score decoupling is native here: WHERE gates,
+ORDER BY scores, and the two never need to agree (Indri `#filreq`).
+Graded negation beats hard NOT when the exclusion is soft — demote by
+subtracting: `scry_recipe_score('a') - 0.5*scry_recipe_score('b')` (ES
+`boosting`). Soft-AND over m weak signals = sum of indicators with a
+threshold, the continuous cousin of quorum.
+
+**5. Quantifier plane.** The whole monadic zoo — every / some / no /
+at-least-k / at-most / exactly / most / fewer-than-p% / more-X-than-Y —
+is tests on `(countIf, count)` pairs from one `GROUP BY author`; name the
+quantifier you mean and its denominator. Three named idioms kill standing
+error classes:
+- **division** ("in ALL of these"): `uniqExactIf(community, cond) = N` —
+  never the double-NOT-EXISTS;
+- **anti** ("never"): `countIf(P) = 0` as a HAVING, absence typed as a
+  result set;
+- **group-wise first/top-k**: `argMin`/`LIMIT k BY key`, not window
+  ceremony.
+Honesty metadata comes free: upward-monotone quantifiers (at-least-k)
+are stable as ingest continues; downward-monotone ones (every, no,
+at-most) are provisional — the cohort can only shrink as data arrives.
+Say which kind a claim is.
+
+**6. Temporal plane.** Derive spans per (author[, recipe]) —
+`[min(t), max(t)]` or quantile-trimmed — and Allen's 13 relations become
+endpoint comparisons: `contains` the hype cycle = veterans, `during` =
+tourists, `meets` = the topic handoff, `overlaps` = the conversion window.
+LTL words that analysts already use have direct shapes: *once*
+(`countIf > 0` before t), *since* (condition on every post after pivot),
+*until* (arc with pivot), bounded response `G(trigger → F≤Δ response)` =
+`sequenceMatch('(?1)(?t<Δ)(?2)')(t, trigger, response)`; `windowFunnel`
+for multi-step chains. The cheapest profound operator on this surface is
+the **life-history regex**: per author, order posts by time, map each to
+one letter of a small declared recipe alphabet, and
+`match(arrayStringConcat(groupArray(letter), ''), '^s+h*b+$')` runs a
+career-shaped query — skeptic-to-booster converts, `a$` (last word an
+apology), criticism-never-followed-by-apology via `NOT match`. One
+grouped scan; the alphabet is the curated asset.
+
+**7. Thread and graph plane.** Rungs 4 and 6 generalized: edges can be
+text-conditioned (replies **to posts matching P**), cones can be any
+depth where parent chains exist (`parent_hn_id`/`story_hn_id`), and reply
+trees are branching time — "every branch stayed civil" vs "some path
+reached an apology" are grouped every/some over descendants, distinct
+questions from any linear timeline.
+
+**8. Epistemic plane.** The reasoning-register recipes are operators for
+*how a text knows what it claims*. The families worth holding (licenses
+in the survey): hedge/booster; Appraisal ENGAGEMENT (entertain /
+attribute-acknowledge vs attribute-distance / proclaim / disclaim — the
+dogmatism-vs-dialogism dial); evidential source-type (perception,
+inference, assumption, reportative, quotative); attribution-verb
+factuality (*shows/proves* co-signs, *claims/alleges* distances); modal
+flavor (epistemic "must have" vs deontic "must do" — the word alone
+carries only force); counterfactual constructions (*would have* + *had X
+not* — a small closed set of tense/modal forms); speech-act denominators
+(hedging rate per **assertion**, not per post). Two distinction
+disciplines: *never affirmed* ≠ *denied* — keep silence and
+counter-assertion separately queryable; and *exposed* (replied to/quoted
+the correction) ≠ *knew* — name the proxy. The common-ground detector is
+allusion-without-link: the date after which posts use the event as an
+unexplained premise.
+
+**9. Reverse plane.** Standing queries — a document arriving and asking
+"which stored queries match it" (ES percolate) — exist nowhere on this
+surface and, per the 2023–2026 literature, nowhere in LLM-era research
+either. Recipes are already stored queries; a percolation lane over fresh
+ingest is the natural future operator (execplan).
+
+The LLM-operator failure literature says where discipline must live, and
+this surface already encodes most of it: negation and set logic stay
+symbolic (dense retrieval scores below random on negation — NevIR);
+compositional intent must not collapse to a token bag ("X for Y" is a
+phrase or a NEAR, never `X AND Y`); after zero results broaden, never
+re-specify (agents demonstrably fail to); add no filter the question did
+not ask for; and measured recipes are the standing antidote to
+hallucinated term sets — the systematic-review literature finds LLM
+boolean queries precision-heavy, recall-poor, with invented controlled
+vocabulary, and guided seeding is what fixes them.
+
 ## The recipe shelf
 
 `GET /v1/scry/recipes` (MCP `scry_recipes`) is the live catalog; this

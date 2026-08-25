@@ -152,7 +152,10 @@ Read those matches before publishing, keep provenance and measurements
 with the terms, and treat the stance as part of the recipe's identity.
 The seeded shelf and choosing guidance live in `references.md` § The
 recipe shelf; the author/thread/time/graph quantifier shapes that
-recipes plug into are `references.md` § The quantifier chain.
+recipes plug into are `references.md` § The quantifier chain; the full
+plane-by-plane operator map — quorum and frequency gates, named
+quantifiers, Allen span relations, life-history regex, epistemic
+operator families — is `references.md` § The operator space.
 
 Composing recipes is plain SQL, because each call expands to a boolean:
 difference `scry_recipe('hedging') AND NOT scry_recipe('certainty')`,
