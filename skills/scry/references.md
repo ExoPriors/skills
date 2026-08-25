@@ -566,8 +566,12 @@ Allen intervals, temporal logic, relational division, Kleene algebra),
 stance linguistics (Hyland, Appraisal, factuality, modality,
 evidentiality), and the LLM-era retrieval literature. The planes below are
 the deduplicated result, each with its idiom on this surface. Everything
-here rides plain SQL — only table functions are gated, so `groupArray`,
-`sequenceMatch`, `windowFunnel`, `match` all pass the validator.
+here rides plain SQL. The served validator denies functions whose
+aggregate state grows with attacker-controlled input — the
+`groupArray`/`groupUniqArray` families, `topK`, `uniqExact`,
+`quantileExact` — plus `sleep`/`file`; `sequenceMatch`, `windowFunnel`,
+`match`, `argMin`/`argMax` and the `-If` combinators all pass (verified
+live 2026-08-25).
 
 **1. Term forms.** Tokens, phrases, `/regex/`, `word~1` fuzzy, substrings
 — and recipes are this surface's synonym operator (Indri `#syn`), with
@@ -628,12 +632,27 @@ LTL words that analysts already use have direct shapes: *once*
 *until* (arc with pivot), bounded response `G(trigger → F≤Δ response)` =
 `sequenceMatch('(?1)(?t<Δ)(?2)')(t, trigger, response)`; `windowFunnel`
 for multi-step chains. The lowest-cost profound operator on this surface is
-the **life-history regex**: per author, order posts by time, map each to
-one letter of a small declared recipe alphabet, and
-`match(arrayStringConcat(groupArray(letter), ''), '^s+h*b+$')` runs a
-career-shaped query — skeptic-to-booster converts, `a$` (last word an
-apology), criticism-never-followed-by-apology via `NOT match`. One
-grouped scan; the alphabet is the curated asset.
+the **life-history operator**: map each post to one letter of a small
+declared recipe alphabet, then ask career-shaped questions per author.
+The string-building regex form (`match` over a concatenated history)
+is denied on the served surface with the `groupArray` family; the
+working form is `argMinIf`/`argMaxIf` for career endpoints plus
+`sequenceMatch` for ordered arcs, all in one `GROUP BY author`.
+
+First published alphabet, `epistemic1` (measured 2026-08-25): per doc,
+`h` = `scry_recipe('hedging')` without `certainty`, `c` = `certainty`
+without `hedging`, `o` = other; careers = authors with ≥12 docs.
+LessWrong 2022–.. (2,876 careers, 55s): pure-hedge career openings
+outnumber pure-certainty 8.8:1 (2,531 vs 286), endings 7.9:1; the
+first→last conversion flows are symmetric (c→h 233 vs h→c 262), and
+48.5% of careers contain a cc…hh arc
+(`sequenceMatch('(?1)(?1)(?2)(?2)')(ts, letter='c', letter='h')`) —
+exactly as many as the reverse (1,394 vs 1,396): long LW careers
+alternate registers rather than converting. r/changemyview 2020–..
+(836 careers, 8.5s): openings only 2.4:1 hedge-heavy (565 vs 235) and
+arc rates collapse to ~11% vs ~10% — the career-level register
+contrast between the two communities is the finding. The alphabet is
+the curated asset: small, declared, recipe-defined.
 
 **7. Thread and graph plane.** Rungs 4 and 6 generalized: edges can be
 text-conditioned (replies **to posts matching P**), cones can be any
