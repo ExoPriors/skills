@@ -469,6 +469,21 @@ curl -s https://api.scry.io/v1/scry/query \
   envelope's `rerank` block carries `{applied, model, column, scores}`
   (scores aligned to returned row order) — or the exact reason rows
   stayed in SQL order; a rerank failure never fails the billed query.
+- Typed search takes the same directive inline: `rerank: <ranking
+  directive>` on `POST /v1/scry/search` (MCP `scry_search`/`search`)
+  re-orders the retrieved candidate pool (~40-60 rows — the candidates,
+  never the corpus) on the local lanes, $0, typically +0.3-0.8 s, ≤ ~4 s.
+  Companions `rerank_tier: fast|quality` and `rerank_depth` (default =
+  the whole pool, max 64; narrows scoring, never widens retrieval —
+  `limit` stays the returned count). Scored rows carry
+  `score_kind: rerank` with request-local scores; a reranked page is
+  single-page (no cursor). Every response's `rerank` block reports
+  `{requested, applied, mode, tier, model, scope: candidate_set,
+  candidate_count, depth_scored, rerank_ms, degraded_reason}` — including
+  the default relevance pass, so the served order is never unexplained. If
+  the documents you want may not match the query's words, widen the
+  query: no reranker retrieves what retrieval did not admit. Deeper than
+  the pool, use `scry_rerank` on rows you hold.
 - To re-order documents you already hold (or to use the hosted
   long-document tier), `POST
   /v1/scry/rerank` (MCP `scry_rerank`) with `documents: [{id,text}]` (2..=1000) and an
