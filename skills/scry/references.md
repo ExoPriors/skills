@@ -831,7 +831,7 @@ vs reddit-2026H2 match rates:
 | `sensory_evidence` | firsthand witness ("i saw"/"with my own eyes") | 0.013 | 0.006 |
 | `speculation` | marked guessing ("my hunch"/"if i had to guess") | 0.055 | 0.001 |
 | `report_factual` | observed outcome ("we found that"/"was measured") | 0.023 | 0.0006 |
-| `belief_attribution` | owned belief ("i think that"/imho — the anti-certainty) | — | 0.006 |
+| `belief_attribution` | owned belief ("i think that"/imho — the anti-certainty) | 0.103 | 0.006 |
 | `crux_language` | disagreement tech ("my crux"/steelman/"would update if") | 0.014 | 0.00005 |
 | `bet_stake` | money offered on a claim ("i'd bet"/"put money on") | 0.004 | 0.0005 |
 | `credence_numeric` | numeric credence (regex: "90% confident", "p(x) = .7", odds) | 0.020 | 0.0005 |
