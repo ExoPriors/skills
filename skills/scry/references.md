@@ -836,6 +836,16 @@ vs reddit-2026H2 match rates:
 | `bet_stake` | money offered on a claim ("i'd bet"/"put money on") | 0.004 | 0.0005 |
 | `credence_numeric` | numeric credence (regex: "90% confident", "p(x) = .7", odds) | 0.020 | 0.0005 |
 
+CAVEAT (length-bucket audit 2026-08-25): these are document-level
+membership rates, and they confound register with document length —
+within matched length buckets the LW:reddit `conditional_reasoning`
+gap is 2.8–4x, not the ~20x the aggregates suggest (reddit's
+aggregate is dominated by 79M sub-500-char posts), and common recipes
+saturate on long documents (`hedging` hits 0.996 of 8k+ LW posts,
+destroying discrimination there). Compare cohorts within length
+buckets or as within-source ratios; occurrence-density normalization
+(per kilotoken) is move 5 in the execplan.
+
 `credence_numeric` is the first regex-form recipe (form: "regex"
 compiles to `match()`; its token leaves credence/brier carry the
 recall). Composites these license: **evidential mix** =
