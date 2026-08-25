@@ -623,7 +623,7 @@ LTL words that analysts already use have direct shapes: *once*
 (`countIf > 0` before t), *since* (condition on every post after pivot),
 *until* (arc with pivot), bounded response `G(trigger → F≤Δ response)` =
 `sequenceMatch('(?1)(?t<Δ)(?2)')(t, trigger, response)`; `windowFunnel`
-for multi-step chains. The cheapest profound operator on this surface is
+for multi-step chains. The lowest-cost profound operator on this surface is
 the **life-history regex**: per author, order posts by time, map each to
 one letter of a small declared recipe alphabet, and
 `match(arrayStringConcat(groupArray(letter), ''), '^s+h*b+$')` runs a
