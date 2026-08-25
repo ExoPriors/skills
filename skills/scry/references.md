@@ -632,6 +632,69 @@ remaining 234 SocialSent lexicons load the same way (fetch + publish
 pattern in the campaign scratch dir). Induced from 2014 comments —
 treat drifted slang with the temporal-holdout rung.
 
+The **latent-state tranche** (original curation, CC0) instruments what a
+person's language betrays about their state, not their topic: cognitive
+distortion, orientation toward the future, belonging, group boundary
+maintenance, epistemic openness, and machine authorship. All are
+overt-band selectors (match ≪ 1 — WHERE-able everywhere). Measured
+lesswrong-2026 vs reddit-2026H2 match rates:
+
+| slug | reads | lesswrong | reddit |
+|---|---|---|---|
+| `catastrophizing` | worst-case cognition ("it's all over"/"never recover") | 0.035 | 0.004 |
+| `overgeneralization` | always/never distortion ("every single time") | 0.025 | 0.005 |
+| `mind_reading` | assumed hostile intent ("they must think") | 0.003 | 0.0004 |
+| `foreclosed_future` | no-path-forward talk ("no point in trying") | 0.032 | 0.008 |
+| `agentic_future` | plans and self-efficacy ("my plan is"/"i'm going to build") | 0.078 | 0.023 |
+| `external_locus` | outcomes attributed outward ("rigged"/"the system") | 0.019 | 0.002 |
+| `internal_locus` | outcomes owned ("my responsibility"/"i chose") | 0.010 | 0.004 |
+| `loneliness` | disconnection ("no one to talk to") | 0.012 | 0.005 |
+| `exclusion_words` | rejection particles (left out/ignored/excluded) | 0.597 | 0.144 |
+| `dehumanization` | vermin/disease metaphor for people | 0.004 | 0.001 |
+| `us_vs_them` | in/out-group boundary talk ("those people"/"wake up") | 0.018 | 0.001 |
+| `thought_terminating` | cliché as argument-stopper ("it is what it is") | 0.007 | 0.002 |
+| `llm_fingerprint` | GPT-register tics (delve/"i hope this helps"/tapestry) | 0.020 | 0.001 |
+| `changed_my_mind` | belief revision in the wild ("i was wrong"/"updated my view") | 0.010 | 0.0004 |
+| `prediction_stake` | falsifiable commitments ("i predict"/"calling it now") | 0.005 | 0.0002 |
+| `gatekeeping` | boundary policing ("not a real fan"/gatekeep) | 0.001 | 0.0006 |
+| `welcoming` | newcomer hospitality ("great question"/"happy to help") | 0.006 | 0.001 |
+| `recovery_arc` | past-tense struggle narrated from the far side | 0.018 | 0.010 |
+| `financial_distress` | money desperation (eviction/"can't afford rent") | 0.006 | 0.004 |
+| `burnout` | occupational exhaustion ("running on empty") | 0.004 | 0.003 |
+
+These compose into **indices** — ratios of paired instruments over a
+cohort, which cancel base-rate differences the way `hedging`/`certainty`
+does:
+
+- **hope** = `agentic_future` vs `foreclosed_future` per cohort-month
+  (lesswrong runs 2.4:1 agentic; a cohort trending toward foreclosed is
+  a population-level signal worth a study, never a per-person verdict).
+- **hospitability** = `welcoming` vs `gatekeeping` per community.
+- **polarization** = `us_vs_them` + `dehumanization` rates per
+  community-quarter; reddit-wide these are 10–18x rarer than on
+  lesswrong's abstract-discussion register, so always compare a
+  community against its own history, not across registers.
+- **epistemic openness** = `changed_my_mind` + `prediction_stake` per 1k
+  posts. Measured league (reddit 2026H2 posts + lesswrong):
+  lesswrong 9.8/1k, r/offmychest 8.4, r/relationships 7.3,
+  r/changemyview 3.1, r/politics 0.10, r/worldnews 0.016, r/science
+  0.0. Caveat: the relationship-sub rates are interpersonal repair
+  ("you're right, I'll talk to her"), not belief revision — read a
+  sample before naming the construct.
+- **contamination curve** = `llm_fingerprint` (or its index-riding token
+  subset delve/delves/delving/multifaceted/underscores/tapestry) per
+  100k reddit posts by year: 22.9 (2018) declining to 12.6 (2022), then
+  42.5 (2023), 56.0 (2024), 43.0 (2025) — a 3.4x discontinuity dating
+  machine-register arrival, with the pre-2022 organic decline as the
+  natural control and the post-2024 recession tracking newer models
+  shedding the tics.
+
+Ethics: the sensitive instruments (`catastrophizing`, `loneliness`,
+`foreclosed_future`, `dehumanization`, …) carry
+`options.ethics = "population-level research instrument; never a
+screening or targeting tool for individuals"` in the catalog. Honor it:
+aggregate, trend, and compare cohorts; do not rank or flag people.
+
 License-gated families (NRC, LIWC, SentiStrength data, SenticNet) are
 deliberately absent — tracked in `future-ideal-obligations.toml`.
 
