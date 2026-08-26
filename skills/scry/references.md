@@ -392,8 +392,11 @@ Climb it; most questions resolve before the top.
    already derived and measured, as one operand; `scry_recipe_score
    ('vader_polarity')` as a per-row token-weighted signal, or
    `scry_recipe_density('hedging')` as weighted occurrences per 1,000
-   characters across every member form. Recipes are what turn
-   a vocabulary you found into an instrument others reuse.
+   characters across every member form, or `scry_recipe_near('a','b',k)`
+   — true when a token member of `a` sits within k tokens of one of `b`
+   (k ≤ 64; token forms only; a token-less operand is a named error).
+   Recipes are what turn a vocabulary you found into an instrument
+   others reuse.
 5. **Cohort** — a recipe or lex line as a *selector*: authors, threads,
    days that match, then measure something else about them
    (§ Comparative study design owns the discipline).
@@ -735,11 +738,27 @@ Choosing:
 - **`scry_recipe_density` counts every member pattern over every row it
   touches** — bound its input cohort or window; it does not add a hidden
   membership predicate or engage the text index.
+- **`scry_recipe_near` is a per-row position scan** — bound it to a
+  co-membership-prefiltered subquery (`WHERE scry_recipe('a') AND
+  scry_recipe('b') LIMIT 500`); wide windows over long-document corpora
+  breach the memory cap, and rare-term cohorts skew long (add
+  `length(payload) < 20000` when they cap). Inside a subquery pass the
+  text explicitly: `scry_recipe_near('a','b',8, t)` over `SELECT
+  lower(payload) AS t`. First measured splits (lesswrong-2026
+  co-member windows): `certainty` within 12 tokens of
+  `evidence_citing` in 18% of co-member docs vs within 12 of
+  `us_vs_them` in 2% — adjacency separates the two speech acts the
+  way document co-membership cannot; `modal_deontic` within 8 of
+  `modal_epistemic` ("we probably should") in 15%.
 - **Derive before you hand-write**: `scry_recipe_derive(seeds, relation,
   source)` returns prefix-lexicon and co-occurrence candidates with
   relation-wide denominators. Sort co-occurrence candidates by
-  `salience`, not `df_matched` — df ranking surfaces stopwords. Curate,
-  read matches, then publish with `scry_recipe_write`.
+  `salience`, not `df_matched` — df ranking surfaces stopwords. Derive a
+  stance *pair* with `contrast` (slug or seeds: candidates rank against
+  the contrast cohort, contrast-exclusive terms first) and `exclude`
+  (slug whose stored terms are dropped), then check disjointness with
+  `GET /v1/scry/recipes?diff=a,b` (Jaccard + asymmetric term lists).
+  Curate, read matches, then publish with `scry_recipe_write`.
 - **Stance is identity**: the same word list under a different reading
   contract is a different recipe, not a new version.
 
@@ -767,6 +786,19 @@ LessWrong hedges in 66% of posts vs reddit's 10%, evidence-cites 11x
 more, and overtly disagrees 13x more — the register instruments rank
 communities before any per-document reading. Pair `hedging` against
 `certainty` for an epistemic-humility ratio per cohort.
+
+The **modal pair** (`modal_epistemic`: might/may/could/probably/perhaps
+vs `modal_deontic`: should/must/ought/"have to", published 2026-08-26)
+composes a **modal orientation** index — possibility-talk over
+obligation-talk, by density. It flips sign across communities:
+lesswrong-2026 runs epistemic-dominant (1.20 vs 0.49 per 1k chars,
+2.4:1) while r/changemyview comments run deontic-dominant (0.61 vs
+0.82, 0.75:1). Same word class, opposite register: one community
+explores what might be true, the other prosecutes what you should do.
+The surface forms are ambiguous per-document ("must" is deontic in
+"must act" and inferential in "must have been") — per-document scope
+splitting is what `scry_recipe_near` against the evidentiality recipes
+is for; the aggregate densities are honest at cohort scale.
 
 **The `socialsent_*` family** (16 recipes, ~4,900 terms each, PDDL) is
 the community-conditioned reddit formula: SentProp-induced polarity per
