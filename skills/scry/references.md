@@ -392,9 +392,13 @@ Climb it; most questions resolve before the top.
    already derived and measured, as one operand; `scry_recipe_score
    ('vader_polarity')` as a per-row token-weighted signal, or
    `scry_recipe_density('hedging')` as weighted occurrences per 1,000
-   characters across every member form, or `scry_recipe_near('a','b',k)`
+   characters across every member form (recipes of at most 128 terms), or
+   `scry_recipe_near('a','b',k)`
    — true when a token member of `a` sits within k tokens of one of `b`
    (k ≤ 64; token forms only; a token-less operand is a named error).
+   Recipe algebra is membership-only: `scry_recipe('hedging - certainty')`;
+   the three operators `&`, `-`, and `^` must be whitespace-separated and
+   do not support parentheses.
    Recipes are what turn a vocabulary you found into an instrument
    others reuse.
 5. **Cohort** — a recipe or lex line as a *selector*: authors, threads,
@@ -460,7 +464,8 @@ are at.
 - **Derivation from the corpus itself** — prefix lexicon + co-occurrence
   salience + embedding neighbors, seeded from an index-engaging term,
   yields the variant list in seconds; curate, measure, publish as a
-  recipe. Ten SQL calls today, one `scry_recipe_derive` call next.
+  recipe. Derive through MCP `scry_recipe_derive` or REST `POST
+  /v1/scry/recipes/derive`; it is not a SQL function.
 
 ## The quantifier chain — operators search forgot
 
@@ -485,6 +490,11 @@ WHERE subreddit = 'MachineLearning' AND created_utc >= '2025-01-01'
 ```
 38 posts by 9 authors, 1.0 s. Recipes ride multi-relation statements
 with the text column explicit: `scry_recipe('slug', search_text_lc)`.
+On metadata relations, name what that column contains: `openalex.works`
+binds it to title/display name only, `openalex.authors` to display-name
+variants, and `books.catalog` to title + author + publisher. Recipe rates
+there measure metadata fields, not abstracts or prose; cross-relation rate
+comparisons must state the bound text plane and compare like with like.
 
 **Rung 1′ — within-author, never (∄).** Said X, never said Y — always
 with the denominator:
@@ -573,8 +583,8 @@ here rides plain SQL. The served validator denies functions whose
 aggregate state grows with attacker-controlled input — the
 `groupArray`/`groupUniqArray` families, `topK`, `uniqExact`,
 `quantileExact` — plus `sleep`/`file`; `sequenceMatch`, `windowFunnel`,
-`match`, `argMin`/`argMax` and the `-If` combinators all pass (verified
-live 2026-08-25).
+`match`, `argMin`/`argMax`, and `-If` combinators whose base function is
+allowed all pass (verified live 2026-08-25).
 
 **1. Term forms.** Tokens, phrases, `/regex/`, `word~1` fuzzy, substrings
 — and recipes are this surface's synonym operator (Indri `#syn`), with
@@ -587,8 +597,9 @@ phrase or a narrower recipe rather than fighting the expansion.
 and span algebra (containing/before/overlaps — ES `intervals` is the
 model) are not yet operators. Short ordered windows can ride re2:
 `match(text, '(?i)trigger(\\W+\\w+){0,5}\\W+response')`. The
-recipe-proximity operator (`hedge within k tokens of a prediction`) is
-planned — `docs/execplans/lexical_recipes.md`.
+recipe-proximity operator is `scry_recipe_near('a','b',k)` (`hedge
+within k tokens of a prediction`) — token forms only, k ≤ 64,
+memory-bound; usage law in § The recipe shelf.
 
 **3. Doc booleans, quorum, frequency.** Boolean composition is § Composing
 recipes (SKILL). Two gates the professional languages kept and consumer
@@ -607,15 +618,16 @@ here: WHERE gates, ORDER BY scores, and the two never need to agree
 soft — demote by subtracting: `scry_recipe_score('a') -
 0.5*scry_recipe_score('b')` (ES `boosting`). Compare register across
 different document lengths with `scry_recipe_density`, not document
-membership. Soft-AND over m weak signals = sum of indicators with a
-threshold, the continuous cousin of quorum.
+membership; density accepts recipes of at most 128 terms. Soft-AND over m
+weak signals = sum of indicators with a threshold, the continuous cousin
+of quorum.
 
 **5. Quantifier plane.** The whole monadic zoo — every / some / no /
 at-least-k / at-most / exactly / most / fewer-than-p% / more-X-than-Y —
 is tests on `(countIf, count)` pairs from one `GROUP BY author`; name the
 quantifier you mean and its denominator. Three named idioms kill standing
 error classes:
-- **division** ("in ALL of these"): `uniqExactIf(community, cond) = N` —
+- **division** ("in ALL of these"): `uniqIf(community, cond) = N` —
   never the double-NOT-EXISTS;
 - **anti** ("never"): `countIf(P) = 0` as a HAVING, absence typed as a
   result set;
@@ -641,6 +653,9 @@ The string-building regex form (`match` over a concatenated history)
 is denied on the served surface with the `groupArray` family; the
 working form is `argMinIf`/`argMaxIf` for career endpoints plus
 `sequenceMatch` for ordered arcs, all in one `GROUP BY author`.
+On `forums.posts`, cast its `DateTime64` timestamp:
+`sequenceMatch(...)(toDateTime(original_timestamp), ...)`; the aggregate
+requires `DateTime`, while Reddit's `created_utc` already has that type.
 
 First published alphabet, `epistemic1` (measured 2026-08-25): per doc,
 `h` = `scry_recipe('hedging')` without `certainty`, `c` = `certainty`
@@ -649,7 +664,8 @@ LessWrong 2022–.. (2,876 careers, 55s): pure-hedge career openings
 outnumber pure-certainty 8.8:1 (2,531 vs 286), endings 7.9:1; the
 first→last conversion flows are symmetric (c→h 233 vs h→c 262), and
 48.5% of careers contain a cc…hh arc
-(`sequenceMatch('(?1)(?1)(?2)(?2)')(ts, letter='c', letter='h')`) —
+(`sequenceMatch('(?1)(?1)(?2)(?2)')(toDateTime(original_timestamp),
+letter='c', letter='h')`) —
 exactly as many as the reverse (1,394 vs 1,396): long LW careers
 alternate registers rather than converting. r/changemyview 2020–..
 (836 careers, 8.5s): openings only 2.4:1 hedge-heavy (565 vs 235) and
@@ -727,17 +743,21 @@ Choosing:
   slang included), `afinn_polarity` when you want small and legible.
   `hu_liu_*` for opinion/review registers and membership cohorts.
 - **`emoji_polarity` is corpus-diagnostic**: 0.9% on lesswrong; expect
-  real rates on social corpora. Phrase-form, so `scry_recipe_score`
-  ignores it; `scry_recipe_density` counts its weighted occurrences.
+  real rates on social corpora. It is membership-only for now: its 751
+  phrase members exceed density's 128-term limit, while score ignores
+  phrase and regex members. For large weighted lexicons with token members,
+  use `scry_recipe_score`.
 - **All the seeds are overt-band**: blind to negation, sarcasm, and
   domain reversal by construction, and each recipe's `options.blind_to`
   says so. Scope absence claims to the band.
-- **`scry_recipe_score` re-tokenizes every row it touches** — always
-  bound it with a sampled subquery (`... WHERE scry_recipe('slug') LIMIT
-  200`), never a bare full-relation aggregate.
+- **`scry_recipe_score` uses token-form members only** — phrase and regex
+  members do not contribute. It re-tokenizes every row it touches, so
+  always bound it with a sampled subquery (`... WHERE
+  scry_recipe('slug') LIMIT 200`), never a bare full-relation aggregate.
 - **`scry_recipe_density` counts every member pattern over every row it
-  touches** — bound its input cohort or window; it does not add a hidden
-  membership predicate or engage the text index.
+  touches and accepts recipes of at most 128 terms — bound its input cohort
+  or window; it does not add a hidden membership predicate or engage the
+  text index.
 - **`scry_recipe_near` is a per-row position scan** — bound it to a
   co-membership-prefiltered subquery (`WHERE scry_recipe('a') AND
   scry_recipe('b') LIMIT 500`); wide windows over long-document corpora
@@ -750,9 +770,13 @@ Choosing:
   `us_vs_them` in 2% — adjacency separates the two speech acts the
   way document co-membership cannot; `modal_deontic` within 8 of
   `modal_epistemic` ("we probably should") in 15%.
-- **Derive before you hand-write**: `scry_recipe_derive(seeds, relation,
-  source)` returns prefix-lexicon and co-occurrence candidates with
-  relation-wide denominators. Sort co-occurrence candidates by
+- **Derive before you hand-write**: call MCP `scry_recipe_derive` or REST
+  `POST /v1/scry/recipes/derive`; derivation is not a SQL function. Seeds
+  must occur as whole lowercase tokens to build the cohort; put stems in
+  `prefixes` for prefix expansion. The result carries prefix-lexicon and
+  co-occurrence candidates with relation-wide denominators. On huge
+  relations, set a tight `window_days` and require `salience` before using
+  candidates. Sort co-occurrence candidates by
   `salience`, not `df_matched` — df ranking surfaces stopwords. Derive a
   stance *pair* with `contrast` (slug or seeds: candidates rank against
   the contrast cohort, contrast-exclusive terms first) and `exclude`
@@ -901,8 +925,8 @@ gap is 2.8–4x, not the ~20x the aggregates suggest (reddit's
 aggregate is dominated by 79M sub-500-char posts), and common recipes
 saturate on long documents (`hedging` hits 0.996 of 8k+ LW posts,
 destroying discrimination there). Compare with
-`scry_recipe_density('<slug>')`, or keep membership cohorts within
-length buckets or as within-source ratios. Density (measured on the
+`scry_recipe_density('<slug>')` for recipes of at most 128 terms, or keep
+membership cohorts within length buckets or as within-source ratios. Density (measured on the
 same windows, occurrences per 1k chars, avg by length bucket S/M/L/XL):
 conditional_reasoning LW 0.053/0.069/0.063/0.037 vs reddit
 0.004/0.017/0.016/0.015 — flat in length where membership exploded,
@@ -929,9 +953,8 @@ orientation ratio; `politeness_formulae` (0.103 / 0.059);
 `profanity_strong` (0.018 / 0.027 — the one instrument where reddit
 out-rates lesswrong) tiered against `profanity_mild` (0.017 / 0.008).
 
-Still gated on machinery: `modal_epistemic` vs `modal_deontic` (same
-words split by scope — needs the proximity operator), full would-have
-counterfactual syntax and if…then spans (need more regex members).
+Still gated on machinery: full would-have counterfactual syntax and
+if…then spans (need more regex members).
 License-gated families (NRC, LIWC, SentiStrength data, SenticNet, MFD
 2.0 unverified) are deliberately absent — tracked in
 `future-ideal-obligations.toml`.
