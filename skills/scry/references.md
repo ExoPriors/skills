@@ -716,6 +716,45 @@ vocabulary, and guided seeding is what fixes them.
 
 ## The recipe shelf
 
+### Recipes in five minutes
+
+1. **Find your instrument**: `GET /v1/scry/recipes` — each entry carries
+   `kind`, a one-line `stance`, and `n_terms`. `GET /v1/scry/recipes/{slug}`
+   returns terms, `options.blind_to`, and `measurements`.
+2. **Read `measurements.doc_precision` before trusting matches.** Graded
+   samples (2026-08-26 audit) stamp each retrieval-shaped recipe with
+   measured document-level precision per mode and a `read_as` line — the
+   honest usage. Common verdicts: density-ranked retrieval reliable
+   (hedging), cohort-contrast only (catastrophizing), high-recall prefilter
+   only (dehumanization). Constructs rarer than their vocabulary are
+   prevalence instruments, not document classifiers.
+3. **Four planes**: `scry_recipe('slug')` membership (WHERE/countIf);
+   `scry_recipe_score('slug')` weighted token mean (token members only);
+   `scry_recipe_density('slug'[, text])` weighted occurrences per 1k chars
+   (≤128 terms — the honest per-document lens); `scry_recipe_near('a','b',k[,
+   text])` token proximity (k ≤ 64; token members only — phrase-heavy
+   operands silently thin its view, check the term forms first).
+4. **Algebra** (membership only): `scry_recipe('a - b')`, `'a & b'`,
+   `'a ^ b'` — whitespace-separated, chainable, no parentheses, no union.
+   Verified set semantics: `'a - b'` ≡ `a AND NOT b`.
+5. **Cross-relation / subquery**: pass text explicitly —
+   `scry_recipe('slug', lower(body))`. Bare macros bind the relation's
+   registered search text and refuse inside subqueries with expression
+   bindings.
+6. **Density trend in one call**:
+   `SELECT toStartOfQuarter(created_utc) AS q, sum(scry_recipe_density('slug')*length(body))/sum(length(body)) AS d FROM reddit.comments WHERE subreddit='X' AND created_utc >= '2024-01-01' GROUP BY q ORDER BY q LIMIT 20`
+   — char-weighted, kills the length confound that raw membership share
+   carries.
+7. **Lifecycle REST**: `POST /v1/scry/recipes/derive` (seeds are whole
+   tokens; candidates ranked salience-desc) expands vocabulary from the
+   corpus; `PUT /v1/scry/recipes/{slug}` (CAS via `if_version`) writes;
+   `?history=1` lists versions, `?version=N` loads one, `?diff=1,2` diffs
+   two versions of a slug (term text — form changes show jaccard 1.0), and
+   catalog-level `?diff=a,b` diffs two recipes.
+8. **Read the envelope**: `coverage.freshness_blocker` explains corpus
+   recency (e.g. reddit's Arctic-dump boundary) — check it before charting
+   the most recent weeks.
+
 `GET /v1/scry/recipes` (MCP `scry_recipes`) is the live catalog; this
 table is the shelf as measured on lesswrong 2026-01-01.. (2026-08-24).
 `match` = share of documents containing ≥1 term; `score` = mean
