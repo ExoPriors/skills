@@ -627,7 +627,8 @@ at-least-k / at-most / exactly / most / fewer-than-p% / more-X-than-Y —
 is tests on `(countIf, count)` pairs from one `GROUP BY author`; name the
 quantifier you mean and its denominator. Three named idioms kill standing
 error classes:
-- **division** ("in ALL of these"): `uniqIf(community, cond) = N` —
+- **division** ("in ALL of these"): `count(DISTINCT if(cond, community, NULL)) = N`
+  (exact; approximate `uniqIf` also passes, but `uniqExact*` is denied) —
   never the double-NOT-EXISTS;
 - **anti** ("never"): `countIf(P) = 0` as a HAVING, absence typed as a
   result set;
