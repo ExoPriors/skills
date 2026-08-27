@@ -453,7 +453,8 @@ are at.
   automatically instead of overreaching.
 - **Cross-source person contrast** — the same person, different
   vocabulary in different venues. `persons.links` joins platform
-  accounts under a `person_id` (deterministic public keys only); group
+  accounts under a `person_id` (deterministic public keys only; enterprise
+  access as of 2026-08-27); group
   each side by author with a recipe score, join on the linked pair.
   Measured 2026-08-24: of 502 persons active on both reddit and Hacker
   News, mean token-weighted hedging score is 2x higher on HN (0.0035 vs
@@ -550,7 +551,7 @@ rooms; this rung says which room.
 
 **Rung 6 — graph.** People followed by people who say P
 (`twitter.following` / `twitter.followers`); people who are the same
-person on another platform (`persons.links`) — the cross-source person
+person on another platform (`persons.links`; enterprise access) — the cross-source person
 contrast in § What lexical search makes possible.
 
 **Rung 7 — provenance.** Documents whose *links* match P — `outbound_url`
