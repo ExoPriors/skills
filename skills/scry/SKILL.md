@@ -547,9 +547,15 @@ curl -s https://api.scry.io/v1/scry/query \
   instructions to every agent on the credential: advisory `guidance`
   to follow, plus enforced fields that bind server-side —
   `consult.require_zdr` forces zero-data-retention routing on every
-  consult, `consult.models` and `web.providers` are allowlists, and a
-  denied or altered call names the setting that bound it (`enforced`
-  array, `disallowed_by_settings` status). Read once per session.
+  consult, `consult.models` and `web.providers` are allowlists,
+  `tools.allow` / `tools.deny` gate every MCP tool name at `tools/call`
+  (validated against the live contract at write time; `scry_settings`
+  and `scry_whoami` are never gated), and a denied or altered call
+  names the setting that bound it (`enforced` array,
+  `disallowed_by_settings` status, `tool_denied`). `scry_whoami` is the
+  one session-open read (account + enforced settings + memory head);
+  `scry_batch` runs 1-16 tool calls in one round trip under the same
+  billing and gate. Read once per session.
   Settings change only through a signed-in console session
   (`PUT /v1/account/agent-settings`, body = the document, last write
   wins); API keys read settings and are bound by them, never write them.
