@@ -728,7 +728,12 @@ vocabulary, and guided seeding is what fixes them.
    honest usage. Common verdicts: density-ranked retrieval reliable
    (hedging), cohort-contrast only (catastrophizing), high-recall prefilter
    only (dehumanization). Constructs rarer than their vocabulary are
-   prevalence instruments, not document classifiers.
+   prevalence instruments, not document classifiers. Density-top ranking
+   rewards repetition artifacts — copypasta, bot boilerplate, chanted
+   refrains — so several recipes invert between the two modes
+   (profanity_strong 1.00 membership / 0.00 density-top; thought_terminating
+   0.10 / 0.00; gratitude inverts the other way, 0.05 / 1.00): read both
+   stamped numbers, not one.
 3. **Four planes**: `scry_recipe('slug')` membership (WHERE/countIf);
    `scry_recipe_score('slug')` weighted token mean (token members only);
    `scry_recipe_density('slug'[, text])` weighted occurrences per 1k chars
