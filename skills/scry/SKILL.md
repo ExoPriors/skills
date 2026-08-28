@@ -401,7 +401,7 @@ curl -s https://api.scry.io/v1/scry/query \
   (use `{}` when there is nothing to freeze), and each declared parameter
   must have a default. The response's `share_slug` field is the permalink
   slug.
-- The share page at `https://scry.io/scry/share/{slug}` renders each
+- The share page at `https://scry.io/s/{slug}` renders each
   parameter as a live control and re-runs the query as the reader plays.
   Optional per-parameter hints shape the controls: `label`, `description`,
   `placeholder`, `choices` (a list of values or `{value, label}` objects —
