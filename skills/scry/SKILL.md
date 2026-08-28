@@ -222,6 +222,25 @@ report it; never average it away. Small bounded probes cast wide before
 expensive queries close. Done means the written answer is checked against
 the queries that actually ran.
 
+## Fixpoint programs (recursive graph search)
+
+For recursive walks one SQL statement cannot express — citation closures,
+filtered multi-hop expansions, walked sets ranked semantically — send a
+program instead of SQL: `POST /v1/scry/query` with a JSON body
+`{"program": {...}}` (MCP `scry_program`). A program is named relations
+(sets of work ids) built from a closed atom vocabulary — `ids` seeds,
+`ann` (top-k probe from an embed handle), `rel` (a body naming its own
+relation recurses), `edge` (`references` / `cited_by`), `filter`
+(in-walk attribute prune — changes what gets expanded and billed), `in`
+(intersection) — plus an optional per-relation `"rank": {handle, k}`
+ordering final rows by exact distance to a handle. Every evaluation step
+is one ordinary metered statement under your own key; `depth` (default 3)
+and 50k-row caps bound the walk; the envelope returns `{id, parent,
+depth}` provenance rows, a `meter`, and `truncations[]` (empty = true
+fixpoint). Prefer `rank` over intersecting a walk with a global ANN
+top-k — measured near-empty overlap at corpus scale. The MCP tool
+contract carries two worked templates.
+
 ## Lexical range
 
 Embeddings are for missing vocabulary. When you know the words — names,
