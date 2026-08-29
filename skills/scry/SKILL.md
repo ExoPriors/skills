@@ -225,8 +225,8 @@ the queries that actually ran.
 ## Fixpoint programs (recursive graph search)
 
 `WITH RECURSIVE` is served on `/v1/scry/query` (body must be `anchor UNION
-ALL step`; read the CTE only in the step's FROM/JOIN, never in a subquery;
-16 iterations max) — but every iteration rescans the joined relation
+ALL step`; read the CTE only in the step's FROM/JOIN, never in a
+subquery) — but every iteration rescans the joined relation
 (~1.8 s per step on openalex.works), so declare `x-scry-max-seconds`. For
 frontier-pruned walks — citation closures, filtered multi-hop expansions,
 walked sets ranked semantically — send a program instead of SQL: `POST /v1/scry/query` with a JSON body
