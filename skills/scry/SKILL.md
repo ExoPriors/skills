@@ -224,9 +224,12 @@ the queries that actually ran.
 
 ## Fixpoint programs (recursive graph search)
 
-For recursive walks one SQL statement cannot express — citation closures,
-filtered multi-hop expansions, walked sets ranked semantically — send a
-program instead of SQL: `POST /v1/scry/query` with a JSON body
+`WITH RECURSIVE` is served on `/v1/scry/query` (body must be `anchor UNION
+ALL step`; read the CTE only in the step's FROM/JOIN, never in a subquery;
+16 iterations max) — but every iteration rescans the joined relation
+(~1.8 s per step on openalex.works), so declare `x-scry-max-seconds`. For
+frontier-pruned walks — citation closures, filtered multi-hop expansions,
+walked sets ranked semantically — send a program instead of SQL: `POST /v1/scry/query` with a JSON body
 `{"program": {...}}` (MCP `scry_program`). A program is named relations
 (sets of work ids) built from a closed atom vocabulary — `ids` seeds,
 `ann` (top-k probe from an embed handle), `rel` (a body naming its own
