@@ -528,7 +528,7 @@ curl -s https://api.scry.io/v1/scry/query \
   when the fact became public), and composition is deterministic
   (duplicate collapse, at most two passages per host).
   `known_after` states temporal eligibility (only pages first observed
-  after it are returned — set it to your knowledge cutoff); it does not
+  after it are returned — set it to your training cutoff date); it does not
   model what you know. Empty results carry a `coverage_note`; a
   `degraded_reason` of ANN order means the rerank lanes were down, not
   that relevance is meaningless. For anything older than the fresh
