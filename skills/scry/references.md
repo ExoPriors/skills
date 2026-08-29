@@ -903,7 +903,7 @@ lesswrong-2026 vs reddit-2026H2 match rates:
 | `dehumanization` | vermin/disease metaphor for people | 0.004 | 0.001 |
 | `us_vs_them` | in/out-group boundary talk ("those people"/"wake up") | 0.018 | 0.001 |
 | `thought_terminating` | cliché as argument-stopper ("it is what it is") | 0.007 | 0.002 |
-| `llm_fingerprint` | GPT-register tics (delve/"i hope this helps"/tapestry) | 0.020 | 0.001 |
+| `llm_fingerprint` | GPT-register tics (`delve`/"i hope this helps"/`tapestry`) | 0.020 | 0.001 |
 | `changed_my_mind` | belief revision in the wild ("i was wrong"/"updated my view") | 0.010 | 0.0004 |
 | `prediction_stake` | falsifiable commitments ("i predict"/"calling it now") | 0.005 | 0.0002 |
 | `gatekeeping` | boundary policing ("not a real fan"/gatekeep) | 0.001 | 0.0006 |
@@ -932,7 +932,7 @@ does:
   ("you're right, I'll talk to her"), not belief revision — read a
   sample before naming the construct.
 - **contamination curve** = `llm_fingerprint` (or its index-riding token
-  subset delve/delves/delving/multifaceted/underscores/tapestry) per
+  subset `delve`/`delves`/`delving`/`multifaceted`/`underscores`/`tapestry`) per
   100k reddit posts by year: 22.9 (2018) declining to 12.6 (2022), then
   42.5 (2023), 56.0 (2024), 43.0 (2025) — a 3.4x discontinuity dating
   machine-register arrival, with the pre-2022 organic decline as the
