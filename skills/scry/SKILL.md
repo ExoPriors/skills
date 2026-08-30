@@ -473,9 +473,6 @@ curl -s https://api.scry.io/v1/scry/query \
   (`x-scry-long-query: keepalive`, always HTTP 200) before the JSON body —
   parse the body, not the status, on that path. Keep the connection open;
   do not set client timeouts below your query's real budget.
-- When results must survive the current session, create a share. Record
-  read-back (`GET /v1/scry/records/{record_id}`) is dark (deterministic
-  503); preserve `record_id` as the durable identifier.
 - For published Parquet dataset artifacts, inspect
   `GET /v1/datasets/catalog` and `GET /v1/datasets/{dataset_id}`. These are
   artifact metadata routes, not a corpus SQL fallback.
