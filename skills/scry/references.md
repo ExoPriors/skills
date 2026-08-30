@@ -787,6 +787,19 @@ Choosing:
 - **Polarity on general prose**: `vader_polarity` first (widest coverage,
   slang included), `afinn_polarity` when you want small and legible.
   `hu_liu_*` for opinion/review registers and membership cohorts.
+- **Temporal-window opportunities** (family published 2026-08-29):
+  `opportunity_window_edge` (structural; deadline-edge phrases) ANDed with
+  one vertical register — `grant_funding_register`,
+  `startup_program_register`, `cfp_academic_register`,
+  `fellowship_register`, `prize_challenge_register`,
+  `job_posting_register` — selects pages announcing closing application
+  windows on the crawl surfaces. Extract the deadline in-SQL
+  (`extractAll` on a dated-phrase pattern + `parseDateTimeBestEffortUSOrNull`)
+  and compare with `now()` for still-open windows; a past deadline on an
+  annual program is a reopening prior, not noise. Membership plane,
+  phrase-dominant by design (bare tokens like `accelerator` and
+  `residency program` were measured polluters); per-anchor precision
+  samples live in each recipe's `measurements`.
 - **`emoji_polarity` is corpus-diagnostic**: 0.9% on lesswrong; expect
   real rates on social corpora. It is membership-only for now: its 751
   phrase members exceed density's 128-term limit, while score ignores
