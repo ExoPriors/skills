@@ -430,8 +430,7 @@ curl -s https://api.scry.io/v1/scry/query \
 
 - Account, settings, and market state: MCP `whoami`,
   `GET /v1/scry/pricing`,
-  `GET /v1/scry/price`, `GET /v1/scry/price/history`,
-  `GET /v1/scry/price/stream`.
+  `GET /v1/scry/price`, `GET /v1/scry/price/history`.
 - Per-query charges arrive in the query response body: `burden_nanodollars`
   (the metered burden of your query) beside
   `spend_nanodollars` (what you actually paid under the fairness charge
