@@ -65,7 +65,7 @@ orientation.
 ## Memory
 
 Scry hosts one cross-platform memory document per account
-(`GET`/`POST /v1/scry/memory`; MCP `memory`/`memory_write`):
+(MCP `memory`/`memory_write`):
 markdown, default slug `main`, 64KB, shared by every agent and harness the
 user connects. At session start read it alongside context (version 0 +
 empty content = none yet). At session end, consolidate durable user
@@ -196,7 +196,7 @@ For multi-step research — several hypotheses, several sources, or any ask
 where missing vocabulary would silently distort the answer — follow
 `references.md` § Deep research operations: fan out lexical probes, keep a probe
 ledger, verify the written report against the ledger, and end in a durable
-artifact. `POST /v1/scry/route` (MCP `route`; `mode` plan /
+artifact. The `route` tool (`mode` plan /
 inspire / compose) is a usable first step for surface selection; treat its output as a starting shortlist, not a substitute
 for the enumeration and probe discipline above.
 
@@ -515,8 +515,8 @@ curl -s https://api.scry.io/v1/scry/query \
   degraded tier returns identity order plus a `degraded_reason` — never
   a silent reorder. For judgement-grade pairwise comparisons beyond
   reranking, the offering points at `POST /v1/judgements/runs`.
-- For "what does the fresh web say about X since my cutoff", `POST
-  /v1/scry/brief` (MCP: `brief`) with `{"question": "...",
+- For "what does the fresh web say about X since my cutoff", the `brief`
+  tool with `{"question": "...",
   "known_after": "<RFC 3339 or YYYY-MM-DD>", "k": 1..12}` returns 8-12
   dated verbatim passages `{title, true_as_of, quote, source_url,
   relevance}` from a rolling ~45-day crawl of allowlisted

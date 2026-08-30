@@ -17,7 +17,7 @@ artifact another agent can pick up.
    `SELECT source, count() FROM forums.posts GROUP BY source`) so the lane
    plan starts from the full source roster, not from guessed names. Assign
    each hypothesis the enabled relations whose source family could hold its
-   evidence, one lane per family. (`POST /v1/scry/route` is a usable
+   evidence, one lane per family. (the `route` tool is a usable
    first-step shortlist — never a substitute for this enumeration
    discipline.)
 3. **Fan out lexically** (below) inside each lane.
@@ -465,8 +465,7 @@ are at.
 - **Derivation from the corpus itself** — prefix lexicon + co-occurrence
   salience + embedding neighbors, seeded from an index-engaging term,
   yields the variant list in seconds; curate, measure, publish as a
-  recipe. Derive through MCP `scry_recipe_derive` or REST `POST
-  /v1/scry/recipes/derive`; it is not a SQL function.
+  recipe. Derive through the `recipe_derive` tool; it is not a SQL function.
 
 ## The quantifier chain — operators search forgot
 
@@ -720,8 +719,8 @@ vocabulary, and guided seeding is what fixes them.
 
 ### Recipes in five minutes
 
-1. **Find your instrument**: `GET /v1/scry/recipes` — each entry carries
-   `kind`, a one-line `stance`, and `n_terms`. `GET /v1/scry/recipes/{slug}`
+1. **Find your instrument**: the `recipes` tool — each entry carries
+   `kind`, a one-line `stance`, and `n_terms`; with a `slug` it
    returns terms, `options.blind_to`, and `measurements`.
 2. **Read `measurements.doc_precision` before trusting matches.** Graded
    samples (2026-08-26 audit) stamp each retrieval-shaped recipe with
@@ -752,17 +751,17 @@ vocabulary, and guided seeding is what fixes them.
    `SELECT toStartOfQuarter(created_utc) AS q, sum(scry_recipe_density('slug')*length(body))/sum(length(body)) AS d FROM reddit.comments WHERE subreddit='X' AND created_utc >= '2024-01-01' GROUP BY q ORDER BY q LIMIT 20`
    — char-weighted, kills the length confound that raw membership share
    carries.
-7. **Lifecycle REST**: `POST /v1/scry/recipes/derive` (seeds are whole
+7. **Lifecycle**: `recipe_derive` (seeds are whole
    tokens; candidates ranked salience-desc) expands vocabulary from the
-   corpus; `PUT /v1/scry/recipes/{slug}` (CAS via `if_version`) writes;
-   `?history=1` lists versions, `?version=N` loads one, `?diff=1,2` diffs
+   corpus; `recipe_write` (CAS via `if_version`) writes;
+   `history` lists versions, `version=N` loads one, `diff=[1,2]` diffs
    two versions of a slug (term text — form changes show jaccard 1.0), and
    catalog-level `?diff=a,b` diffs two recipes.
 8. **Read the envelope**: `coverage.freshness_blocker` explains corpus
    recency (e.g. reddit's Arctic-dump boundary) — check it before charting
    the most recent weeks.
 
-`GET /v1/scry/recipes` (MCP `scry_recipes`) is the live catalog; this
+The `recipes` tool is the live catalog; this
 table is the shelf as measured on lesswrong 2026-01-01.. (2026-08-24).
 `match` = share of documents containing ≥1 term; `score` = mean
 `scry_recipe_score` over a 200-hit sample (weighted token recipes only).
@@ -816,8 +815,8 @@ Choosing:
   `us_vs_them` in 2% — adjacency separates the two speech acts the
   way document co-membership cannot; `modal_deontic` within 8 of
   `modal_epistemic` ("we probably should") in 15%.
-- **Derive before you hand-write**: call MCP `scry_recipe_derive` or REST
-  `POST /v1/scry/recipes/derive`; derivation is not a SQL function. Seeds
+- **Derive before you hand-write**: call the `recipe_derive` tool;
+  derivation is not a SQL function. Seeds
   must occur as whole lowercase tokens to build the cohort; put stems in
   `prefixes` for prefix expansion. The result carries prefix-lexicon and
   co-occurrence candidates with relation-wide denominators. On huge
@@ -827,8 +826,8 @@ Choosing:
   stance *pair* with `contrast` (slug or seeds: candidates rank against
   the contrast cohort, contrast-exclusive terms first) and `exclude`
   (slug whose stored terms are dropped), then check disjointness with
-  `GET /v1/scry/recipes?diff=a,b` (Jaccard + asymmetric term lists).
-  Curate, read matches, then publish with `scry_recipe_write`.
+  the `recipes` tool's `diff=[a,b]` (Jaccard + asymmetric term lists).
+  Curate, read matches, then publish with `recipe_write`.
 - **Stance is identity**: the same word list under a different reading
   contract is a different recipe, not a new version.
 
