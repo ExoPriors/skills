@@ -314,6 +314,27 @@ asking yourself to be creative. Change the ask instead (`references.md`
   and field steps remain the primary instrument; the endpoint is the
   wide net behind them. Wallet-funded, about two minutes, experimental.
 
+### Saturation sweeps
+
+When the ask is exhaustive — find *everything*, leave nothing unturned —
+the enumeration discipline above gains a stopping rule. Adopt the frame:
+you are covering a space, not fetching an answer, and the corpora are
+wide enough that a miss is almost always a wrong probe (vocabulary,
+venue, era) before it is a real absence.
+
+- The grid is relations × vocabularies × time windows: shortlist every
+  plausibly-holding relation from the schema index, fan each concept
+  into its namings (practitioner jargon, plain speech,
+  adjacent-community dialect, era-bound terms), and track cells — an
+  unprobed cell is an open claim, not a conclusion.
+- Run the lexical and semantic arms in parallel; they miss differently.
+  Chase edges — authors, threads, citations — with `program`; batch
+  probes 16 per round trip.
+- Stop at saturation, not satisfaction: the tenth probe is where a field
+  opens, and done is when new probes return only known rows. Report the
+  grid itself — probed, found, unprobed — not only the hits. The MCP
+  `exhaustive_search` prompt carries this frame for any MCP client.
+
 ## Registered surfaces
 
 The live schema is the coverage authority: relation inventory, row counts,
