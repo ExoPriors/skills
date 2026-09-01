@@ -1,0 +1,12 @@
+{
+  "name": "exopriors",
+  "description": "ExoPriors plugins: Scry — programmatic search over public corpora.",
+  "owner": { "name": "ExoPriors", "email": "contact@exopriors.com", "url": "https://scry.io" },
+  "plugins": [
+    {
+      "name": "scry",
+      "source": ".",
+      "description": "Programmatic search over Scry's public corpora: bounded ClickHouse SQL, the search grammar, compositional embeddings, and the saturation frame — plus the hosted Scry MCP server, wired on install."
+    }
+  ]
+}

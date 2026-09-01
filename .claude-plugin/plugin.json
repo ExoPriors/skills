@@ -1,0 +1,11 @@
+{
+  "name": "scry",
+  "displayName": "Scry",
+  "description": "Programmatic search over Scry's public corpora: bounded ClickHouse SQL, the search grammar, compositional embeddings, and the saturation frame — plus the hosted Scry MCP server, wired on install.",
+  "version": "1.0.0",
+  "author": { "name": "ExoPriors", "email": "contact@exopriors.com", "url": "https://scry.io" },
+  "homepage": "https://scry.io",
+  "repository": "https://github.com/ExoPriors/skills",
+  "license": "MIT",
+  "keywords": ["search", "sql", "research", "corpora", "clickhouse", "embeddings", "scry"]
+}

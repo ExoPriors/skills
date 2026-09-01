@@ -1,0 +1,6 @@
+{
+  "scry": {
+    "type": "http",
+    "url": "https://mcp.scry.io"
+  }
+}
