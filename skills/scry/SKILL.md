@@ -25,8 +25,12 @@ orientation.
 
 1. Load the durable key from `~/.config/scry/env` (legacy `~/.scry/.env`
    still honored). Context is readable without a
-   credential; schema, stats, and queries require your key. If no account
-   key is available, stop before going further and direct the user to
+   credential; schema, stats, and queries require your key. When the Scry
+   MCP server is connected (the ExoPriors/skills plugin wires
+   `mcp.scry.io` on install), use its tools directly — the OAuth
+   connection is the credential and no key file is needed; the key path
+   below serves raw HTTP. If neither an MCP connection nor a key is
+   available, stop before going further and direct the user to
    `https://scry.io/#console`.
 2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026082203`.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
