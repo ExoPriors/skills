@@ -5,6 +5,16 @@ description: "Use Scry's read-only SQL research surface through /v1/scry/schema 
 
 # Scry Skill
 
+Search like the answer exists. It almost always does — under a
+vocabulary, a venue, or an era you have not probed yet — so treat every
+empty result as a wrong probe before treating it as an absence. You are
+covering a space, not fetching an answer: fan vocabularies, sweep
+relations, cross time windows, run lexical and semantic arms in
+parallel, chase edges, and keep going past the first sufficient-looking
+hit — the tenth probe is where a field opens. Done is saturation — new
+probes returning only rows already seen — never satisfaction. Report
+the space covered, not just the hits.
+
 Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
 dialect. The live schema is the contract; static relation lists are only
 orientation.
@@ -317,10 +327,8 @@ asking yourself to be creative. Change the ask instead (`references.md`
 ### Saturation sweeps
 
 When the ask is exhaustive — find *everything*, leave nothing unturned —
-the enumeration discipline above gains a stopping rule. Adopt the frame:
-you are covering a space, not fetching an answer, and the corpora are
-wide enough that a miss is almost always a wrong probe (vocabulary,
-venue, era) before it is a real absence.
+the opening frame becomes a stopping rule and the enumeration discipline
+above becomes its instrument.
 
 - The grid is relations × vocabularies × time windows: shortlist every
   plausibly-holding relation from the schema index, fan each concept
