@@ -243,7 +243,7 @@ subquery) — but every iteration rescans the joined relation
 (~1.8 s per step on openalex.works), so declare `x-scry-max-seconds`. For
 frontier-pruned walks — citation closures, filtered multi-hop expansions,
 walked sets ranked semantically — send a program instead of SQL: `POST /v1/scry/query` with a JSON body
-`{"program": {...}}` (MCP `program`). A program is named relations
+`{"program": {...}}` (MCP `datalog`). A program is named relations
 (sets of node ids) built from a closed atom vocabulary — `ids` seeds,
 `ann` (top-k probe from an embed handle), `rel` (a body naming its own
 relation recurses), `edge` (OpenAlex `references`/`cited_by`; twitter
@@ -340,7 +340,7 @@ above becomes its instrument.
   adjacent-community dialect, era-bound terms), and track cells — an
   unprobed cell is an open claim, not a conclusion.
 - Run the lexical and semantic arms in parallel; they miss differently.
-  Chase edges — authors, threads, citations — with `program`; batch
+  Chase edges — authors, threads, citations — with `datalog`; batch
   probes 16 per round trip.
 - Stop at saturation, not satisfaction: the tenth probe is where a field
   opens, and done is when new probes return only known rows. Report the
