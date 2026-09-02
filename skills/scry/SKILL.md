@@ -512,7 +512,8 @@ curl -s https://api.scry.io/v1/scry/query \
   parse the body, not the status, on that path. Keep the connection open;
   do not set client timeouts below your query's real budget.
 - For published Parquet dataset artifacts, inspect
-  `GET /v1/datasets/catalog` and `GET /v1/datasets/{dataset_id}`. These are
+  `GET /v1/products/{product_id}/datasets/catalog` and
+  `GET /v1/products/{product_id}/datasets/{dataset_id}`. These are
   artifact metadata routes, not a corpus SQL fallback.
 - To sort a query's rows by an attribute you can describe, send
   `x-scry-rerank: <ranking directive>` on `POST /v1/scry/query` — one
@@ -570,19 +571,6 @@ curl -s https://api.scry.io/v1/scry/query \
   that relevance is meaningless. For anything older than the fresh
   window, exhaustive coverage, or lexical/entity lookups, use `sql`
   with `q` or a SQL statement instead.
-- When a claim needs the live open web — earliest mention,
-  does-anything-exist, due-diligence fan-out beyond the registered
-  corpora — the engine passthroughs. These are named third-party
-  engines behind Scry's wallet and status contract, never
-  Scry's own index: `POST /v1/scry/web` with `{"q": "..."}`
-  (limit 1..=20, optional `providers: ["exa"|"google"]`) calls both
-  and interleaves normalized hits by per-provider rank. Every response
-  names each engine's status — ok, unavailable (with the upstream
-  error), or unconfigured — so absence is explicit, never empty-result
-  silence. Each provider arm that answers settles $0.0075 against the
-  wallet (`charged_nanodollars` in the response); a failed arm is
-  never charged. Titles and snippets are open-web text. Full contract: `offerings.web_search` on
-  `GET /v1/scry/context`.
 - To consult another model, the OpenRouter passthrough: MCP tool
   `chat`, or `POST /v1/scry/openrouter` with
   `{"model": "...", "prompt": "..."}` (or a full `messages` turn list;

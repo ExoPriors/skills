@@ -45,17 +45,18 @@ from the corpus itself with the co-occurrence pattern
 A variant's count is its ledger row; zero-count variants are vocabulary
 findings, not dead ends.
 
-Run one bounded probe per variant. Typed search:
+Run one bounded probe per variant. Lexical probe, two equivalent doors:
 
-```
-POST /v1/scry/search
-{"query": "…", "method": "lexical", "limit": 20,
- "sources": [...], "kinds": [...], "from": "…", "to": "…"}
-```
+- MCP `sql` with the search-grammar line as `q` against one registered
+  `relation` (bare words AND, quoted phrases, `-` exclusion, `/regex/`).
+- Plain SQL on `POST /v1/scry/query`: `scry_lex('<line>')` expands
+  server-side into the relation's index-engaging predicate, so a
+  count-only probe is one statement —
+  `SELECT count() AS n FROM internet.text
+   WHERE scry_lex('"scaling laws" -toy') LIMIT 1`.
 
-`method` is `lexical`, `hybrid`, or `rerank`; `limit` is capped at 20; `from`
-and `to` are RFC 3339. For token-level SQL fanout, use the enabled
-parameterized search relations advertised by `/v1/scry/schema`.
+For token-level SQL fanout, use the enabled parameterized search relations
+advertised by `/v1/scry/schema`.
 
 Keep fanning while marginal probes still surface new relevant records. Stop
 when two consecutive rounds of fresh variants produce nothing new — a fixed
@@ -79,10 +80,10 @@ which sources the conclusion actually rests on.
 
 ### Candidate reuse and hydration
 
-A search response carries `candidate_set.record`. Pass it back as
-`candidate_record` to refine (`hybrid` or `rerank`) against the same
-shortlist instead of re-retrieving. Search results and query rows arrive as
-plain JSON. Hydrate a source record with
+Query rows arrive as plain JSON. To re-order a retrieved candidate pool,
+pass a `rerank` directive on the same MCP `sql` call instead of
+re-retrieving (the response's `rerank` block reports scope and scoring).
+Hydrate a source record with
 `GET /v1/scry/search/records/{record_ref}`.
 
 ### Semantic escalation
