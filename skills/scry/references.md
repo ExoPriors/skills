@@ -1117,19 +1117,20 @@ text column. Three entry points engage the text index:
   349ms where the equivalent five-way `hasToken` OR took 738ms.
 
 The index stores tokens without positions, so a phrase has no direct index
-path. For a phrase, intersect its tokens, then refine with `LIKE` — and
-scope time. Both anchors must be present: skip-index pruning weakens for
+path. For a phrase, intersect its tokens, then refine on the **raw** column
+(`body ILIKE`) for adjacency — substring `LIKE` over the token-indexed
+`search_text_lc` column itself is refused by the validator — and scope
+time. Both anchors must be present: skip-index pruning weakens for
 mid-frequency tokens spread across many granules, and the date predicate
-restores it (measured 2026-09-04: this query 3.8s with the one-year scope,
-44.7s without it; the earlier unscoped common-token form of this example
-measured 57.65s):
+restores it (measured through the API 2026-09-04: this query 6.3s with the
+one-year scope, 68s without it — past the headerless 60s deadline):
 
 ```sql
 SELECT subreddit, score, body
 FROM reddit.comments
 WHERE created_utc >= '2025-09-01'
   AND hasAllTokens(search_text_lc, ['tacit', 'knowledge'])
-  AND search_text_lc LIKE '%tacit knowledge%'
+  AND body ILIKE '%tacit knowledge%'
 ORDER BY score DESC
 LIMIT 20
 ```
