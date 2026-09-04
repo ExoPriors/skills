@@ -1135,12 +1135,23 @@ ORDER BY score DESC
 LIMIT 20
 ```
 
-Do not send bare `LIKE '%...%'` predicates without a token prefilter: the
-engine then reads every row body in the scanned range, which is the common
-path to the memory cap. Substring probes have no fast door at estate scale —
-`positionCaseInsensitive` measures p50 122s on `internet.text` and the
-ngram-index LIKE routes measure worse (142s–300s+, index traversal costs
-more than the scan it saves), while the token-anchored equivalent runs 4.2s.
+Substring probes DO have a fast door on the big single relations — but only
+through the exact indexed expression. `lower(text) LIKE '%needle%'` on
+`twitter.tweets` and `lower(body) LIKE '%needle%'` on `reddit.comments`
+ride ngrams(3) inverted indexes (measured through the API 2026-09-04: a
+rare substring 0.4–1.0s over 49.7B tweets / all of reddit.comments;
+`'%tacit knowledge%'` 17s/36s unscoped; a stop-word phrase like
+`'%well actually%'` still dies — millions of matches are doomed on any
+road). Know the cliff: counts and streamed `LIMIT`s stop at the posting
+lists, but a global `ORDER BY` — or a `LIMIT` above the match count —
+reads every candidate granule (28.5s measured on a 29-match needle, still
+4× better than the scan): count first, retrieve under the count, sort the
+page yourself. The expression must match the index exactly: `text ILIKE`,
+`positionCaseInsensitive`, and `match` never ride it (p50 122s scans).
+`internet.text` has NO door — the UNION view does not push `lower(text)`
+into each branch's differently-shaped index expression (the same rare
+needle measures >150s there); on the view, always anchor with
+hasToken/hasAllTokens first, 4.2s measured.
 
 ### Vocabulary expansion from the corpus
 
