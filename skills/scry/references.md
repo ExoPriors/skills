@@ -1117,20 +1117,29 @@ text column. Three entry points engage the text index:
   349ms where the equivalent five-way `hasToken` OR took 738ms.
 
 The index stores tokens without positions, so a phrase has no direct index
-path. For a phrase, intersect its tokens, then refine with `LIKE`:
+path. For a phrase, intersect its tokens, then refine with `LIKE` — and
+scope time. Both anchors must be present: skip-index pruning weakens for
+mid-frequency tokens spread across many granules, and the date predicate
+restores it (measured 2026-09-04: this query 3.8s with the one-year scope,
+44.7s without it; the earlier unscoped common-token form of this example
+measured 57.65s):
 
 ```sql
 SELECT subreddit, score, body
 FROM reddit.comments
-WHERE hasAllTokens(search_text_lc, ['lid', 'off'])
-  AND search_text_lc LIKE '%lid off%'
+WHERE created_utc >= '2025-09-01'
+  AND hasAllTokens(search_text_lc, ['tacit', 'knowledge'])
+  AND search_text_lc LIKE '%tacit knowledge%'
 ORDER BY score DESC
 LIMIT 20
 ```
 
 Do not send bare `LIKE '%...%'` predicates without a token prefilter: the
 engine then reads every row body in the scanned range, which is the common
-path to the memory cap.
+path to the memory cap. Substring probes have no fast door at estate scale —
+`positionCaseInsensitive` measures p50 122s on `internet.text` and the
+ngram-index LIKE routes measure worse (142s–300s+, index traversal costs
+more than the scan it saves), while the token-anchored equivalent runs 4.2s.
 
 ### Vocabulary expansion from the corpus
 

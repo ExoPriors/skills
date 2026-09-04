@@ -33,6 +33,10 @@ orientation.
    available, stop before going further and direct the user to
    `https://scry.io/#console`.
 2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026082203`.
+   For worked, measured query shapes, `GET /v1/scry/examples` (free, no
+   key) serves the curated gallery — six rungs from selectivity probe to
+   semantic ANN, each with its observed wall time; `?mode=index` for the
+   compact list, `?slug=<slug>` for one entry.
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
