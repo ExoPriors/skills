@@ -1110,20 +1110,18 @@ text column. Three entry points engage the text index:
 
 - `hasToken(col, 'token')` — one token.
 - `hasAllTokens(col, ['t1','t2'])` — all tokens, intersected inside the
-  index. Measured on one year of `reddit.comments`: 70ms and 4.3M rows
-  read, where `hasToken(...) AND hasToken(...)` read 202M rows in 316ms
-  for the same 1,636 matches.
-- `hasAnyTokens(col, ['t1','t2'])` — any token, one index pass. Measured
-  349ms where the equivalent five-way `hasToken` OR took 738ms.
+  index: 70ms/4.3M rows on a year of `reddit.comments`, where chained
+  `hasToken AND hasToken` read 202M rows for the same matches.
+- `hasAnyTokens(col, ['t1','t2'])` — any token, one index pass: 349ms
+  where the five-way `hasToken` OR took 738ms.
 
-The index stores tokens without positions, so a phrase has no direct index
-path. For a phrase, intersect its tokens, then refine on the **raw** column
-(`body ILIKE`) for adjacency — substring `LIKE` over the token-indexed
-`search_text_lc` column itself is refused by the validator — and scope
+The index stores tokens without positions, so a phrase intersects its
+tokens, then refines on the **raw** column (`body ILIKE`) for adjacency —
+`LIKE` over token-indexed `search_text_lc` itself is refused — and scopes
 time. Both anchors must be present: skip-index pruning weakens for
-mid-frequency tokens spread across many granules, and the date predicate
-restores it (measured through the API 2026-09-04: this query 6.3s with the
-one-year scope, 68s without it — past the headerless 60s deadline):
+mid-frequency tokens across many granules, the date predicate restores it
+(API-measured 2026-09-04: 6.3s scoped to one year, 68s without — past the
+headerless 60s deadline):
 
 ```sql
 SELECT subreddit, score, body
@@ -1135,28 +1133,18 @@ ORDER BY score DESC
 LIMIT 20
 ```
 
-Substring probes DO have a fast door on the big single relations — but only
-through the exact indexed expression. `lower(text) LIKE '%needle%'` on
-`twitter.tweets` and `lower(body) LIKE '%needle%'` on `reddit.comments`
-ride ngrams(3) inverted indexes (measured through the API 2026-09-04: a
-rare substring 0.4–1.0s over 49.7B tweets / all of reddit.comments;
-`'%tacit knowledge%'` 17s/36s unscoped; a stop-word phrase like
-`'%well actually%'` still dies — millions of matches are doomed on any
-road). Know the cliff: counts and streamed `LIMIT`s stop at the posting
-lists, but a global `ORDER BY` — or a `LIMIT` above the match count —
-reads every candidate granule (28.5s measured on a 29-match needle, still
-4× better than the scan): count first, retrieve under the count, sort the
-page yourself. The expression must match the index exactly: `text ILIKE`,
-`positionCaseInsensitive`, and `match` never ride it (p50 122s scans).
-`internet.text` has NO door — the UNION view does not push `lower(text)`
-into each branch's differently-shaped index expression (the same rare
-needle measures >150s there); on the view, always anchor with
-hasToken/hasAllTokens first, 4.2s measured.
+Substring probes have a fast door on the big single relations, but only
+through the relation's exact indexed expression (surveyed through the API
+2026-09-04, same rare unanchored needle); `text ILIKE`,
+`positionCaseInsensitive`, and `match` never ride it (p50 122s scans),
+and match volume still governs — `'%tacit knowledge%'` 17s/36s on
+tweets/comments, stop-word phrases doomed on any road. The cliff: counts
+and streamed `LIMIT`s stop at the trigram posting lists; a global `ORDER
+BY` or an above-count `LIMIT` reads every candidate granule (28.5s on a
+29-match needle, still 4× the scan) — count first, retrieve under the
+count, sort the page yourself.
 
-Every door, surveyed through the API with the same rare needle
-(2026-09-04, unanchored count):
-
-| relation | door expression | wall |
+| relation | door expression | rare-needle wall |
 | --- | --- | --- |
 | `twitter.tweets` | `lower(text)` | 0.36s |
 | `reddit.comments` | `lower(body)` | 1.0s |
@@ -1166,32 +1154,19 @@ Every door, surveyed through the API with the same rare needle
 | `quora.answers` | `lower(concat(question_title, ' ', content))` | 0.4s |
 | `courts.china_judgments` | `full_text` (no lower) | 0.4s |
 
-No door despite ngram indexes upstream: `internet.text` and `social.posts`
-(union views, >150s), `crawl.pages` (the served column is words-indexed, so
-the validator refuses substring LIKE and the base ngram expression does not
-map through the view), `commoncrawl.distillate` (words index only).
+No door: `internet.text` and `social.posts` (union views never reach the
+branch indexes, >150s — anchor with hasToken/hasAllTokens there, 4.2s
+measured), `crawl.pages` (words-validator refuses substring LIKE on the
+served column), `commoncrawl.distillate` (words index only).
 
 ### Vocabulary expansion from the corpus
 
 The corpus itself is the best thesaurus: rows matching a seed term carry the
 community's own jargon, spellings, and adjacent handles. Use one bounded
-probe:
-
-```sql
-SELECT t AS token, count() AS c
-FROM (
-  SELECT arrayJoin(tokens(search_text_lc)) AS t
-  FROM reddit.comments
-  WHERE created_utc >= '2026-05-01' AND created_utc < '2026-06-01'
-    AND hasToken(search_text_lc, 'mechinterp')
-)
-WHERE length(t) > 3
-GROUP BY t
-ORDER BY c DESC
-LIMIT 40
-```
-
-Skim past stopwords — the raw counts are co-occurrence, not salience. The
+probe — the exact query is served at
+`GET /v1/scry/examples?slug=vocabulary-expansion` (0.38s measured): a
+month-scoped `hasToken` seed, `arrayJoin(tokens(search_text_lc))`,
+`GROUP BY` token, `ORDER BY` count. Skim past stopwords — the raw counts are co-occurrence, not salience. The
 yield is the mid-list tokens you did not know to search for: project names,
 insider shorthand, author handles. Feed each candidate back through a
 selectivity probe and keep the ones with real signal. This turns lexical
