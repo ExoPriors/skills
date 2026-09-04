@@ -1153,6 +1153,24 @@ into each branch's differently-shaped index expression (the same rare
 needle measures >150s there); on the view, always anchor with
 hasToken/hasAllTokens first, 4.2s measured.
 
+Every door, surveyed through the API with the same rare needle
+(2026-09-04, unanchored count):
+
+| relation | door expression | wall |
+| --- | --- | --- |
+| `twitter.tweets` | `lower(text)` | 0.36s |
+| `reddit.comments` | `lower(body)` | 1.0s |
+| `reddit.posts` | `lower(concat(title, ' ', selftext))` | 0.4s |
+| `hackernews.items` | `lower(concat(title, ' ', payload))` | 0.4s |
+| `stackexchange.posts` | `lower(concat(ifNull(title, ''), ' ', ifNull(payload, ''), ' ', ifNull(tags, '')))` | 0.7s |
+| `quora.answers` | `lower(concat(question_title, ' ', content))` | 0.4s |
+| `courts.china_judgments` | `full_text` (no lower) | 0.4s |
+
+No door despite ngram indexes upstream: `internet.text` and `social.posts`
+(union views, >150s), `crawl.pages` (the served column is words-indexed, so
+the validator refuses substring LIKE and the base ngram expression does not
+map through the view), `commoncrawl.distillate` (words index only).
+
 ### Vocabulary expansion from the corpus
 
 The corpus itself is the best thesaurus: rows matching a seed term carry the
