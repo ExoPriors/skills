@@ -128,8 +128,8 @@ cells; unless a tool is named as doing the work, everything below is client-side
   conflicts stay typed. Check: a merged claim without refs was made by the fold.
 - **Blackboard claim conflicts** - a shared claim store (`memory_write` CAS) where
   contexts attach support or counter refs. Check: conflict state reaches the report.
-- **Uncertainty-targeted escalation** - cheap arms everywhere; `rerank` quality or
-  `chat` only where cheap arms conflict. Check: a stated rule picks the set.
+- **Uncertainty-targeted escalation** - light arms everywhere; `rerank` quality or
+  `chat` only where light arms conflict. Check: a stated rule picks the set.
 
 ### Worked directions
 
