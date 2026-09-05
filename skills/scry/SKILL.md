@@ -103,10 +103,10 @@ search-grammar line as `q` to MCP `sql`; SQL remains the only read verb.
 The `q` search grammar speaks a full lexical language: bare words AND
 together; `"exact phrase"`; `a OR b`; `-term` / `-"phrase"` exclusion;
 `( )` grouping; `/pattern/` regex over full text (case-insensitive,
-negatable; RE2 dialect plus lookaround and backreferences, which are
-verified app-side — pair them with concrete literals; every pattern needs
-a 3+-char literal run somewhere to prune by index — `/gpt-?4o/` prunes,
-bare `/[0-9]+/` cannot); `word*` wildcards; `word~1` fuzzy
+negatable; RE2 only — SQL rejects lookaround and backreferences rather than
+counting a prefilter's superset. A positive literal or token anchors the
+query; `rust /[0-9]+/` can use `rust` to bound the regex residual, while
+bare `/[0-9]+/` is refused); `word*` wildcards; `word~1` fuzzy
 (typo-tolerant: a 4-24 char word resolves against the corpus vocabulary
 into its real one-edit word forms and searches as their OR —
 `query_plan.clamped` echoes the forms chosen; bare `~` means `~1`,
@@ -115,36 +115,24 @@ larger asks clamp to 1 with a note); `"exact phrase"~3` slop
 max 50); and
 `a NEAR b` / `a NEAR/50 b` proximity (uppercase NEAR; matches both orders
 within N characters, default 100, max 1000; operands may be words, quoted
-phrases, `/regex/`, or `(x OR y)` groups). Unanchored substrings and CJK
-terms search whole through trigram indexes — no word boundaries needed.
-The response's `query_plan` (`ignored`, `clamped`, kept terms) is ground
-truth for whether operators did what you meant, and each result's
-`snippet_matches` / `title_matches` carry char-offset `[start, end)` spans
-where your terms matched the served snippet and title (empty can mean the
-match lies deeper in the document than the snippet window). A query that
-would return zero results retries once with a strictly weaker
-leave-one-out form (phrases and negations intact); when that fills the
-page, `candidate_set.degraded_reason` reports
-`zero_results_relaxed_to: <query>` — relaxed rows are never presented as
-exact matches.
+phrases, `/regex/`, or `(x OR y)` groups). Substrings and CJK phrases can
+use a sufficiently built n-gram index; read the relation's capabilities,
+not a corpus-wide availability claim.
 
-The same grammar compiles for the SQL plane: MCP `sql` with `q`, a
-registered `relation`, and `explain: true` returns
-`compiled.where` — the ranked lane's own index-engaging predicates bound
-to that relation's live text indexes (token postings, trigram/2-gram
-substring, regex behind a literal prefilter, `after:`/`author:`/`source:`
-on the relation's columns) — plus `compiled.sql`/`count_sql` to run as-is,
-per-leaf `leaves[].{plane,index,prunes,exact}`, and `notes` naming every
-operator the relation cannot express. Paste the WHERE into any shape
-(`count() … GROUP BY`, `HAVING`, joins, `extractAll` histograms); add
-`explain: true` for ClickHouse's index analysis (parts/granules kept per
-engaged index) before spending. Without `relation` it is a pure parse.
-`relation: "*"` sweeps instead: the line compiled against every
-registered relation carrying a text plane, and `counts: true` runs each
-compiled count bounded (readonly, 8s/relation) — one call for the
-expression's distribution across the whole estate, denominators
-included (`sweep[]` count-descending, `sweep_skipped[]` naming the
-relations with no text plane).
+MCP `sql` with `q` requires one registered `relation`, never `"*"`.
+It returns ordinary SQL rows and the executed `compiled_sql`; it does not
+silently weaken a zero-result query. Inspect that SQL before interpreting
+membership. With `explain: true`, the statement is validated and its
+ClickHouse index analysis is returned without executing the corpus query.
+Request `prompts/get` with `name: "query_guide"` and `tool: "sql"` for
+composition patterns and the current input schema.
+
+The compiler's internal plan distinguishes declared indexes from measured
+coverage: zero-built word indexes do not establish pruning, and partial
+coverage is not complete coverage. `EXPLAIN` is the actual plan evidence,
+especially for views whose backing indexes are not mapped in discovery.
+Use bounded, independently recorded queries to compare several relations;
+the MCP SQL tool does not accept a multi-relation grammar sweep.
 
 The grammar is also a first-class SQL operand: inside any
 `POST /v1/scry/query` statement, `scry_lex('<line>')` expands
@@ -556,8 +544,12 @@ curl -s https://api.scry.io/v1/scry/query \
   `GET /v1/scry/context`. Scores are monotonic ranking signals, not
   calibrated probabilities, and are not comparable across models. A
   degraded tier returns identity order plus a `degraded_reason` — never
-  a silent reorder. For judgement-grade pairwise comparisons beyond
-  reranking, the offering points at `POST /v1/judgements/runs`.
+  a silent reorder. Local lanes score only the leading 3,500 characters;
+  `usage.local_prefix_char_limit` and `usage.locally_truncated_documents`
+  disclose that window when local scoring applies. Missing metadata is not
+  full-document coverage. For longer sources, retain original provenance
+  and submit evidence-focused passages with stable ids. For judgement-grade
+  pairwise comparisons, the offering points at `/v1/judgements/runs`.
 - For "what does the fresh web say about X since my cutoff", the `brief`
   tool with `{"question": "...",
   "known_after": "<RFC 3339 or YYYY-MM-DD>", "k": 1..12}` returns 8-12

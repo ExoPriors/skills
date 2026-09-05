@@ -2,167 +2,163 @@
 
 ## Deep research operations
 
-The higher-order loop for multi-step research over Scry: plan surfaces, fan
-out lexically, keep a probe ledger, escalate to semantic ranking only over
-bounded candidates, adjudicate with explicit denominators, and end in an
-artifact another agent can pick up.
+The higher-order loop for multi-step research over Scry: plan surfaces, fan out
+lexically, keep a probe ledger, compare bounded lexical and semantic pools,
+adjudicate with denominators, externalize. Cohort inference: § Comparative
+study design; covering open possibility spaces: § Orthogonal enumeration.
 
 ### Operating loop
 
-1. **Frame.** State the question and several labeled hypotheses. For each,
-   name what evidence would confirm or refute it and which source families
-   could plausibly hold that evidence.
-2. **Plan surfaces manually.** Read `/v1/scry/schema`, then enumerate the
-   partition values of every candidate relation (e.g.
-   `SELECT source, count() FROM forums.posts GROUP BY source`) so the lane
-   plan starts from the full source roster, not from guessed names. Assign
-   each hypothesis the enabled relations whose source family could hold its
-   evidence, one lane per family. (the `route` tool is a usable
-   first-step shortlist — never a substitute for this enumeration
-   discipline.)
-3. **Fan out lexically** (below) inside each lane.
-4. **Probe bounded, record every probe** in the ledger (below).
-5. **Escalate to semantic ranking** only over a bounded candidate set.
-6. **Adjudicate** with explicit coverage denominators.
-7. **Externalize** the result and the ledger.
+1. **Frame** labeled rival hypotheses; per hypothesis, name confirming and
+   refuting evidence and the source families that could hold it.
+2. **Plan surfaces manually.** Read the schema, then enumerate partition values
+   of candidate relations (`SELECT site_key, count() AS n FROM forums.posts
+   GROUP BY site_key ORDER BY n DESC LIMIT 100`) and account for truncated rosters. `route` is a shortlist only.
+3. **Fan out lexically** per lane; **record every bounded probe** (below).
+4. **Audit lexical recall** with an independent semantic arm under matched
+   eligibility (§ Registered vector helpers); hydrate both arms before judging.
+5. **Adjudicate with denominators**, then **externalize** result and ledger.
 
 ### Lexical fanout
 
-The dominant failure mode in corpus research is missing vocabulary, not
-misreading rows. Before concluding absence — and before any semantic or
-judgement-heavy step — expand each hypothesis into term variants:
-
-- insider jargon and community shorthand alongside formal names;
-- exact phrases and quoted strings; product, project, and code names;
-- abbreviations, hyphenation variants, and common misspellings;
-- per-source dialects — the same idea is worded differently in Hacker News
-  titles, Reddit bodies, and Mastodon posts, so vary terms per relation.
-
-Variants cost little to score and to harvest: run each variant as a
-sub-second count-only probe before any retrieval, and mine new variants
-from the corpus itself with the co-occurrence pattern
-(§ Shape probes, § Vocabulary expansion).
-A variant's count is its ledger row; zero-count variants are vocabulary
-findings, not dead ends.
-
-Run one bounded probe per variant. Lexical probe, two equivalent doors:
-
-- MCP `sql` with the search-grammar line as `q` against one registered
-  `relation` (bare words AND, quoted phrases, `-` exclusion, `/regex/`).
-- Plain SQL on `POST /v1/scry/query`: `scry_lex('<line>')` expands
-  server-side into the relation's index-engaging predicate, so a
-  count-only probe is one statement —
-  `SELECT count() AS n FROM internet.text
-   WHERE scry_lex('"scaling laws" -toy') LIMIT 1`.
-
-For token-level SQL fanout, use the enabled parameterized search relations
-advertised by `/v1/scry/schema`.
-
-Keep fanning while marginal probes still surface new relevant records. Stop
-when two consecutive rounds of fresh variants produce nothing new — a fixed
-probe count is not a stopping rule.
+The dominant failure mode is missing vocabulary, not misreading rows. Before
+concluding absence - and before any semantic or judgement-heavy step - expand
+each hypothesis into variants: insider jargon beside formal names; exact
+phrases; product and code names; abbreviations, hyphenation, misspellings;
+per-source dialects (HN titles, Reddit bodies, and Mastodon posts word the
+same idea differently). Use `sql` with `q` plus one registered `relation` for
+a bounded page; use explicit `SELECT count() AS n ... WHERE scry_lex(...)
+LIMIT 1` for counts. Inspect coverage and EXPLAIN; LIMIT bounds output, not reads.
+Mine further variants from matching rows (§ Shape probes, § Vocabulary
+expansion); zero counts are vocabulary findings. Stop when two consecutive
+rounds of fresh variants surface nothing new - never at a fixed probe count.
 
 ### Probe ledger
 
-One row per probe, kept as you go and preserved in the final artifact:
+One row per probe, preserved in the final artifact: hypothesis served; exact
+query; scope (relation, sources, window); result (`row_count`, duration,
+truncation); verdict; next move (widen, narrow, swap source, escalate, stop).
+It makes answers auditable; a versioned protocol records the declared holdout.
+Probe order alone does not prove a context never saw later information. Reuse pools: a `rerank` directive on the same `sql` call re-orders
+without re-retrieving; hydrate by record_ref (`fetch`) before describing;
+never invent ids; keep the id-to-source map with any frozen pool.
 
-| field | content |
-| --- | --- |
-| hypothesis | the label this probe serves |
-| query | exact query text or SQL |
-| scope | relation or sources/kinds, time window |
-| result | `row_count`, duration, truncation state |
-| verdict | what the rows confirmed, ruled out, or left open |
-| next move | widen, narrow, swap source, escalate, or stop |
+### Adjudication and report integrity
 
-The ledger is what makes an answer auditable: it shows which vocabulary and
-which sources the conclusion actually rests on.
+Relevance, coverage, freshness, and provenance are different assertions - keep
+them separate. State the denominator - relations, sources, windows searched,
+against what exists (schema, coverage blocks). Absent rows prove absence from
+the searched slice, not the world; a recent load time is not a recent source
+event. Report lane disagreement with what would resolve it, never averaged.
+Write side: hydrate before describing - a title licenses no claim about a
+body; trace every number, name, quotation, and direction to a hydrated record
+or ledger row; mark the rest `[UNVERIFIED: ...]`. Audit for fabrication
+shapes: sources no row contains, statistics more exact or favorable than the
+rows, untested "first"/"only" claims, content described from titles, references
+no probe returned. Calibrate strength to evidence and take positions: a
+neutral catalog of findings is the default failure mode.
 
-### Candidate reuse and hydration
+### Continuation and budget
 
-Query rows arrive as plain JSON. To re-order a retrieved candidate pool,
-pass a `rerank` directive on the same MCP `sql` call instead of
-re-retrieving (the response's `rerank` block reports scope and scoring).
-Hydrate a source record with
-`GET /v1/scry/search/records/{record_ref}`.
+Keep a local artifact with the narrative, ledger, open hypotheses, verified
+value spellings, and vocabulary map including zeros. Publish a `share` only
+with the owner's approval of its contents and destination. Recheck changing
+extents on resume. Prefer better vocabulary to larger blind scans.
 
-### Semantic escalation
+### Cognitive work operators
 
-Use registered vector helpers and relations (§ Registered vector
-helpers) for semantic
-ordering over a candidate list you already trust lexically. Every semantic
-ordering is a ranking hypothesis: confirm top rows against lexical evidence
-and provenance before reporting a semantic conclusion.
+Multi-context designs are built from operators. An operator is five things:
+typed input and output evidence, a context-visibility map (which context sees
+which evidence, verbatim or compressed), the transformation each context
+applies, and a decision rule with a stop condition. A design whose visibility
+map is unspecified cannot support an independence claim. Seven design axes:
 
-### Adjudication and denominators
+- **Evidence access** - disjoint, overlapping, shared, or sealed temporal holdout.
+- **Topology** - independent fork, pipeline, relay, fan-in, pairwise graph,
+  blackboard, bounded loop.
+- **Context state** - fresh per step, accumulating, compressed handoff, external
+  versioned memory (`memory_write` CAS).
+- **Objective** - retrieve, interpret, propose, falsify, rank, reconcile, compress.
+- **Heterogeneity** - varied briefs, models, tiers (`chat`, `rerank`); SQL as a role.
+- **Scheduling** - parallel only for genuinely independent prerequisites; adaptive
+  routing where answers gate later probes; `batch` is transport, not independence.
+- **Adjudication** - symbolic set ops over ids, blind criterion ranking, calibrated
+  measurement with denominators, disagreement retained as output.
 
-- Keep claims separate: relevance, coverage, freshness, and provenance are
-  different assertions with different evidence.
-- State the denominator: which relations, sources, and time windows were
-  actually searched, against what exists (`/v1/scry/schema`, `GET /v1/stats`,
-  and route `coverage_warnings`).
-- Absent rows prove absence from the searched corpus slice, not absence in
-  the world. A recent load time does not imply a recent source event.
-- When lanes disagree, report the disagreement and what would resolve it;
-  do not average it away.
+Distinguish source independence, context isolation, and parallel execution.
+Different platforms can repeat one source; fresh windows can share model
+priors and training contamination. Track original evidence and blind drafts;
+multiple contexts are not multiple observations. Parallelism changes latency,
+not the evidence denominator. The axes are vocabulary, not proof of useful
+cells; unless a tool is named as doing the work, everything below is client-side.
 
-### Report integrity
+### Operator catalog
 
-Retrieval discipline alone does not make the artifact honest. Before you
-externalize a report or share, apply these write-side rules. They are the
-gate between the probe ledger and the delivered text.
+- **Source-disjoint discovery** - lanes over separately traced source origins,
+  provenance retained through the union. Check: syndication and cross-posts collapse lanes silently.
+- **Asymmetric information join** - two contexts hold different evidence halves
+  (methods vs results), joined afterward. Check: quotes smuggle the withheld half.
+- **Blinded re-derivation** - a fresh context re-derives conclusions from the
+  evidence table alone, never the narrative. Check: verdict words must not leak in.
+- **Cross-examination, budgeted witnesses** - an examiner hydrates at most k
+  records (`fetch`) to attack a claim set. Check: challenges raised vs sustained.
+- **Perturbation/invariance audit** - rerun with paraphrased queries, shuffled
+  candidate order, swapped synonym recipes. Check: explain flips; verify the perturbation preserved meaning.
+- **Temporal pre-registration** - freeze predictions, vocabulary, and exposure policy in
+  a versioned artifact. Check: pre-cutoff evidence excludes training-time leakage.
+- **Proposer/refuter separation** - `creativity` proposes from fresh server-side
+  cells; a fresh context probes only to disconfirm. Check: refuters show probe rows.
+- **Counterexample-guided repair** - bounded loop: claim, counterexample search,
+  narrowed claim, at most n rounds; keep the set. Check: silently regained scope.
+- **Disagreement-guided retrieval** - the next probes go exactly where arms
+  disagree (id-set diff, then `sql`/`fetch`). Check: retrieval only, on the gap.
+- **Criterion-separated ranking** - one frozen blinded pool, one `rerank` call per
+  criterion, client Pareto front. Check: inspect degradation; ranks are pool-relative, not cardinal measurements.
+- **Lossy-compression reconstruction** - a fresh context rebuilds claims from a
+  summary alone; audit against originals. Check: score fabrications, not only misses.
+- **Instrument induction on holdout** - derive a lexicon (`recipe_derive`); measure
+  precision on rows derivation never saw (`sample`, grade). Check: disjoint slices.
+- **Transposition** - a pattern from domain A run in domain B, vocabulary
+  re-translated per lane (`schema` value spaces). Check: re-base every rate.
+- **Planner/executor separation** - plan without running (`route`, `sql`
+  explain=true); execute only accepted plans. Check: diff executed SQL vs plan.
+- **Independent synthesis audit** - a fresh context holding only ledger and report
+  re-checks each claim against rows. Check: per-claim verdicts, no overall pass.
+- **Provenance-preserving fold** - fan-in keeps every claim's record_refs and lane;
+  conflicts stay typed. Check: a merged claim without refs was made by the fold.
+- **Blackboard claim conflicts** - a shared claim store (`memory_write` CAS) where
+  contexts attach support or counter refs. Check: conflict state reaches the report.
+- **Uncertainty-targeted escalation** - cheap arms everywhere; `rerank` quality or
+  `chat` only where cheap arms conflict. Check: a stated rule picks the set.
 
-**Read first, write after.** Hydrate a record before you describe its
-content. A title or snippet does not license a claim about the body.
+### Worked directions
 
-**Trace each claim.** Each number, name, quotation, and direction in the
-report must match a hydrated record or a ledger row. Remove or flag a claim
-that has no probe behind it.
-
-**Flag, do not fill.** Mark an unverified fact with a visible
-`[UNVERIFIED: …]` marker in the artifact. A silent fill is a fabrication,
-and one fabricated attribution poisons trust in the full report.
-
-**Fabrication patterns.** Examine each paragraph against the known failure
-shapes:
-
-- an author, handle, or source name that no retrieved row contains;
-- a statistic more exact or more favorable than the rows show;
-- a priority claim — "first", "earliest", "only" — that no probe tested;
-- a description of record content written from its title alone;
-- a reference to a record that no ledger row returned.
-
-**Calibrate strength to evidence.** When two or more independent sources
-agree, state the finding directly. When one source speaks, attribute it in
-the sentence. When the searched slice holds no evidence, say so with the
-denominator. Do not hedge as a default register: filler such as "may
-suggest" or "promising" signals an unread source, not caution.
-
-**Take positions.** A neutral catalog of findings is the default failure
-mode. Where the evidence licenses a verdict, write one clear verdict
-sentence and bound it by the stated denominator.
-
-### Continuation
-
-End in artifacts another agent can pick up: shares
-(`POST /v1/scry/shares`, then `PATCH /v1/scry/shares/{slug}`) hold the
-narrative, the ledger, and open hypotheses. Confirm a surface's presence in
-the live context `endpoint_access` before depending on it.
-
-**Orientation shares.** At the end of a multi-session investigation, save
-one share per relation you worked: its observed extent edges, the value
-spaces you verified (real subreddit/lang spellings), the vocabulary map
-your fanout converged on (variants with counts, including the zero-count
-findings), and the probe shapes that worked. Resuming means running that
-share, not re-deriving corpus shape from scratch — recomputing this
-knowledge costs real probes every session; a share replays it for the
-price of one call.
-
-### Budget discipline
-
-Start with a small `LIMIT` before wide scans; widen only after a relevant
-bounded probe. Spend tokens on more probes and better vocabulary before
-spending on wider row counts.
+- **Phrase migration on two clocks.** `attest` per lane dates phrase P on
+  claimed-authorship vs estate-observation clocks, verbatim and near-miss counts;
+  `sample` exposes seeded draws and per-lane denominators; fan variants first. Refuter: an
+  unfanned variant or a near-miss precursor dating earlier than the verbatim hit.
+- **Vocabulary transfer, matched eligibility.** Does community B discuss C in
+  other words? Freeze one eligibility; run a lexical arm and a semantic arm
+  (`embed` a positive passage, ANN per § Registered vector helpers); the
+  lexical-only/semantic-only/overlap sets are the output; hydrated semantic-only
+  finds yield B's wording. Refuter: finds failing hydration; eligibility drift.
+- **Rival mechanisms, sealed holdout.** Freeze two mechanisms' divergent
+  predictions about post-cutoff rows, plus exact queries, in a versioned
+  protocol; open the holdout with frozen queries and check model-time leakage;
+  score the table. Refuter: the rival scores better; a pre-seal peek voids it.
+- **Methods-vs-counterevidence front.** One deduplicated frozen pool on a
+  contested claim, author and venue stripped; two quality `rerank` calls (rigor;
+  strongest counterevidence); read the client-computed non-dominated front, not
+  either top. Refuter: an off-front row flipping the verdict when hydrated.
+- **Citation bridges.** Seed both literatures via `sql`; `datalog` walks the
+  schema-discovered citation edges to fixpoint with in-walk pruning; bridges =
+  cone intersection with parent/depth kept. Truncations and edge holes are open
+  cells. Failure check: truncation or edge holes preclude an absence claim.
+- **Compression fidelity.** A compressor summarizes N hydrated rows; a
+  reconstructor seeing only the summary lists source-supported claims; an
+  auditor holding originals and claims, never the summary, grades each with a
+  record_ref. Output: fabrication and omission rates vs summary length.
+  Refuter: a grade without a ref; reconstructor peeking at originals.
 
 ## Comparative study design
 
