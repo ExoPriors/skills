@@ -552,23 +552,18 @@ curl -s https://api.scry.io/v1/scry/query \
   full-document coverage. For longer sources, retain original provenance
   and submit evidence-focused passages with stable ids. For judgement-grade
   pairwise comparisons, the offering points at `/v1/judgements/runs`.
-- For "what does the fresh web say about X since my cutoff", the `brief`
-  tool with `{"question": "...",
-  "known_after": "<RFC 3339 or YYYY-MM-DD>", "k": 1..12}` returns 8-12
-  dated verbatim passages `{title, true_as_of, quote, source_url,
-  relevance}` from a rolling ~45-day crawl of allowlisted
-  high-information sources (major news, AI-lab and government
-  announcement pages, primary technical sources). A brief is retrieval,
-  never generation: quotes are verbatim page text, `true_as_of` is the crawl-observation time (an upper bound on
-  when the fact became public), and composition is deterministic
-  (duplicate collapse, at most two passages per host).
-  `known_after` states temporal eligibility (only pages first observed
-  after it are returned — set it to your training cutoff date); it does not
-  model what you know. Empty results carry a `coverage_note`; a
-  `degraded_reason` of ANN order means the rerank lanes were down, not
-  that relevance is meaningless. For anything older than the fresh
-  window, exhaustive coverage, or lexical/entity lookups, use `sql`
-  with `q` or a SQL statement instead.
+- For "what does the fresh web say about X since my cutoff", freshness
+  is a SQL predicate: `embeddings.crawl_pages` holds a rolling fresh
+  crawl of allowlisted high-information hosts (major news, AI-lab and
+  government announcement pages, primary technical sources), and its
+  `page_ts` is the crawl-observation time — an upper bound on when a
+  fact became public (rows without it sit at epoch). Mint an @handle
+  with `embed`, rank with the vector helper, and bound eligibility with
+  `WHERE page_ts > toDateTime('<your training cutoff>')` — the
+  predicate states when a page was first observed, not what you know.
+  Hydrate verbatim text from `crawl.pages` by url (ANN statements admit
+  one relation; the second query is the hydration). Dedup and per-host
+  caps are yours in SQL (`LIMIT n BY host`).
 - To consult another model, the OpenRouter passthrough: MCP tool
   `chat`, or `POST /v1/scry/openrouter` with
   `{"model": "...", "prompt": "..."}` (or a full `messages` turn list;
