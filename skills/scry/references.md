@@ -13,7 +13,7 @@ study design; covering open possibility spaces: § Orthogonal enumeration.
    refuting evidence and the source families that could hold it.
 2. **Plan surfaces manually.** Read the schema, then enumerate partition values
    of candidate relations (`SELECT site_key, count() AS n FROM forums.posts
-   GROUP BY site_key ORDER BY n DESC LIMIT 100`) and account for truncated rosters. `route` is a shortlist only.
+   GROUP BY site_key ORDER BY n DESC LIMIT 100`) and account for truncated rosters.
 3. **Fan out lexically** per lane; **record every bounded probe** (below).
 4. **Audit lexical recall** with an independent semantic arm under matched
    eligibility (§ Registered vector helpers); hydrate both arms before judging.
@@ -120,7 +120,7 @@ cells; unless a tool is named as doing the work, everything below is client-side
   precision on rows derivation never saw (`sample`, grade). Check: disjoint slices.
 - **Transposition** - a pattern from domain A run in domain B, vocabulary
   re-translated per lane (`schema` value spaces). Check: re-base every rate.
-- **Planner/executor separation** - plan without running (`route`, `sql`
+- **Planner/executor separation** - plan without running (`sql`
   explain=true); execute only accepted plans. Check: diff executed SQL vs plan.
 - **Independent synthesis audit** - a fresh context holding only ledger and report
   re-checks each claim against rows. Check: per-claim verdicts, no overall pass.

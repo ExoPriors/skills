@@ -204,9 +204,9 @@ For multi-step research — several hypotheses, several sources, or any ask
 where missing vocabulary would silently distort the answer — follow
 `references.md` § Deep research operations: fan out lexical probes, keep a probe
 ledger, verify the written report against the ledger, and end in a durable
-artifact. The `route` tool (`mode` plan /
-inspire / compose) is a usable first step for surface selection; treat its output as a starting shortlist, not a substitute
-for the enumeration and probe discipline above.
+artifact. Surface selection starts with `schema`: the compact catalog plus
+per-relation stats is the shortlist; enumerate partition values yourself
+rather than delegating the plan.
 
 For any study that compares cohorts or tests a hypothesis (who does X more,
 does trait A predict behavior B), follow `references.md` § Comparative study design before
