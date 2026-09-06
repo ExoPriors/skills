@@ -1242,9 +1242,14 @@ curl -s https://api.scry.io/v1/scry/embed \
   --data '{"text":"How do communities govern powerful AI systems?","name":"my_query"}'
 ```
 
-The normal metered provider call uses `voyage-4-lite`. It stores a
-2,048-dimension vector under `my_query`. If the response reports a different
-model, trust the response model field. List stored vectors:
+The metered provider call uses `voyage-4-lite` when provider cash covers
+it; when the wallet cannot (free accounts hold Scry credit, which funds
+queries, not provider spend), the mint runs on the local `voyage-4-nano` lane
+at no charge and the response says so in `note`. Pass `"model":
+"voyage-4-nano"` to take the local lane outright. Either way it stores a
+2,048-dimension vector under `my_query`; Voyage-4 models share one ranking
+space, so the handle works against every embeddings relation. Trust the
+response `model` field. List stored vectors:
 
 ```bash
 curl -s https://api.scry.io/v1/scry/vectors \
