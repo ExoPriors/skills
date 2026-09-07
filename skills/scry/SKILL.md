@@ -240,6 +240,28 @@ walked sets ranked semantically — send a program instead of SQL: `POST /v1/scr
 `{"program": {...}}` (MCP `datalog`).
 A `sql` atom `{q, id_col}` seeds a set from one statement (sole atom in
 its body; `id_col` defaults to `id`; `LIMIT <= 10000`).
+Inside a `sql` atom, `{name}` splices an already-evaluated relation as an `IN` list (OpenAlex ids retain their full URLs) within the 100,000-byte whole-statement bound; other returned columns ride each row as `attrs`, preserved by copies and cleared across edges.
+
+Walk then hydrate:
+
+```json
+{
+  "relations": {
+    "seed": {"bodies": [[{"sql": {"q": "SELECT hn_id AS id FROM hackernews.items WHERE scry_lex('claude code') AND hn_type = 'story' ORDER BY original_timestamp DESC LIMIT 100"}}]]},
+    "thread": {"bodies": [[{"rel": "seed"}], [{"rel": "thread"}, {"edge": "hackernews.children"}]]},
+    "final": {"bodies": [[{"sql": {"q": "SELECT hn_id AS id, original_author, left(payload, 200) AS text FROM hackernews.items WHERE hn_id IN {thread} LIMIT 500"}}]]}
+  },
+  "out": ["final"],
+  "depth": 2
+}
+```
+
+Aggregate the same thread by replacing `final` with the following definition (ids are handles, with `kind` absent unless an edge consumes them):
+
+```json
+{"bodies": [[{"sql": {"q": "SELECT original_author AS id, count() AS replies FROM hackernews.items WHERE hn_id IN {thread} GROUP BY id ORDER BY replies DESC LIMIT 50"}}]]}
+```
+
 A sql seed runs as your own statement, so seed from keyed reads; for an
 account's tweets, use `twitter.tweets_of` from its account id instead of
 filtering `twitter.tweets` by `author_id`.
@@ -267,7 +289,7 @@ depth}` provenance rows, `counts` for every relation (an empty seed set
 shows `counts.seed.rows = 0`), a `meter`, and
 `truncations[]` (empty = true fixpoint). Prefer `rank` over intersecting a walk with a global ANN
 top-k — measured near-empty overlap at corpus scale. The MCP tool
-contract carries five worked templates.
+contract carries seven worked templates.
 
 ## Lexical range
 
