@@ -237,7 +237,13 @@ subquery) — but every iteration rescans the joined relation
 (~1.8 s per step on openalex.works), so declare `x-scry-max-seconds`. For
 frontier-pruned walks — citation closures, filtered multi-hop expansions,
 walked sets ranked semantically — send a program instead of SQL: `POST /v1/scry/query` with a JSON body
-`{"program": {...}}` (MCP `datalog`). A program is named relations
+`{"program": {...}}` (MCP `datalog`).
+A `sql` atom `{q, id_col}` seeds a set from one statement (sole atom in
+its body; `id_col` defaults to `id`; `LIMIT <= 10000`).
+A sql seed runs as your own statement, so seed from keyed reads; for an
+account's tweets, use `twitter.tweets_of` from its account id instead of
+filtering `twitter.tweets` by `author_id`.
+A program is named relations
 (sets of node ids) built from a closed atom vocabulary — `ids` seeds,
 `ann` (top-k probe from an embed handle), `rel` (a body naming its own
 relation recurses), `edge` (graph steps: OpenAlex `references`/`cited_by`;
@@ -257,10 +263,11 @@ prunes the walk itself) — plus an optional per-relation `"rank":
 histograms. Every evaluation step
 is one ordinary metered statement under your own key; `depth` (default 3)
 and 50k-row caps bound the walk; the envelope returns `{id, parent,
-depth}` provenance rows, `counts` per out relation, a `meter`, and
+depth}` provenance rows, `counts` for every relation (an empty seed set
+shows `counts.seed.rows = 0`), a `meter`, and
 `truncations[]` (empty = true fixpoint). Prefer `rank` over intersecting a walk with a global ANN
 top-k — measured near-empty overlap at corpus scale. The MCP tool
-contract carries two worked templates.
+contract carries five worked templates.
 
 ## Lexical range
 
