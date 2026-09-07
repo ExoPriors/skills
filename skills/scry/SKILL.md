@@ -243,8 +243,8 @@ walked sets ranked semantically — send a program instead of SQL: `POST /v1/scr
 relation recurses), `edge` (graph steps: OpenAlex `references`/`cited_by`;
 twitter `twitter.replies`/`twitter.quotes` + inverses; `hackernews.children`/
 `parent`/`story_items`; `forums.children`/`parent`/`thread` — and pivots
-that change what a node is: `openalex.authors`/`institutions`,
-`twitter.by`/`following`/`followers`, `hackernews.by`/`items_of`,
+that change what a node is: `openalex.authors`/`institutions`/`works_of`,
+`twitter.by`/`following`/`followers`/`tweets_of`, `hackernews.by`/`items_of`,
 `forums.by`/`posts_of`, `github.repos_of`, `bluesky.by`/`posts_of`,
 `youtube.uploader`/`commenters`, `tiktok.videos_of`, `instagram.posts_of`,
 `crawl.urls_of`; rows carry `kind`; an unknown edge name returns the
