@@ -240,10 +240,15 @@ walked sets ranked semantically — send a program instead of SQL: `POST /v1/scr
 `{"program": {...}}` (MCP `datalog`). A program is named relations
 (sets of node ids) built from a closed atom vocabulary — `ids` seeds,
 `ann` (top-k probe from an embed handle), `rel` (a body naming its own
-relation recurses), `edge` (OpenAlex `references`/`cited_by`; twitter
-`twitter.replies`/`twitter.quotes` + inverses; `hackernews.children`/
-`parent`/`story_items`; `forums.children`/`parent`/`thread` — an unknown
-edge name returns the catalog with measured costs), `filter`
+relation recurses), `edge` (graph steps: OpenAlex `references`/`cited_by`;
+twitter `twitter.replies`/`twitter.quotes` + inverses; `hackernews.children`/
+`parent`/`story_items`; `forums.children`/`parent`/`thread` — and pivots
+that change what a node is: `openalex.authors`/`institutions`,
+`twitter.by`/`following`/`followers`, `hackernews.by`/`items_of`,
+`forums.by`/`posts_of`, `github.repos_of`, `bluesky.by`/`posts_of`,
+`youtube.uploader`/`commenters`, `tiktok.videos_of`, `instagram.posts_of`,
+`crawl.urls_of`; rows carry `kind`; an unknown edge name returns the
+catalog with measured costs), `filter`
 (in-walk attribute prune — changes what gets expanded and billed), `in`
 (intersection), `not_in` (stratified negation; on a recursive body it
 prunes the walk itself) — plus an optional per-relation `"rank":
