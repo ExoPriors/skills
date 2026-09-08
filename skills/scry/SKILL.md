@@ -288,8 +288,31 @@ and 50k-row caps bound the walk; the envelope returns `{id, parent,
 depth}` provenance rows, `counts` for every relation (an empty seed set
 shows `counts.seed.rows = 0`), a `meter`, and
 `truncations[]` (empty = true fixpoint). Prefer `rank` over intersecting a walk with a global ANN
-top-k — measured near-empty overlap at corpus scale. The MCP tool
-contract carries seven worked templates.
+top-k — measured near-empty overlap at corpus scale.
+
+Bound bodies give a relation tuples and variables: declare `"vars": ["S",
+"W"]` and every body opens with a driving `{"rel": {"name": "seed", "vars":
+["S"]}}` (naming its own relation recurses), then up to four `{"edge":
+{"name": "references", "vars": ["S", "W"]}}` joins whose source var is
+already bound, `{"rel": {name, vars}}` joins and `{"not": {name, vars}}`
+anti-joins against evaluated relations, and filters either on the var an
+edge produces (`{"filter": {"on": "W", "col": "publication_year", "op":
+">=", "val": 2020}}`) or between two vars (`{"filter": {"on": "B", "op":
+"!=", "var": "A"}}`). Every head/negated/filtered var needs an earlier
+positive binding; kinds come from edges, not sql; `cited_by` goes last;
+legacy atoms consume only unary bound relations. Rows return as `{tuple,
+parent, depth}` plus an envelope `schemas` map. A k-edge chain nests its
+prefilters (three HN edges in one body read ~88M rows), so keep bodies to
+one or two edges when intermediate sets are large. Coauthors in one step:
+
+```json
+{"relations": {"a": {"bodies": [[{"ids": ["A5000000036"]}]]},
+  "co": {"vars": ["B"], "bodies": [[{"rel": {"name": "a", "vars": ["A"]}}, {"edge": {"name": "openalex.works_of", "vars": ["A", "W"]}}, {"edge": {"name": "openalex.authors", "vars": ["W", "B"]}}, {"filter": {"on": "B", "op": "!=", "var": "A"}}]]}},
+ "out": ["co"]}
+```
+
+The MCP tool contract carries ten worked templates, including a seed-keyed
+citation closure and an anti-join.
 
 ## Lexical range
 
