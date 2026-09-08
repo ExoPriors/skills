@@ -240,7 +240,7 @@ walked sets ranked semantically — send a program instead of SQL: `POST /v1/scr
 `{"program": {...}}` (MCP `datalog`).
 A `sql` atom `{q, id_col}` seeds a set from one statement (sole atom in
 its body; `id_col` defaults to `id`; `LIMIT <= 10000`).
-Inside a `sql` atom, `{name}` splices an already-evaluated relation as an `IN` list (OpenAlex ids retain their full URLs) within the 100,000-byte whole-statement bound; other returned columns ride each row as `attrs`, preserved by copies and cleared across edges.
+Inside a `sql` atom, `{name}` binds an already-evaluated relation as a query-scoped table (OpenAlex ids retain their full URLs), bounded by the 50k relation cap; other returned columns ride each row as `attrs`, preserved by copies and cleared across edges.
 
 Walk then hydrate:
 
