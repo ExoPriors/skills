@@ -284,10 +284,10 @@ prunes the walk itself) — plus an optional per-relation `"rank":
 (OpenAlex only) or `"emit": "counts"` for zero-egress per-depth
 histograms. Every evaluation step
 is one ordinary metered statement under your own key; `depth` (default 3)
-and 50k-row caps bound the walk; the envelope returns `{id, parent,
-depth}` provenance rows, `counts` for every relation (an empty seed set
-shows `counts.seed.rows = 0`), a `meter`, and
-`truncations[]` (empty = true fixpoint). Prefer `rank` over intersecting a walk with a global ANN
+and 50k-row caps bound the walk; the envelope returns `{id, kind, parent,
+depth}` provenance rows (a sql atom's other columns ride in `attrs`), `counts` for every relation (an empty seed set
+shows `counts.seed.rows = 0`), a `meter` with `per_statement`, and
+`truncations[]` (empty = fixpoint over the graph the index holds). Prefer `rank` over intersecting a walk with a global ANN
 top-k — measured near-empty overlap at corpus scale.
 
 Bound bodies give a relation tuples and variables: declare `"vars": ["S",
