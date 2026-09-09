@@ -435,6 +435,14 @@ complete document. The doors:
 | `cn_enterprise.companies` | China enterprise registry (GSXT), one best row per company keyed by USCC |
 | `mailing_lists.messages` | Mailing-list and Usenet archive messages; the per-list roster is `mailing_lists.catalog` (depth) |
 | `internet_archive.items` | Internet Archive item-catalog metadata (identifier, creator, mediatype, collection, ...) |
+| `threads.posts` | Threads (Meta) public posts from the anonymous breadth crawl, 2023-05 onward; `threads.profiles` is the author roster |
+| `vk.posts` / `vk.comments` | VK community wall posts and comments, 2007 onward, full-text indexed on `lower(text)`; `vk.communities` is the roster |
+| `nostr.events` | Nostr relay events (signed event JSON; `kind` 1 notes, 0 profiles) |
+| `youtube.videos_live` | YouTube metadata as currently observed (1B+ videos since 2026-08) — `youtube.videos` is the frozen 2021 census |
+| `wikipedia.articles` | English Wikipedia article text, full page set kept current by recentchanges; `wikimedia.events` is the recent-change event stream |
+| `huggingface.repositories` | Hugging Face hub models/datasets/spaces with counters; `huggingface.snapshots_daily` is the daily history |
+| `reddit.subreddits` | Subreddit directory (description, subscribers, type, flags); `reddit.subreddit_rules` / `reddit.subreddit_wikis` are its depth |
+| `irs.form990` / `cms.open_payments` / `cfpb.complaints` / `jobs.postings` / `legistar.matters` | Envelope relations (`payload.record` is the upstream record): nonprofit filings, industry-to-provider payments, consumer finance complaints, live ATS job postings, municipal legislative matters |
 | `epstein.artifacts` | Source-native Epstein artifact index across DOJ and other public releases |
 | `agents.skills` | Parsed SKILL.md documents from public agent-skill repositories |
 | `lexicons.entries` | English lexicon envelopes: Wiktionary (kaikki.org) and GCIDE/Webster 1913 |
