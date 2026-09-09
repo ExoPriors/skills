@@ -300,7 +300,7 @@ subquery) — but every iteration rescans the joined relation
 frontier-pruned walks — citation closures, filtered multi-hop expansions,
 walked sets ranked semantically — send a program instead of SQL: `POST /v1/scry/query` with a JSON body
 `{"program": {...}}` (MCP `datalog`).
-A `sql` atom is one statement (`LIMIT <= 10000`): alone in its body it
+A `sql` atom is one statement (`LIMIT <= 50000`, the relation cap): alone in its body it
 seeds a set from column `id`; after a `rel` it hydrates that relation —
 the rows it returns keep their `parent`/`depth` and gain the other
 columns as `attrs` (the statement must read the relation: `WHERE <key> IN {name}`).
