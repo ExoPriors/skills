@@ -736,7 +736,7 @@ Test wallets are never the operator's concern (2026-09-09: "I shouldn't be
 having to think about test wallets. That is an automated thing"). The two
 pricing-lane test accounts (vault `secret/scry/test-account-pricing-lanes`
 = `SCRY_TEST_API_KEY`, `…-2` = `SCRY_TEST2_API_KEY`) are restored to the
-$10 onboarding default by `bin/test-wallet-topup.sh` — the same grant pair
+$10 onboarding default by `bin/topup-test-wallets.sh` — the same grant pair
 the signup path writes (wallet_events + wallet_entries, bucket scry_credit,
 under the wallet's advisory lock; balances are trigger-maintained), never
 above the $10 default, never on a customer. Every storm/kill drill script
