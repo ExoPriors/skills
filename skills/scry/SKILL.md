@@ -187,7 +187,7 @@ ClickHouse index analysis is returned without executing the corpus query,
 beside a `forecast` — `rows_est`, `bytes_est_uncompressed` and `seconds_est`
 from the measured rows and bytes per granule and the measured scan rate,
 `fits_max_seconds` against the deadline the call would run under, and
-`cheaper` (sibling relation plus the rewritten statement) when it does not.
+`faster` (sibling relation plus the rewritten statement) when it does not.
 Request `prompts/get` with `name: "query_guide"` and `tool: "sql"` for
 composition patterns and the current input schema.
 
