@@ -1,13 +1,14 @@
 #!/bin/bash
 # Test-wallet top-up rail (operator 2026-09-09: "I shouldn't be having to think about test
-# wallets. That is an automated thing"). Restores each Scry TEST account to exactly the
-# $10 onboarding default — the same wallet_events + wallet_entries pair the signup grant
-# writes (kind grant, bucket scry_credit; wallet_balances is trigger-maintained), under
-# the wallet's advisory lock. Never more than the $10 default per grant, never a
+# wallets. That is an automated thing"). Restores each Scry TEST account to exactly $20
+# (operator 2026-09-09: "test wallets can have $20" — twice the $10 onboarding default,
+# sized by her for these two accounts alone) — the same wallet_events + wallet_entries
+# pair the signup grant writes (kind grant, bucket scry_credit; wallet_balances is
+# trigger-maintained), under the wallet's advisory lock. Never above $20, never a
 # customer: the user ids below are the two pricing-lane test accounts
 # (vault secret/scry/test-account-pricing-lanes and …-2). Run before every storm drill.
 set -eu
-TARGET=${TARGET:-10000000000}   # $10, the onboarding default — the ceiling for an agent grant
+TARGET=${TARGET:-20000000000}   # $20, her sizing for the two test accounts — the ceiling for this rail
 declare -a USERS=(
   "55fbd76f-4113-4a67-aebd-c4cc082f1127 acct1 SCRY_TEST_API_KEY"
   "2b643878-5136-45d7-bb88-4a1f6b74578f acct2 SCRY_TEST2_API_KEY"
@@ -22,7 +23,7 @@ WITH bal AS (
 ), ev AS (
   INSERT INTO wallet_events (user_id, api_key_id, kind, idempotency_key, source, related_object, notes)
   SELECT '$uid', NULL, 'grant', 'test_topup_${stamp}', 'test_wallet_topup', 'pricing-lane drills',
-         'Test-wallet top-up to the \$10 onboarding default (agent rail; test account, not a customer)'
+         'Test-wallet top-up to \$20 (operator-sized 2026-09-09; agent rail; test account, not a customer)'
   FROM bal WHERE b < $TARGET
   RETURNING id
 )
