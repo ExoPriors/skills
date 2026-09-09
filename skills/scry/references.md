@@ -1517,14 +1517,15 @@ If a relation or helper is absent from `/v1/scry/schema`, it is unavailable.
 Choose another registered surface or report the coverage gap. Never route the
 query to a fallback database.
 
-For slow queries: reduce selected columns, add a selective predicate, lower the
-limit, and inspect a recent time window when the schema exposes one. Broaden
-only after the bounded retry succeeds.
-
 #### Known failure modes
 
-- `request_timeout` (query execution timeout, HTTP 408): shard by an indexed
-  time window instead of retrying the full scan.
+- A 408 (`runtime_deadline_exceeded`; `request_timeout` on embed) and every other
+  kill carries `error.details` — branch on it, never the prose: `kill_source`
+  (`deadline` | `memory` | `exposure` | `wallet` | `watchdog`), `authorized_seconds`
+  (the deadline that applied; at 2000 shard by an indexed time window instead),
+  `partial_possible` (true only for a deadline kill of a statement that neither
+  aggregates nor sorts: without `x-scry-max-staleness` its rows are served in
+  place of the error), `elapsed_ms`, and `burden_nanodollars` when metered.
 - The parser accepts the standard `WITH <name> AS (SELECT ...)` CTE form.
   ClickHouse scalar `WITH <expr> AS <name>` fails as a parse error. Inline the
   expression or use the standard CTE form.
