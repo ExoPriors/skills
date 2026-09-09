@@ -5,6 +5,60 @@ description: "Use Scry's read-only SQL research surface through /v1/scry/schema 
 
 # Scry Skill
 
+Scry is read-only SQL (ClickHouse dialect) over registered public corpora
+— Hacker News, Reddit, the Twitter archive, books, papers, forums, SEC
+filings, the crawl — one call from a question to cited rows. Queries are
+free while the system has slack: every response reports `billing_mode`
+and `spend_nanodollars`, and the money arguments (`x-scry-budget`,
+`x-scry-max-seconds`; MCP `budget_nanodollars`, `max_seconds`) are
+ceilings you choose, never fees. Ask your wildest curiosity.
+
+Three one-call questions (`POST /v1/scry/query` with `Content-Type:
+text/plain`, or the MCP `sql` tool). The first Hacker News item to
+mention bitcoin:
+
+```sql
+SELECT hn_id, original_author, original_timestamp, title
+FROM hackernews.items
+WHERE hasToken(search_text_lc, 'bitcoin')
+ORDER BY original_timestamp ASC
+LIMIT 5
+```
+
+Who said "vibe coding" before Karpathy:
+
+```sql
+SELECT tweet_id, original_timestamp, text
+FROM twitter.tweets
+WHERE hasAllTokens(search_text_lc, ['vibe', 'coding'])
+  AND positionCaseInsensitive(search_text_lc, 'vibe coding') > 0
+  AND original_timestamp < '2025-02-01'
+ORDER BY original_timestamp ASC
+LIMIT 5
+```
+
+Where Reddit talked bitcoin in 2013:
+
+```sql
+SELECT subreddit, count() AS n
+FROM reddit.comments_popular
+WHERE created_utc >= '2013-01-01' AND created_utc < '2014-01-01'
+  AND hasToken(search_text_lc, 'bitcoin')
+GROUP BY subreddit
+ORDER BY n DESC
+LIMIT 10
+```
+
+Every response carries `rows`, `read_rows`, `coverage`,
+`deadline_partial`, `truncated`, and the meter (`burden_nanodollars` is
+what the machine did, `spend_nanodollars` what you paid). A cut scan
+(`deadline_partial: true`, or a deadline error) wants a rarer token, a
+tighter WHERE or LIMIT, or a smaller sibling relation
+(`reddit.comments_popular` beside `reddit.comments`, `x_open.tweets`
+beside `twitter.tweets`); the `x-scry-explain: 1` header (MCP `explain:
+true`) pre-flights a wide statement for free — the index analysis returns
+and nothing runs.
+
 Search like the answer exists. It almost always does — under a
 vocabulary, a venue, or an era you have not probed yet — so treat every
 empty result as a wrong probe before treating it as an absence. You are
@@ -15,8 +69,7 @@ hit — the tenth probe is where a field opens. Done is saturation — new
 probes returning only rows already seen — never satisfaction. Report
 the space covered, not just the hits.
 
-Scry exposes a read-only SQL query surface speaking the ClickHouse SQL
-dialect. The live schema is the contract; static relation lists are only
+The live schema is the contract; static relation lists are only
 orientation.
 
 **Skill generation**: `2026082203`
@@ -33,18 +86,23 @@ orientation.
    available, stop before going further and direct the user to
    `https://scry.io/#console`.
 2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026082203`.
-   For worked, measured query shapes, `GET /v1/scry/examples` (free, no
-   key) serves the query-complexity tree — every entry introduces exactly
-   one construct atop its parent's, from selectivity probe to semantic
-   ANN, each with its observed wall time. `?mode=tree` nests the taxonomy,
-   `?mode=chains` lists root-to-leaf ladder walks, `?mode=index` the
-   compact list, `?slug=<slug>` one entry.
+   For worked, measured query shapes, `GET /v1/scry/examples?mode=index`
+   (free, no key) lists the query-complexity tree one row per entry —
+   every entry introduces exactly one construct atop its parent's, from
+   selectivity probe to semantic ANN, each with its observed wall time and
+   the byte size of its SQL. `?slug=<slug>` fetches one entry's problem,
+   SQL, technique, and measurement; `?mode=tree` nests the taxonomy,
+   `?mode=chains` lists root-to-leaf ladder walks; the bare route returns
+   every entry in full (144 KB).
 3. Discover from the doors. The default `GET /v1/scry/schema` document
    already carries full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
    contracts with `GET /v1/scry/schema?relation=<name>[,<name>]`, or
-   `?mode=index` for the compact whole-catalog listing (both also exposed
-   as the MCP `schema` tool's `mode` and `relation` arguments). Use only
+   `?mode=index` for the whole catalog as one `relation | tier | extent |
+   lag | purpose` line per relation (both also exposed as the MCP `schema`
+   tool's `mode` and `relation` arguments; the MCP default is the index and
+   `mode="contract"` carries the product contract, census, and live
+   statistics). Use only
    relations and helper functions returned there, and read each relation's
    `query_guidance` block — `filter_columns_first`, `indexed_predicates`,
    `coverage_note` — before writing the first predicate: it names the
@@ -125,7 +183,11 @@ MCP `sql` with `q` requires one registered `relation`, never `"*"`.
 It returns ordinary SQL rows and the executed `compiled_sql`; it does not
 silently weaken a zero-result query. Inspect that SQL before interpreting
 membership. With `explain: true`, the statement is validated and its
-ClickHouse index analysis is returned without executing the corpus query.
+ClickHouse index analysis is returned without executing the corpus query,
+beside a `forecast` — `rows_est`, `bytes_est_uncompressed` and `seconds_est`
+from the measured rows and bytes per granule and the measured scan rate,
+`fits_max_seconds` against the deadline the call would run under, and
+`cheaper` (sibling relation plus the rewritten statement) when it does not.
 Request `prompts/get` with `name: "query_guide"` and `tool: "sql"` for
 composition patterns and the current input schema.
 
@@ -408,8 +470,8 @@ document serves full contracts for the ~two dozen **primary-tier doors** (one
 start-here relation per corpus family) plus a compact `depth_relations` index
 of every supporting table — users, edges, comment variants, per-corpus
 embeddings — all equally queryable. `?relation=<names>` fetches any full
-contract, `?mode=index` the compact whole-catalog listing, `?mode=full` the
-complete document. The doors:
+contract, `?mode=index` the whole catalog one line per relation, `?mode=full`
+the complete document. The doors:
 
 | Door | Purpose |
 | --- | --- |
