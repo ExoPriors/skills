@@ -300,18 +300,20 @@ subquery) — but every iteration rescans the joined relation
 frontier-pruned walks — citation closures, filtered multi-hop expansions,
 walked sets ranked semantically — send a program instead of SQL: `POST /v1/scry/query` with a JSON body
 `{"program": {...}}` (MCP `datalog`).
-A `sql` atom `{q, id_col}` seeds a set from one statement (sole atom in
-its body; `id_col` defaults to `id`; `LIMIT <= 10000`).
-Inside a `sql` atom, `{name}` binds an already-evaluated relation as a query-scoped table (OpenAlex ids retain their full URLs), bounded by the 50k relation cap; other returned columns ride each row as `attrs`, preserved by copies and cleared across edges.
+A `sql` atom is one statement (`LIMIT <= 10000`): alone in its body it
+seeds a set from column `id`; after a `rel` it hydrates that relation —
+the rows it returns keep their `parent`/`depth` and gain the other
+columns as `attrs` (the statement must read the relation: `WHERE <key> IN {name}`).
+Inside a `sql` atom, `{name}` binds an already-evaluated relation as a query-scoped table of its ids (OpenAlex ids retain their full URLs), bounded by the 50k relation cap.
 
 Walk then hydrate:
 
 ```json
 {
   "relations": {
-    "seed": {"bodies": [[{"sql": {"q": "SELECT hn_id AS id FROM hackernews.items WHERE scry_lex('claude code') AND hn_type = 'story' ORDER BY original_timestamp DESC LIMIT 100"}}]]},
+    "seed": {"bodies": [[{"sql": "SELECT hn_id AS id FROM hackernews.items WHERE scry_lex('claude code') AND hn_type = 'story' ORDER BY original_timestamp DESC LIMIT 100"}]]},
     "thread": {"bodies": [[{"rel": "seed"}], [{"rel": "thread"}, {"edge": "hackernews.children"}]]},
-    "final": {"bodies": [[{"sql": {"q": "SELECT hn_id AS id, original_author, left(payload, 200) AS text FROM hackernews.items WHERE hn_id IN {thread} LIMIT 500"}}]]}
+    "final": {"bodies": [[{"rel": "thread"}, {"sql": "SELECT hn_id AS id, original_author, left(payload, 200) AS text FROM hackernews.items WHERE hn_id IN {thread} LIMIT 500"}]]}
   },
   "out": ["final"],
   "depth": 2
@@ -321,7 +323,7 @@ Walk then hydrate:
 Aggregate the same thread by replacing `final` with the following definition (ids are handles, with `kind` absent unless an edge consumes them):
 
 ```json
-{"bodies": [[{"sql": {"q": "SELECT original_author AS id, count() AS replies FROM hackernews.items WHERE hn_id IN {thread} GROUP BY id ORDER BY replies DESC LIMIT 50"}}]]}
+{"bodies": [[{"sql": "SELECT original_author AS id, count() AS replies FROM hackernews.items WHERE hn_id IN {thread} GROUP BY id ORDER BY replies DESC LIMIT 50"}]]}
 ```
 
 A sql seed runs as your own statement, so seed from keyed reads; for an
