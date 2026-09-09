@@ -1529,7 +1529,11 @@ only after the bounded retry succeeds.
   ClickHouse scalar `WITH <expr> AS <name>` fails as a parse error. Inline the
   expression or use the standard CTE form.
 - `query_exposure_exhausted`: raise the per-query ceiling with an
-  `x-scry-budget: <nanodollars>` header (e.g. `1000000000` = $1).
+  `x-scry-budget: <nanodollars>` header (e.g. `1000000000` = $1). HTTP 400
+  when your own ceiling stopped the run; 402 only for an exhausted x402
+  prepaid allowance.
+- An admission denial (`invalid_request`, message `query denied (<tag>): …`)
+  carries the same `<tag>` as `error.details.tag`; branch on the field.
 - A relation can appear in the schema `surfaces` list yet be denied as
   unregistered at query time; trust the relation list inside the denial error.
 - Parallel queries on one key can return `429` above the per-account
