@@ -569,8 +569,8 @@ curl -s https://api.scry.io/v1/scry/query \
   `{title, kind: "query", payload: {sql, params: [{name, type, default}],
   snapshot: {...}}}`. `title` is required, `snapshot` must be an object
   (use `{}` when there is nothing to freeze), and each declared parameter
-  must have a default. The response's `share_slug` field is the permalink
-  slug.
+  must have a default. The response's `permalink` field is the share's
+  page URL — cite it as served; `share_slug` is its tail.
 - The share page at `https://scry.io/s/{slug}` renders each
   parameter as a live control and re-runs the query as the reader plays.
   Optional per-parameter hints shape the controls: `label`, `description`,
