@@ -511,6 +511,11 @@ the complete document. The doors:
 | `epstein.artifacts` | Source-native Epstein artifact index across DOJ and other public releases |
 | `agents.skills` | Parsed SKILL.md documents from public agent-skill repositories |
 | `lexicons.entries` | English lexicon envelopes: Wiktionary (kaikki.org) and GCIDE/Webster 1913 |
+| `amazon.reviews` / `amazon.items` | Amazon Reviews 2023 (McAuley Lab): 571.5M product reviews 1996–2023 with full-text `text`, and the 48.2M-item catalog; join on `parent_asin` |
+| `orkut.topics` / `orkut.replies` | Orkut community forums 2004–2014 from the Wayback Machine: 120.6M topics, 897.3M replies (`body` full-text indexed), mostly Brazilian Portuguese |
+| `community_notes.notes` / `community_notes.ratings` | X Community Notes public export (2025-02-22): every note with its `tweet_id`, every rating; `community_notes.status_history` / `community_notes.enrollment` are depth |
+| `twitter.recsys_follow_graph` | Twitter's RecSys 2022 follow graph, 261M anonymised edges — structure only, never joins `twitter.users` |
+| `streams.vod_chat` / `streams.vods` | Replayed Twitch and Kick VOD chat (offset, user name, message) with the VOD roster; live Twitch IRC with ids is `twitch.messages` |
 
 Schema contracts carry measured `value_spaces` — the live vocabulary of
 categorical spine columns (forum `source`, stackexchange `site`, market
