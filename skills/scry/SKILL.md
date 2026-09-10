@@ -303,7 +303,7 @@ walked sets ranked semantically — send a program instead of SQL: `POST /v1/scr
 A `sql` atom is one statement (`LIMIT <= 50000`, the relation cap): alone in its body it
 seeds a set from column `id`; after a `rel` it hydrates that relation —
 the rows it returns keep their `parent`/`depth` and gain the other
-columns as `attrs` (the statement must read the relation: `WHERE <key> IN {name}`).
+columns as `attrs` (the statement must read the relation: `WHERE <key> IN {name}` — the keys are hn_id, post_key, tweet_id, and the OpenAlex id URL).
 Inside a `sql` atom, `{name}` binds an already-evaluated relation as a query-scoped table of its ids (OpenAlex ids retain their full URLs), bounded by the 50k relation cap.
 
 Walk then hydrate:
