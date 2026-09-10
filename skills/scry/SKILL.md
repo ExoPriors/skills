@@ -505,7 +505,7 @@ the complete document. The doors:
 | `nostr.events` | Nostr relay events (signed event JSON; `kind` 1 notes, 0 profiles) |
 | `youtube.videos_live` | YouTube metadata as currently observed (1B+ videos since 2026-08) — `youtube.videos` is the frozen 2021 census |
 | `wikipedia.articles` | English Wikipedia article text, full page set kept current by recentchanges; `wikimedia.events` is the recent-change event stream |
-| `huggingface.repositories` | Hugging Face hub models/datasets/spaces with counters; `huggingface.snapshots_daily` is the daily history |
+| `huggingface.repositories` | Hugging Face hub models/datasets/spaces with counters; `huggingface.snapshots_daily` is the daily history; `huggingface.repo_details` carries per-repo bytes on the hub (usedStorage), file sizes, and model details |
 | `reddit.subreddits` | Subreddit directory (description, subscribers, type, flags); `reddit.subreddit_rules` / `reddit.subreddit_wikis` are its depth |
 | `irs.form990` / `cms.open_payments` / `cfpb.complaints` / `jobs.postings` / `legistar.matters` | Envelope relations (`payload.record` is the upstream record): nonprofit filings, industry-to-provider payments, consumer finance complaints, live ATS job postings, municipal legislative matters |
 | `epstein.artifacts` | Source-native Epstein artifact index across DOJ and other public releases |
