@@ -102,7 +102,10 @@ orientation.
    lag | purpose` line per relation (both also exposed as the MCP `schema`
    tool's `mode` and `relation` arguments; the MCP default is the index and
    `mode="contract"` carries the product contract, census, and live
-   statistics). Use only
+   statistics). Schema discovery is also one SQL call: `scry.relations`
+   and `scry.columns` are the same catalog served as relations you can
+   filter and join, e.g. SELECT relation FROM scry.columns WHERE name =
+   'author_id' LIMIT 100. Use only
    relations and helper functions returned there, and read each relation's
    `query_guidance` block — `filter_columns_first`, `indexed_predicates`,
    `coverage_note` — before writing the first predicate: it names the
