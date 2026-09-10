@@ -587,6 +587,20 @@ curl -s https://api.scry.io/v1/scry/query \
   through the full metered pipeline as the caller: normal authentication,
   validation, and billing. Values that are not supplied use the declared
   defaults.
+- A standing research question is a share too: `kind: "question"` with
+  `payload: {prompt, brief?, asked_in?}` — `prompt` is the person's research
+  desire in their own words, verbatim (never paraphrased), `brief` is
+  markdown on how to attack it (relations, angles, what a good answer looks
+  like), `asked_in` the public URL where it was said. Any share of any kind
+  contributes to a question by setting top-level `answers` to the
+  question's slug at creation (immutable after); the question's page and
+  JSON (`contributions`) list every public contribution, and its markdown
+  twin (`?format=md`) carries the literal contribute call. The open index is
+  `https://scry.io/s` (`GET /v1/scry/shares?kind=question`, no credential).
+  When someone voices a research want, post it as a question and hand them
+  the permalink; when you finish a piece of work on one, publish the finding
+  as a contribution — a hinted query share is the best kind, because the
+  question's page then carries a live playground.
 
 ## Adjacent runtime surfaces
 
