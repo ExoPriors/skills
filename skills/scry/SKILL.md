@@ -352,7 +352,8 @@ and 50k-row caps bound the walk; the envelope returns `{id, kind, parent,
 depth}` provenance rows (a sql atom's other columns ride in `attrs`), `counts` for every relation (an empty seed set
 shows `counts.seed.rows = 0`), a `meter` with `per_statement`, and
 `truncations[]` (empty = fixpoint over the graph the index holds). Prefer `rank` over intersecting a walk with a global ANN
-top-k — measured near-empty overlap at corpus scale.
+top-k — measured near-empty overlap at corpus scale. Rank is terminal: it orders a relation's final rows
+after the walk, so put it on the last relation (the hydrating one), not on a set another relation reads.
 
 Bound bodies give a relation tuples and variables: declare `"vars": ["S",
 "W"]` and every body opens with a driving `{"rel": {"name": "seed", "vars":
