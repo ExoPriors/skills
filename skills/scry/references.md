@@ -336,7 +336,7 @@ POST /v1/creativity/outsized
 ```
 
 `brief` is at most 16 KB; `shots` is 4–24 (default 12); `field` picks
-the axis bank — `inquiry` (venue, era, stance, register, scale,
+the axis bank and the candidate law (an inquiry cell delivers a research direction, never an invented document or quote) — `inquiry` (venue, era, stance, register, scale,
 inversion) for research direction, `artifact` (the default: lever,
 scale, time, inversion, audience, form, stance) for deliverables. The
 response
