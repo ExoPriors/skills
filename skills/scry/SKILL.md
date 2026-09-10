@@ -728,7 +728,9 @@ curl -s https://api.scry.io/v1/scry/query \
   `chat`, or `POST /v1/scry/openrouter` with
   `{"model": "...", "prompt": "..."}` (or a full `messages` turn list;
   optional `system`, `temperature`, `top_p`, `max_tokens`,
-  `zdr: true` to route only to zero-data-retention endpoints).
+  `reasoning_effort`). Routing is restricted to zero-data-retention
+  endpoints — every preset lane has one; a full model id without one
+  is refused by the provider, never served with retention.
   `model` is a preset naming a current lane — kimi, deepseek, gemini,
   gemini-flash, glm, grok, gpt, claude — or any full OpenRouter model
   id. Funding is the account's Scry-minted OpenRouter key (minted on
@@ -741,8 +743,9 @@ curl -s https://api.scry.io/v1/scry/query \
   `GET /v1/account/agent-settings`) are the owner's standing
   instructions to every agent on the credential: advisory `guidance`
   to follow, plus enforced fields that bind server-side —
-  `consult.require_zdr` forces zero-data-retention routing on every
-  consult, `consult.models` and `web.providers` are allowlists,
+  `consult.require_zdr` refuses web providers that cannot route
+  zero-data-retention (the OpenRouter consult already is),
+  `consult.models` and `web.providers` are allowlists,
   `tools.allow` / `tools.deny` gate every MCP tool name at `tools/call`
   (validated against the live contract at write time; `whoami` is
   never gated), and a denied or altered call
