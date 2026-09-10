@@ -1,12 +1,8 @@
 #!/bin/bash
-# Test-wallet top-up rail (operator 2026-09-09: "I shouldn't be having to think about test
-# wallets. That is an automated thing"). Restores each Scry TEST account to exactly $20
-# (operator 2026-09-09: "test wallets can have $20" — twice the $10 onboarding default,
-# sized by her for these two accounts alone) — the same wallet_events + wallet_entries
-# pair the signup grant writes (kind grant, bucket scry_credit; wallet_balances is
-# trigger-maintained), under the wallet's advisory lock. Never above $20, never a
-# customer: the user ids below are the two pricing-lane test accounts
-# (vault secret/scry/test-account-pricing-lanes and …-2). Run before every storm drill.
+# Test-wallet top-up rail: restores each pricing-lane TEST account below to exactly $20
+# (operator-sized 2026-09-09) with the same wallet_events + wallet_entries grant pair the
+# signup path writes, under the wallet's advisory lock. Never above $20, never a customer.
+# Doctrine and the operator's words: skills/scry/SKILL.md § Test wallets.
 set -eu
 TARGET=${TARGET:-20000000000}   # $20, her sizing for the two test accounts — the ceiling for this rail
 declare -a USERS=(
