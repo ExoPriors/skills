@@ -570,7 +570,13 @@ curl -s https://api.scry.io/v1/scry/query \
   snapshot: {...}}}`. `title` is required, `snapshot` must be an object
   (use `{}` when there is nothing to freeze), and each declared parameter
   must have a default. The response's `permalink` field is the share's
-  page URL — cite it as served; `share_slug` is its tail.
+  page URL — cite it as served; `share_slug` is its tail. A query share
+  carries exactly one of the query door's three envelopes: `sql` as above,
+  `program` (the datalog program JSON exactly as `program` takes it,
+  validated to shape at creation, `params: []` — a program's `{name}`
+  splices are the same braces a `{p:String}` bind uses), or
+  `semantic_join` (the join envelope). A named, rerunnable program is how
+  a procedure is shared, not just its statements.
 - The share page at `https://scry.io/s/{slug}` renders each
   parameter as a live control and re-runs the query as the reader plays.
   Optional per-parameter hints shape the controls: `label`, `description`,
@@ -583,10 +589,12 @@ curl -s https://api.scry.io/v1/scry/query \
   bounded, hinted template over many near-duplicate saved queries.
 - To run a saved query again: `POST /v1/scry/shares/{slug}/run?param_n=100`
   (MCP `share_run`)
-  or JSON body `{"params":{"n":100}}` (the body wins). The stored SQL goes
-  through the full metered pipeline as the caller: normal authentication,
-  validation, and billing. Values that are not supplied use the declared
-  defaults.
+  or JSON body `{"params":{"n":100}}` (the body wins). The stored envelope
+  goes through the full metered pipeline as the caller — sql through the
+  query lane (x402 or key), a program through the program lane (every
+  statement metered; a key is required, programs are not on the x402
+  lane), a semantic join through its own lane (key required). Values that
+  are not supplied use the declared defaults.
 - A standing research question is a share too: `kind: "question"` with
   `payload: {prompt, brief?, asked_in?}` — `prompt` is the person's research
   desire in their own words, verbatim (never paraphrased), `brief` is
