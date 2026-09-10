@@ -772,10 +772,12 @@ Test wallets are never the operator's concern (2026-09-09: "I shouldn't be
 having to think about test wallets. That is an automated thing"). The two
 pricing-lane test accounts (vault `secret/scry/test-account-pricing-lanes`
 = `SCRY_TEST_API_KEY`, `…-2` = `SCRY_TEST2_API_KEY`) are restored to $20
-(her sizing, 2026-09-09: "test wallets can have $20") by
-`bin/topup-test-wallets.sh` — the same grant pair
-the signup path writes (wallet_events + wallet_entries, bucket scry_credit,
-under the wallet's advisory lock; balances are trigger-maintained), never
-above $20, never on a customer. Every storm/kill drill script
+of scry_credit (her sizing, 2026-09-09: "test wallets can have $20") and
+$10 of promo_credit (2026-09-10: "fund our test accounts so we can test
+things" — provider inference arms from promo_credit + cash only, so the
+MCP chat and creativity doors need it) by `bin/topup-test-wallets.sh` —
+the same grant pair the signup path writes (wallet_events +
+wallet_entries, under the wallet's advisory lock; balances are
+trigger-maintained), never above those targets, never on a customer. Every storm/kill drill script
 calls it first; run it yourself before any drill that spends test credit,
 and never report test-wallet balances as something she must handle.
