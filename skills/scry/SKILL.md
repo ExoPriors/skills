@@ -757,8 +757,8 @@ curl -s https://api.scry.io/v1/scry/query \
   endpoints — every preset lane has one; a full model id without one
   is refused by the provider, never served with retention.
   `model` is a preset naming a current lane — kimi, deepseek, gemini,
-  gemini-flash, glm, grok, gpt, claude — or any full OpenRouter model
-  id. Funding is the account's Scry-minted OpenRouter key (minted on
+  gemini-flash, glm, grok, gpt, claude, gemma — or any full OpenRouter
+  model id. Funding is the account's Scry-minted OpenRouter key (minted on
   first use, limit bound to the wallet's cash + promo credit — free
   signup credit funds Scry queries, never third-party inference — and
   settled at provider cost through the key's usage counter, no
