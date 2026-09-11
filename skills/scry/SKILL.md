@@ -1,6 +1,11 @@
 ---
 name: scry
-description: "Use Scry's read-only SQL research surface through /v1/scry/schema and /v1/scry/query. Use for bounded SQL over registered public-corpus relations, source provenance, and registered vector helpers. Also use when a research ask wants diverse, varied, or orthogonal sources, angles, hypotheses, or probe phrasings — the skill carries the enumeration discipline and the /v1/creativity/outsized fan-out."
+description: >-
+  Use Scry's read-only SQL research surface (/v1/scry/schema, /v1/scry/query)
+  for bounded SQL over registered public-corpus relations, provenance, and
+  vector helpers. Also use when a research ask wants diverse, orthogonal
+  sources, angles, hypotheses, or probe phrasings — carries the enumeration
+  discipline and the /v1/creativity/outsized fan-out.
 ---
 
 # Scry Skill
