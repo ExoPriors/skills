@@ -382,6 +382,31 @@ one or two edges when intermediate sets are large. Coauthors in one step:
 The MCP tool contract carries ten worked templates, including a seed-keyed
 citation closure and an anti-join.
 
+## First-contact audit rail (datalog)
+
+The datalog door improves by rotation: outside models meet it docs-only,
+attempt real research tasks, and report frictions; the lead folds the real
+ones (executor fix over wording), builds on colo2, lands, deploy-applies, and
+live-verifies. Rotations 1–13 (2026-09-09..11) ran this way.
+
+- Brief template `bin/datalog-audit-brief.md` (fill the numbered tasks; keep
+  the docs-only rule, the colo2 `/tmp/hunt-client/mcp.py` mechanics, the
+  ≤25-call cap, and "the report file is the deliverable — final chat text is
+  not seen"). Launcher `bin/datalog-audit.sh <model> <brief.md> <log>` runs
+  headless OMP from `/tmp/xp-dl-probes`; launch as
+  `(nohup bin/datalog-audit.sh <model> brief.md log >/dev/null 2>&1 &)`.
+  Models that have worked: `gemini-3.8-flash` (fast, fabricates quotes and
+  misreads figures), `openrouter/x-ai/grok-4.6` (careful, best cost tables),
+  `openrouter/deepseek/deepseek-v4-flash-0731` (slow, hours). Liveness
+  `pgrep -f "auditN-"`; progress `ls auditN-*.py | wc -l`.
+- An auditor's figure or quote is a lead, never a measurement: re-measure
+  before it lands (a quoted guide passage did not exist; an "11.5M rows"
+  figure was a LIMIT-10 early exit of a 510M-row read; a "16M rows" was the
+  hit range). Two auditors agreeing is still a lead.
+- Burden (nanodollars) swings >2x between identical runs while read_rows
+  holds; guide prose carries read-row magnitudes as the pre-pay lesson,
+  never dated nanodollar or seconds figures.
+
 ## Lexical range
 
 Embeddings are for missing vocabulary. When you know the words — names,
@@ -770,7 +795,7 @@ state coverage and freshness limits.
 
 Test wallets are never the operator's concern (2026-09-09: "I shouldn't be
 having to think about test wallets. That is an automated thing"). The two
-pricing-lane test accounts (vault `secret/scry/test-account-pricing-lanes`
+pricing-lane test accounts (vault `secret/secret/scry/test-account-pricing-lanes` — the kv mount nests a second `secret/`; the key is a `scry_…` string, read it with `vault kv get -mount=secret -field=SCRY_TEST_API_KEY secret/scry/test-account-pricing-lanes` from a script file, never echoed
 = `SCRY_TEST_API_KEY`, `…-2` = `SCRY_TEST2_API_KEY`) are restored to $20
 of scry_credit (her sizing, 2026-09-09: "test wallets can have $20") and
 $10 of promo_credit (2026-09-10: "fund our test accounts so we can test
