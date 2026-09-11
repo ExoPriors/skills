@@ -681,9 +681,11 @@ curl -s https://api.scry.io/v1/scry/query \
   rates, bands, and the operator's current price multiplier — is
   published as `charge_law` on `GET /v1/scry/pricing`. Off-peak
   research costs least (slack is free).
-- Never get surprised by a query: send `X-Scry-Max-Seconds: <n>` to give
-  a query a hard execution deadline (the runtime kills it at n seconds
-  with a timeout error; you pay only for what ran). `X-Scry-Budget:
+- State how long you are willing to wait on every query: `X-Scry-Max-Seconds:
+  <n>` (MCP `max_seconds`) is a hard execution deadline — the runtime kills
+  the query at n seconds with a typed timeout error, you pay only for what
+  ran, and a query that states none is killed at 15 s. Predict the runtime
+  and send ~1.5× it. `X-Scry-Budget:
   <nanodollars>` is a runaway kill-switch, not a spend statement: while
   the system has slack a query bills nothing, and the budget still binds the
   raw machine meter — a small cap kills large scans that would have

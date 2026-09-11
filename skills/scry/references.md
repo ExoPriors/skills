@@ -1116,8 +1116,8 @@ tokens, then refines on the **raw** column (`body ILIKE`) for adjacency —
 `LIKE` over token-indexed `search_text_lc` itself is refused — and scopes
 time. Both anchors must be present: skip-index pruning weakens for
 mid-frequency tokens across many granules, the date predicate restores it
-(API-measured 2026-09-04: 6.3s scoped to one year, 68s without — past the
-headerless 60s deadline):
+(API-measured 2026-09-04: 6.3s scoped to one year, 68s without — far past
+the headerless 15 s deadline):
 
 ```sql
 SELECT subreddit, score, body
