@@ -12,6 +12,7 @@ PROMO_TARGET=${PROMO_TARGET:-10000000000}  # $10 promo_credit — the promo defa
 declare -a USERS=(
   "55fbd76f-4113-4a67-aebd-c4cc082f1127 acct1 SCRY_TEST_API_KEY"
   "2b643878-5136-45d7-bb88-4a1f6b74578f acct2 SCRY_TEST2_API_KEY"
+  "d4ab6bc7-40cd-4462-818e-d833f7f6d7cf mcp-walk MCP_TEST_API_KEY"
 )
 stamp=$(python3 -c 'import time;print(time.strftime("%Y%m%d%H%M%S",time.gmtime()))')
 for entry in "${USERS[@]}"; do
