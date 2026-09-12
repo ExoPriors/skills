@@ -541,6 +541,7 @@ the complete document. The doors:
 | `huggingface.repositories` | Hugging Face hub models/datasets/spaces with counters; `huggingface.snapshots_daily` is the daily history; `huggingface.repo_details` carries per-repo bytes on the hub (usedStorage), file sizes, and model details |
 | `reddit.subreddits` | Subreddit directory (description, subscribers, type, flags); `reddit.subreddit_rules` / `reddit.subreddit_wikis` are its depth |
 | `irs.form990` / `cms.open_payments` / `cfpb.complaints` / `jobs.postings` / `legistar.matters` | Envelope relations (`payload.record` is the upstream record): nonprofit filings, industry-to-provider payments, consumer finance complaints, live ATS job postings, municipal legislative matters |
+| `yc.companies` | Y Combinator company directory: every batch's company cards (name, one-liner, description, batch, status, industries, tags, locations, team size); the newest `fetched_at` per `yc_id` is the current state |
 | `epstein.artifacts` | Source-native Epstein artifact index across DOJ and other public releases |
 | `agents.skills` | Parsed SKILL.md documents from public agent-skill repositories |
 | `lexicons.entries` | English lexicon envelopes: Wiktionary (kaikki.org) and GCIDE/Webster 1913 |
