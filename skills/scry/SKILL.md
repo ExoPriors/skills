@@ -134,7 +134,13 @@ orientation.
    leaves it while its vector index re-materializes — and the schema names
    the live set: only surfaces with `serves_ann: true` accept ANN ranking
    (the rest still serve plain SQL). ANN queries must be standalone (no
-   JOIN); hydrate companion text in a second query.
+   JOIN); hydrate companion text in a second query. On
+   `embeddings.hackernews_items`, WHERE predicates on `hn_id` (`=`, `IN`,
+   `>=`, `<=`, `BETWEEN`) scope the search before ranking. `hn_id` is
+   monotone with item time: a date window is an id window, with boundaries
+   from `SELECT min(hn_id), max(hn_id) FROM hackernews.items WHERE original_timestamp BETWEEN ...`.
+   On `embeddings.crawl_pages`, `host` (`=`, `IN`) scopes the search before
+   ranking. Other WHERE predicates post-filter the candidate window.
 6. Keep every query bounded with `LIMIT`. Start at 20 and widen only after
    inspecting row shape, provenance, and source coverage.
    Token search speed is governed by the rarest token: in
