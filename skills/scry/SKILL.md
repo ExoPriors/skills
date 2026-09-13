@@ -568,7 +568,7 @@ name.
 Each relation's contract carries `freshness` as a class beside the measured
 lag: `live` (new rows land within 15 minutes), `hourly` (within an hour),
 `daily` (within a day), `periodic` (a longer scheduled cadence), or `frozen`
-(nothing lands; `freshness_blocker` says why). `freshness_lag_seconds` is the
+(nothing lands). `freshness_lag_seconds` is the
 age of the newest landed row at the last probe, `null` before the first. Read
 the lag against the class, not against the clock: a `frozen` relation's lag is
 its age, not a fault. The document names relations by `relation` only —

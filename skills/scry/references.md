@@ -754,9 +754,9 @@ vocabulary, and guided seeding is what fixes them.
    `history` lists versions, `version=N` loads one, `diff=[1,2]` diffs
    two versions of a slug (term text — form changes show jaccard 1.0), and
    catalog-level `?diff=a,b` diffs two recipes.
-8. **Read the envelope**: `coverage.freshness_blocker` explains corpus
-   recency (e.g. reddit's Arctic-dump boundary) — check it before charting
-   the most recent weeks.
+8. **Read the envelope**: `coverage.freshness` reads `frozen` where nothing
+   lands (e.g. reddit's Arctic-dump boundary) — check it and `extent` before
+   charting the most recent weeks.
 
 The `recipes` tool is the live catalog; this
 table is the shelf as measured on lesswrong 2026-01-01.. (2026-08-24).
