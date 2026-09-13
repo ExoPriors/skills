@@ -765,10 +765,10 @@ curl -s https://api.scry.io/v1/scry/query \
   is a SQL predicate: `embeddings.crawl_pages` holds a rolling fresh
   crawl of allowlisted high-information hosts (major news, AI-lab and
   government announcement pages, primary technical sources), and its
-  `page_ts` is the crawl-observation time — an upper bound on when a
-  fact became public (rows without it sit at epoch). Mint an @handle
+  `observed_on` is the day the page was observed — an upper bound on
+  when a fact became public (rows without a clock sit at 1970-01-01). Mint an @handle
   with `embed`, rank with the vector helper, and bound eligibility with
-  `WHERE page_ts > toDateTime('<your training cutoff>')` — the
+  `WHERE observed_on > toDate('<your training cutoff>')` — the
   predicate states when a page was first observed, not what you know.
   Hydrate verbatim text from `crawl.pages` by url (ANN statements admit
   one relation; the second query is the hydration). Dedup and per-host
