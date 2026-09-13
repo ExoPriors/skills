@@ -520,7 +520,7 @@ the complete document. The doors:
 | `reddit.posts` | Full-retention Reddit submissions; comments (`reddit.comments`, depth) join via `link_id = concat('t3_', id)` |
 | `hackernews.items` | Hacker News items with source identity and timestamps |
 | `stackexchange.posts` | Stack Exchange Q&A across landed sites (`site` value space is the roster) |
-| `crawl.pages` | Promoted text extractions of crawled web pages — the live house-crawl corpus |
+| `crawl.pages` | Promoted text extractions of observed web pages — the live web-page corpus |
 | `commoncrawl.distillate` | Clean genre-classified Common Crawl reading layer; CDX census and raw WET recall are its depth companions |
 | `social.posts` | Six frozen fringe-platform archives (voat, parler, gab, telegram, discord, truth_social) as one relation — always filter `platform`; profiles/edges/community directories are its depth companions (`social.users`/`edges`/`communities`) |
 | `github.repos` | The public GitHub repository universe (408M origins, Software Heritage export) keyed by owner; repo READMEs/docs/source live in `github.documents` (depth) |
@@ -533,7 +533,7 @@ the complete document. The doors:
 | `cn_enterprise.companies` | China enterprise registry (GSXT), one best row per company keyed by USCC |
 | `mailing_lists.messages` | Mailing-list and Usenet archive messages; the per-list roster is `mailing_lists.catalog` (depth) |
 | `internet_archive.items` | Internet Archive item-catalog metadata (identifier, creator, mediatype, collection, ...) |
-| `threads.posts` | Threads (Meta) public posts from the anonymous breadth crawl, 2023-05 onward; `threads.profiles` is the author roster |
+| `threads.posts` | Threads (Meta) public posts, 2023-05 onward; `threads.profiles` is the author directory |
 | `vk.posts` / `vk.comments` | VK community wall posts and comments, 2007 onward, full-text indexed on `lower(text)`; `vk.communities` is the roster |
 | `nostr.events` | Nostr relay events (signed event JSON; `kind` 1 notes, 0 profiles) |
 | `youtube.videos_live` | YouTube metadata as currently observed (1B+ videos since 2026-08) — `youtube.videos` is the frozen 2021 census |
