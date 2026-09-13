@@ -1314,34 +1314,53 @@ Hydration joins for the registered families:
 
 | relation | scope column users filter on | hydration join |
 | --- | --- | --- |
-| `embeddings.academic_paper_chunks` | `source_bucket` or exact `paper_key` | `academic.papers.paper_key = paper_key` |
+| `embeddings.academic_paper_chunks` | exact `paper_key` (no ANN today) | `academic.papers.paper_key = paper_key AND text_sha256 = source_text_sha256` |
 | `embeddings.forum_posts` | `post_key` prefix, such as `lesswrong%` | `forums.posts.post_key = post_key` |
 | `embeddings.reddit_comments` | `subreddit`, then `kind` | `reddit.comments.id = substring(full_id, 4)` for comments |
 | `embeddings.hackernews_items` | exact or ranged `hn_id` | `hackernews.items.hn_id = hn_id` |
 | `embeddings.stackexchange_posts` | `site`, then `stackexchange_id` | `(stackexchange.posts.id, stackexchange.posts.site) = (stackexchange_id, site)` |
 | `embeddings.mailing_list_messages` | `message_key` prefix, such as `xorg-devel::` | `mailing_lists.messages.message_key = message_key` |
 
-Unscoped ANN and `count()` over `embeddings.academic_paper_chunks` are
-expensive (tens of seconds and large burden). Scope with `paper_key` or
-`source_bucket`.
+`embeddings.academic_paper_chunks` serves no ANN today (`serves_ann:
+false`; `scry_vector_topk_distance` over it is refused with the live
+ANN-enabled list in the error). Its vector column is a readable
+`embedding`, so rank one paper's chunks exactly:
+`scry_cosine_similarity(embedding, @my_query) AS sim … WHERE paper_key =
+'<paper-key>' ORDER BY sim DESC LIMIT 5` (measured 2026-09-13: 5 rows,
+0.6 s). Unscoped `count()` over it is expensive.
+
+**WHERE under ANN post-filters.** Only `hn_id` on
+`embeddings.hackernews_items` and `host` on `embeddings.crawl_pages` scope
+the search before ranking. Every other predicate (`post_key LIKE`,
+`subreddit =`, `model_name =`, `kind =`) filters a ~400-candidate
+nearest-neighbour window after ranking, so a selective filter returns
+fewer than k rows, often zero. Put the selectivity into the query text,
+or raise `LIMIT` to 100 and filter client-side.
 
 #### Search LessWrong
 
-Rank LessWrong chunks. Keep the model filter:
+Rank LessWrong chunks, one row per post:
 
 ```sql
 SELECT post_key, chunk_index, token_count, model_name,
        scry_vector_topk_distance(embedding_voyage4, @my_query) AS distance
 FROM embeddings.forum_posts
-WHERE model_name = 'voyage-4-lite'
-  AND post_key LIKE 'lesswrong%'
+WHERE post_key LIKE 'lesswrong%'
 ORDER BY distance ASC
+LIMIT 1 BY post_key
 LIMIT 20
 ```
 
-The table stores each chunk under both `voyage-4-lite` and
-`voyage-4-large`. Without `WHERE model_name = 'voyage-4-lite'`, near-duplicate
-chunks occupy the result list.
+Do not filter `model_name`. Candidates and distances always come from the
+`voyage-4-lite` vector index and the top-k is already one row per
+`(post_key, chunk_index)`; `model_name` only selects which metadata row
+hydrates, can only shrink the result, and cost 18 s against 4 s without
+it (measured 2026-09-13; the interview form with the filter returned 0
+rows). The returned `model_name` column mixes nano, lite, and large rows
+for the same ranking. `post_key LIKE 'lesswrong%'` post-filters the
+candidate window; it returns a full 20 because LessWrong dominates the
+relation, not because the scope is applied first. `LIMIT 1 BY post_key`
+collapses chunks of one post; measured 20 rows, 0.3 s.
 
 Hydrate text in a second query. Copy the returned keys into `IN`:
 
@@ -1359,22 +1378,25 @@ The hydration key is
 
 #### Search Reddit
 
-Scope ANN ranking to one subreddit:
+A subreddit predicate does not scope the search; it post-filters the
+~400-candidate window (measured 2026-09-13: `WHERE subreddit =
+'CryptoCurrency' AND kind = 'comment'` returned 0 rows at LIMIT 20 and at
+LIMIT 100; `'MachineLearning'` returned 1). Rank unscoped, wide, and
+filter the subreddit client-side; an unscoped LIMIT 100 returned 100 rows
+across 18 subreddits in 0.6 s:
 
 ```sql
 SELECT full_id, kind, subreddit, original_timestamp, upvotes,
        chunk_index, token_count, model_name,
        scry_vector_topk_distance(embedding_voyage4, @my_query) AS distance
 FROM embeddings.reddit_comments
-WHERE subreddit = 'CryptoCurrency'
-  AND kind = 'comment'
 ORDER BY distance ASC
-LIMIT 20
+LIMIT 100
 ```
 
-Replace the subreddit equality with
-`subreddit IN ('CryptoCurrency', 'MachineLearning')` to search a small set.
-Keep `kind = 'comment'`.
+When one subreddit must dominate, write its diction into the query text
+(§ Writing the query text) rather than into `WHERE`. `kind = 'comment'`
+post-filters the same way; drop it and read the `kind` column.
 
 The embedding relation has no text column. Hydrate comment bodies in a second
 query. Copy the returned `full_id` values into `substring`:
@@ -1454,10 +1476,26 @@ The query runtime expands registered `scry_*` helpers only after deterministic
 validation; helper SQL outside those admitted shapes is rejected by design.
 
 Registered embedding relations support exactly one
-`scry_vector_topk_distance(embedding, @handle) AS distance` projection from
-one ANN relation, optional `WHERE` predicates, `ORDER BY distance ASC`, and
-`LIMIT 1` through `100`. The helper is ranking-only. Other vector helpers
-retain their algebra semantics.
+`scry_vector_topk_distance(<vector column>, @handle) AS distance` projection
+from one ANN relation, optional `WHERE` predicates, `ORDER BY distance ASC`,
+and `LIMIT 1` through `100`. The vector column is `embedding_voyage4` on the
+per-corpus `embeddings.*` relations and `embedding` on `embeddings.chunks`
+and `embeddings.academic_paper_chunks`. On the per-corpus relations that
+name is valid only inside this projection: the vectors live in the vector
+index, `scry_cosine_similarity(embedding_voyage4, …)` is refused, and only
+`embeddings.chunks` (and `academic_paper_chunks`) keep a readable vector
+for row-level math. One row per item on a chunked relation is served as
+`ORDER BY distance ASC LIMIT 1 BY <key> LIMIT n` (measured 2026-09-13:
+`LIMIT 1 BY hn_id LIMIT 10` on `embeddings.hackernews_items`, 10 rows,
+0.5 s); other `LIMIT BY` shapes are refused as `ann_topk_limit_by`. The
+set of relations serving ANN moves (a relation leaves while its index
+re-materializes); a refused ranking names the live set. The helper is
+ranking-only. Other vector helpers retain their algebra semantics.
+
+`POST /v1/scry/query` with `{"sql": "...", "explain": true}` returns the
+plan envelope (`explain`, `ann`, `forecast`, `relations`, `summary`)
+without executing; `?explain=true` on the URL is ignored and the query
+runs.
 
 Confirm the live signature and columns before use. Do not use
 database-specific vector operators or assume that an unregistered embedding
@@ -1479,17 +1517,36 @@ handle, and warnings — and refuses degenerate results (NULL from the noise
 floor, norm ≤ 0.01, near-duplicate of an input) with the reason instead of
 storing them.
 
-Workflow discipline: run the matching diagnostic first, follow its
-`recommendation`, then save. `GET /v1/scry/schema` serves the canonical
-recipes as `vector_recipes`. The core pairs:
+Workflow discipline: run the matching diagnostic as a query (`SELECT
+scry_axis_diagnostics(@pos, @neg) AS d LIMIT 1`), read its recommendation,
+then save. `GET /v1/scry/schema` serves the canonical recipes as
+`vector_recipes`. The core pairs:
 
 | goal | diagnostic first | then compose |
 | --- | --- | --- |
 | contrast axis A vs B | `scry_axis_diagnostics(@pos, @neg)` | `scry_contrast_axis_balanced(@pos, @neg)` |
 | concept centroid | `scry_seed_centroid([@s1, @s2, @s3])` | `scry_centroid([@s1, @s2, @s3])` |
-| remove a nuisance | `scry_debias_audit(@axis, @topic)` | `scry_debias_safe(@axis, @topic)` |
+| remove a nuisance | `scry_debias_audit(@axis, @nuisance[, max_removal=0.5])` | `scry_debias_safe(@axis, @nuisance[, max_removal=0.5])` |
 | shared component | `scry_cosine_similarity(@topic, @axis)` | `scry_project_onto(@topic, @axis)` |
 | compare candidates | `scry_handle_matrix([@a, @b, @c])` | keep the healthy one, delete the rest |
+
+The diagnostics come back as one unnamed `Tuple` column, positional, no
+field names (measured 2026-09-13). `scry_axis_diagnostics` is
+`(pos_norm, neg_norm, pole_similarity, raw_axis_norm, balanced_axis_norm,
+recommendation, warnings)`: the recommendation is element 6, one of
+`inspect_inputs`, `rebuild_poles` (poles near-duplicate or the axis is
+noise), `tighten_shared_context` (poles share too little to cancel
+anything), `contrast_axis_balanced` (one pole's magnitude would dominate),
+`contrast_axis`. `scry_debias_audit` is `(axis_norm, nuisance_norm,
+similarity_before, removed_fraction, unsafe_norm, safe_norm,
+similarity_after_unsafe, similarity_after_safe, cap_applied,
+unsafe_vector, safe_vector, warnings)`: a removed fraction above 0.5 means
+the axis mostly was the nuisance; a tiny safe norm means nothing survives.
+`tupleElement(scry_axis_diagnostics(@pos, @neg), 6) AS recommendation` is
+served when only one field is wanted. A wrong arity is refused as
+`vector_helper_arguments`. The compose response, by contrast, is named:
+`diagnostics.norm`, `diagnostics.input_similarity.<handle>`,
+`diagnostics.warnings`.
 
 ```bash
 curl -s https://api.scry.io/v1/scry/embed \
@@ -1498,9 +1555,30 @@ curl -s https://api.scry.io/v1/scry/embed \
   --data '{"expression":"scry_contrast_axis_balanced(@pos, @neg)","name":"my_axis"}'
 ```
 
-A composed handle ranks rows exactly like a minted one:
-`scry_vector_topk_distance(embedding_voyage4, @my_axis)`. Composition costs
-no embedding tokens.
+A composed point (centroid, projection, debiased handle) ranks rows exactly
+like a minted one: `scry_vector_topk_distance(embedding_voyage4, @my_concept)`.
+An axis is a direction, not a point: ANN top-k by `@my_axis` returns junk
+(measured 2026-09-13 on `embeddings.hackernews_items`: generic
+"feel-good" one-liners at distance 0.59). Score a candidate set along the
+axis instead, where a readable vector column exists:
+
+```sql
+SELECT target_key, chunk_index,
+       scry_cosine_similarity(embedding, @my_axis) AS sim
+FROM embeddings.chunks
+WHERE source = 'forum_posts'
+  AND target_key LIKE 'eaforum%'
+ORDER BY sim DESC
+LIMIT 10
+```
+
+Measured 2026-09-13: 10 rows, 63k vectors read, 0.9 s. The candidate set
+is a `WHERE` on `embeddings.chunks` (`embeddings.sources` lists its
+`source` values; Hacker News and Reddit are not among them today), or the
+keys from an ANN top-k by a topic handle. The same form on a per-corpus
+relation (`scry_cosine_similarity(embedding_voyage4, @my_axis) FROM
+embeddings.hackernews_items`) is refused: that column is not readable.
+Composition costs no embedding tokens.
 
 ### Failure recovery
 
@@ -1612,8 +1690,9 @@ LIMIT 50
 - **By title:** `WHERE hasToken(search_text_lc, '<lowercase-token>')` on
   works; add `publication_year` bounds and `ORDER BY cited_by_count DESC`.
 - **By content:** `hasToken(text, '<token>')` on `papers` (token-indexed;
-  rare method terms work best), or semantic search over
-  `embeddings.academic_paper_chunks`.
+  rare method terms work best), or exact cosine ranking of one paper's
+  chunks in `embeddings.academic_paper_chunks` under a `paper_key` scope
+  (no ANN there today; § Embedding corpus catalog).
 - **Abstract:** `abstract_inverted_index` is an OpenAlex word→positions
   JSON map, not prose. Read title + full text instead when you need clean
   words; decode the map only when the abstract is all you have.
