@@ -437,7 +437,7 @@ would think to compose. Shapes that reward that creativity:
   `internet.text` ordered by `original_timestamp ASC` — when and where a
   phrase first appeared.
 - An author's written history: one handle across reddit, HN, and mailing
-  lists over two decades (`original_author` on `internet.text`), drift
+  lists over two decades (`author` on `internet.text`, unindexed — anchor it with a token or source filter), drift
   measured with `countIf` per year.
 - Co-occurrence archaeology: `hasAllTokens` with two rare tokens and a
   date bound — who put two ideas together first.
