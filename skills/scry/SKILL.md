@@ -378,8 +378,8 @@ largest components first — plus an optional per-relation `"rank":
 {handle, k}` (bare handle name) ordering final rows by exact distance to a handle
 (OpenAlex only); a relation left out of `out` ships only its per-depth
 counts, zero egress (`out: []` is the census). Every evaluation step
-is one ordinary metered statement under your own key; `depth` (default 3)
-and 50k-row caps bound the walk; the envelope returns `{id, kind, parent,
+is one ordinary metered statement under your own key; `depth` (default 3,
+at most 64) and 50k-row caps bound the walk; the envelope returns `{id, kind, parent,
 depth}` provenance rows (a sql atom's other columns ride in `attrs`), `counts` for every relation (an empty seed set
 shows `counts.seed.rows = 0`), a `meter` with `per_statement`, and
 `truncations[]` (empty = fixpoint over the graph the index holds; `edge_window`: a `cited_by` hop walks the newest 50 citers per work, so its count is a lower bound — census with `openalex.cited_by`). Prefer `rank` over intersecting a walk with a global ANN
