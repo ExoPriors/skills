@@ -729,7 +729,11 @@ curl -s https://api.scry.io/v1/scry/query \
   <n>` (MCP `max_seconds`) is a hard execution deadline — the runtime kills
   the query at n seconds with a typed timeout error, you pay only for what
   ran, and a query that states none is killed at 15 s. Predict the runtime
-  and send ~1.5× it. `X-Scry-Budget:
+  and send ~1.5× it — but the accepted ceiling floats with box load (3 s at
+  pressure 0.74, 2026-09-13): a declared value above it is refused outright
+  with HTTP 429 `query_capacity_exhausted` naming the current ceiling, so an
+  unattended rail declares none and retries a 429 once after ~15 s rather
+  than pinning a large number. `X-Scry-Budget:
   <nanodollars>` is a runaway kill-switch, not a spend statement: while
   the system has slack a query bills nothing, and the budget still binds the
   raw machine meter — a small cap kills large scans that would have
