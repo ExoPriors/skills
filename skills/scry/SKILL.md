@@ -13,7 +13,7 @@ description: >-
 Scry is read-only SQL (ClickHouse dialect) over registered public corpora
 — Hacker News, Reddit, the Twitter archive, books, papers, forums, SEC
 filings, the crawl — one call from a question to cited rows. Queries are
-free while the system has slack: every response reports `billing_mode`
+free while the system has slack: every query response reports `billing_mode`
 and `spend_nanodollars`, and the money arguments (`x-scry-budget`,
 `x-scry-max-seconds`; MCP `budget_nanodollars`, `max_seconds`) are
 ceilings you choose, never fees. Ask your wildest curiosity.
@@ -39,8 +39,11 @@ WHERE hasAllTokens(search_text_lc, ['vibe', 'coding'])
   AND positionCaseInsensitive(search_text_lc, 'vibe coding') > 0
   AND original_timestamp < '2025-02-01'
 ORDER BY original_timestamp ASC
+LIMIT 1 BY tweet_id
 LIMIT 5
 ```
+
+(`LIMIT 1 BY tweet_id`: the archive keeps a tweet's revisions as rows.)
 
 Where Reddit talked bitcoin in 2013:
 
@@ -375,7 +378,7 @@ is one ordinary metered statement under your own key; `depth` (default 3)
 and 50k-row caps bound the walk; the envelope returns `{id, kind, parent,
 depth}` provenance rows (a sql atom's other columns ride in `attrs`), `counts` for every relation (an empty seed set
 shows `counts.seed.rows = 0`), a `meter` with `per_statement`, and
-`truncations[]` (empty = fixpoint over the graph the index holds). Prefer `rank` over intersecting a walk with a global ANN
+`truncations[]` (empty = fixpoint over the graph the index holds; `edge_window`: a `cited_by` hop walks the newest 50 citers per work, so its count is a lower bound — census with `openalex.cited_by`). Prefer `rank` over intersecting a walk with a global ANN
 top-k — measured near-empty overlap at corpus scale. Rank is terminal: it orders a relation's final rows
 after the walk, so put it on the last relation (the hydrating one), not on a set another relation reads.
 
@@ -390,7 +393,7 @@ edge produces (`{"filter": {"on": "W", "col": "publication_year", "op":
 "!=", "var": "A"}}`). Every head/negated/filtered var needs an earlier
 positive binding; kinds come from edges, not sql; `cited_by` goes last;
 legacy atoms consume only unary bound relations. Rows return as `{tuple,
-parent, depth}` plus an envelope `schemas` map. A k-edge chain nests its
+parent, depth}` (`parent` is `{id}` there, the bare id string on unary rows) plus an envelope `schemas` map. A k-edge chain nests its
 prefilters (three HN edges in one body read ~88M rows), so keep bodies to
 one or two edges when intermediate sets are large. Coauthors in one step:
 

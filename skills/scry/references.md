@@ -576,10 +576,11 @@ Allen intervals, temporal logic, relational division, Kleene algebra),
 stance linguistics (Hyland, Appraisal, factuality, modality,
 evidentiality), and the LLM-era retrieval literature. The planes below are
 the deduplicated result, each with its idiom on this surface. Everything
-here rides plain SQL. The served validator denies functions whose
+here rides plain SQL. The served validator bounds functions whose
 aggregate state grows with attacker-controlled input — the
-`groupArray`/`groupUniqArray` families, `topK`, `uniqExact`,
-`quantileExact` — plus `sleep`/`file`; `sequenceMatch`, `windowFunnel`,
+`groupArray`/`groupUniqArray` families and `topK` take a literal state
+bound, `groupArray(N)(x)` with N from 1 to 1000 (`uniqExact` and
+`quantileExact` are served as written) — and denies `sleep`/`file`; `sequenceMatch`, `windowFunnel`,
 `match`, `argMin`/`argMax`, and `-If` combinators whose base function is
 allowed all pass (verified live 2026-08-25).
 
@@ -625,7 +626,7 @@ is tests on `(countIf, count)` pairs from one `GROUP BY author`; name the
 quantifier you mean and its denominator. Three named idioms kill standing
 error classes:
 - **division** ("in ALL of these"): `count(DISTINCT if(cond, community, NULL)) = N`
-  (exact; approximate `uniqIf` also passes, but `uniqExact*` is denied) —
+  (exact; `uniqExactIf` and approximate `uniqIf` also pass) —
   never the double-NOT-EXISTS;
 - **anti** ("never"): `countIf(P) = 0` as a HAVING, absence typed as a
   result set;
@@ -1097,9 +1098,10 @@ error, not an empty result — split it into per-token probes, or use the
 phrase idiom in §Multi-token search when the phrase itself matters.
 Counting note: `count()` over `arrayJoin(tokens(x))` counts occurrences;
 wrap in `arrayDistinct` — `arrayJoin(arrayDistinct(tokens(x)))` — to
-count documents. Aggregates with unbounded state (`topK`, `uniqExact`,
-`groupArray`, `quantileExact` families) are not served; use plain
-`GROUP BY … ORDER BY count() DESC LIMIT k` for top-K.
+count documents. Aggregates with unbounded state (`topK`, `groupArray`,
+`groupUniqArray`) take a literal bound — `topK(k)(x)`, `groupArray(N)(x)`,
+N from 1 to 1000 — or use plain `GROUP BY … ORDER BY count() DESC LIMIT k`
+for top-K; `uniqExact` and `quantileExact` are served.
 
 ### Multi-token search on text-indexed columns
 
