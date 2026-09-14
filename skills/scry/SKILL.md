@@ -770,8 +770,8 @@ curl -s https://api.scry.io/v1/scry/query \
   the pool, use `rerank` on rows you hold.
 - To re-order documents you already hold (or to use the hosted
   long-document tier), `POST
-  /v1/scry/rerank` (MCP `rerank`) with `documents: [{id,text}]` (2..=1000) and an
-  `instruction` — the instruction is the point: "rank by methodological
+  /v1/scry/rerank` (MCP `rerank`) with `query`, `documents: [{id,text}]`
+  (2..=1000) and optionally an `instruction` — the instruction is the point: "rank by methodological
   rigor" re-sorts by that attribute, not generic relevance. Tiers `fast`
   (default, $0) / `quality` ($0) / `hosted` (long documents, per-token
   cost); the live tier contract is `offerings.rerank` on
