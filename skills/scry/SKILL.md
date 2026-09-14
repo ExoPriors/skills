@@ -603,7 +603,7 @@ curl -s https://api.scry.io/v1/scry/schema \
 curl -s https://api.scry.io/v1/scry/query \
   -H "Authorization: Bearer $SCRY_API_KEY" \
   -H "Content-Type: text/plain" \
-  --data "SELECT hn_id, title, original_author, original_timestamp, uri FROM hackernews.items WHERE title != '' ORDER BY original_timestamp DESC LIMIT 20"
+  --data "SELECT hn_id, title, original_author, original_timestamp, uri FROM hackernews.items WHERE hn_id > 49500000 AND title != '' ORDER BY hn_id DESC LIMIT 20"
 ```
 
 ## Query permalinks
