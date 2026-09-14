@@ -323,7 +323,7 @@ walked sets ranked semantically — send a program instead of SQL: `POST /v1/scr
 A `sql` atom is one statement (`LIMIT <= 50000`, the relation cap): alone in its body it
 seeds a set from column `id`; after a `rel` it hydrates that relation —
 the rows it returns keep their `parent`/`depth` and gain the other
-columns as `attrs` (the statement must read the relation: `WHERE <key> IN {name}` — the keys are hn_id, post_key, tweet_id, and the OpenAlex id URL).
+columns as `attrs` (the statement must read the relation: `WHERE <key> IN {name}` — the keys are hn_id, post_key, tweet_id, and the OpenAlex id URL; github.repos is keyed by owner_lc, so pair `origin IN {name}` with `owner_lc = '<owner>'` or the read is unkeyed — 24 K rows in 77 ms keyed against a 408 unkeyed, measured 2026-09-14). Hydrated rows come back in id order whatever the statement's ORDER BY — it only picks which LIMIT window survives; sort on the client.
 Inside a `sql` atom, `{name}` binds an already-evaluated relation as a query-scoped table of its ids (OpenAlex ids retain their full URLs), bounded by the 50k relation cap.
 
 Walk then hydrate:
@@ -424,9 +424,11 @@ live-verifies. Rotations 1–13 (2026-09-09..11) ran this way.
   before it lands (a quoted guide passage did not exist; an "11.5M rows"
   figure was a LIMIT-10 early exit of a 510M-row read; a "16M rows" was the
   hit range). Two auditors agreeing is still a lead.
-- Burden (nanodollars) swings >2x between identical runs while read_rows
-  holds; guide prose carries read-row magnitudes as the pre-pay lesson,
-  never dated nanodollar or seconds figures.
+- An identical statement re-run within the shared-result window (300 s)
+  is served from the shared result — read_rows reads 1 and the burden is
+  the door's own time — so a second run never re-measures the first: change
+  a literal or wait out the window. Guide prose carries read-row magnitudes
+  as the pre-pay lesson, never dated nanodollar or seconds figures.
 
 ## Lexical range
 
@@ -588,8 +590,9 @@ lag: `live` (new rows land within 15 minutes), `hourly` (within an hour),
 age of the newest landed row at the last probe, `null` before the first. Read
 the lag against the class, not against the clock: a `frozen` relation's lag is
 its age, not a fault. The document names relations by `relation` only —
-physical database and table names, probe SQL, loader identity, and cadence
-numbers are not served. Query the relation name; a physical name is unknown.
+probe SQL, loader identity, and cadence numbers are not served. An `explain`
+forecast names the physical table each read touches beside its `relation`;
+only the relation name is queryable.
 
 ## Starter
 
