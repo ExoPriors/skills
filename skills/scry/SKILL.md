@@ -140,13 +140,19 @@ orientation.
    monotone with item time: a date window is an id window, with boundaries
    from `SELECT min(hn_id), max(hn_id) FROM hackernews.items WHERE original_timestamp BETWEEN ...`.
    On `embeddings.crawl_pages`, `host` (`=`, `IN`) scopes the search before
-   ranking. Other WHERE predicates post-filter the candidate window.
+   ranking. Other WHERE predicates post-filter the candidate window. On
+   chunked relations `ORDER BY distance ASC LIMIT 1 BY <key> LIMIT n`
+   collapses the window to each item's nearest chunk (`LIMIT 1 BY hn_id
+   LIMIT 10`); other LIMIT BY shapes are refused.
 6. Keep every query bounded with `LIMIT`. Start at 20 and widen only after
    inspecting row shape, provenance, and source coverage.
    Token search speed is governed by the rarest token: in
    `hasToken`/`hasAllTokens` filters include at least one distinctive
    token (a name, identifier, or unusual word) — all-common-word token
-   sets scan a large share of the table and run 30-60s. A slow query's
+   sets scan a large share of the table and run 30-60s. `hasToken` is
+   case-sensitive, and `hasTokenCaseInsensitive` skips the text index: for
+   either case use `hasAnyTokens(col, ['Term', 'term'])` or a lowercased
+   column such as `search_text_lc`. A slow query's
    response carries a `performance_note` naming the fix. For broad
    topical questions with only common words, use the embeddings helpers
    instead.
@@ -345,7 +351,7 @@ account's tweets, use `twitter.tweets_of` from its account id instead of
 filtering `twitter.tweets` by `author_id`.
 A program is named relations
 (sets of node ids) built from a closed atom vocabulary — `ids` seeds,
-`ann` (top-k probe from an embed handle), `rel` (a body naming its own
+`ann` (`{"handle": "@name", "k": 30}` — the top-k probe from an embed handle; it seeds `openalex.work` ids only), `rel` (a body naming its own
 relation recurses), `edge` (graph steps: OpenAlex `references`/`cited_by`;
 twitter `twitter.replies`/`twitter.quotes` + inverses; `hackernews.children`/
 `parent`/`story_items`; `forums.children`/`parent`/`thread` — and pivots
@@ -639,7 +645,7 @@ curl -s https://api.scry.io/v1/scry/query \
   bounded, hinted template over many near-duplicate saved queries.
 - To run a saved query again: `POST /v1/scry/shares/{slug}/run?param_n=100`
   (MCP `share_run`)
-  or JSON body `{"params":{"n":100}}` (the body wins). The stored envelope
+  or JSON body `{"params":{"n":100}}` — one or the other per parameter: a name supplied in both the URL and the body is a 400. The stored envelope
   goes through the full metered pipeline as the caller — sql through the
   query lane (x402 or key), a program through the program lane (every
   statement metered; a key is required, programs are not on the x402
@@ -653,7 +659,7 @@ curl -s https://api.scry.io/v1/scry/query \
   contributes to a question by setting top-level `answers` to the
   question's slug at creation (immutable after); the question's page and
   JSON (`contributions`) list every public contribution, and its markdown
-  twin (`?format=md`) carries the literal contribute call. The open index is
+  twin (`https://scry.io/s/{slug}?format=md`; the API route ignores the flag) carries the literal contribute call. The open index is
   `https://scry.io/s` (`GET /v1/scry/shares?kind=question`, no credential).
   When someone voices a research want, post it as a question and hand them
   the permalink; when you finish a piece of work on one, publish the finding
