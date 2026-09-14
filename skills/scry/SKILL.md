@@ -351,7 +351,7 @@ account's tweets, use `twitter.tweets_of` from its account id instead of
 filtering `twitter.tweets` by `author_id`.
 A program is named relations
 (sets of node ids) built from a closed atom vocabulary — `ids` seeds,
-`ann` (`{"handle": "@name", "k": 30}` — the top-k probe from an embed handle; it seeds `openalex.work` ids only), `rel` (a body naming its own
+`ann` (`{"handle": "name", "k": 30}` — the top-k probe from an embed handle, written bare: `@name` is the SQL spelling; it seeds `openalex.work` ids only), `rel` (a body naming its own
 relation recurses), `edge` (graph steps: OpenAlex `references`/`cited_by`;
 twitter `twitter.replies`/`twitter.quotes` + inverses; `hackernews.children`/
 `parent`/`story_items`; `forums.children`/`parent`/`thread` — and pivots
@@ -363,8 +363,12 @@ that change what a node is: `openalex.authors`/`institutions`/`works_of`,
 catalog with measured costs), `filter`
 (in-walk attribute prune — changes what gets expanded and billed), `in`
 (intersection), `not_in` (stratified negation; on a recursive body it
-prunes the walk itself) — plus an optional per-relation `"rank":
-{handle, k}` ordering final rows by exact distance to a handle
+prunes the walk itself), and three in-process graph algorithms over a
+completed relation of exactly two vars — `{"pagerank": "pairs"}`,
+`{"components": "pairs"}`, `{"scc": "pairs"}`, each the sole atom of its
+body, zero statements, the 50k-row cap keeping the top scores or the
+largest components first — plus an optional per-relation `"rank":
+{handle, k}` (bare handle name) ordering final rows by exact distance to a handle
 (OpenAlex only); a relation left out of `out` ships only its per-depth
 counts, zero egress (`out: []` is the census). Every evaluation step
 is one ordinary metered statement under your own key; `depth` (default 3)
