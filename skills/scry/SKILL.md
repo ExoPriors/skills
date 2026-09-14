@@ -65,7 +65,11 @@ tighter WHERE or LIMIT, or a smaller sibling relation
 (`reddit.comments_popular` beside `reddit.comments`, `x_open.tweets`
 beside `twitter.tweets`); the `x-scry-explain: 1` header (MCP `explain:
 true`) pre-flights a wide statement for free — the index analysis returns
-and nothing runs.
+and nothing runs. Unasked, a read past a second, a cut, an empty result
+or a kill carries a `scan` warning (the rarest token's sampled df, the
+rows read against the relation's rows, every token's df when nothing
+matched) and `faster` when a sibling relation answers the same rows;
+`x-scry-context` (MCP `context`) is `auto`, `always`, or `none`.
 
 Search like the answer exists. It almost always does — under a
 vocabulary, a venue, or an era you have not probed yet — so treat every
