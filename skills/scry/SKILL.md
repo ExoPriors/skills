@@ -557,7 +557,7 @@ the complete document. The doors:
 | `huggingface.repositories` | Hugging Face hub models/datasets/spaces with counters; `huggingface.snapshots_daily` is the daily history; `huggingface.repo_details` carries per-repo bytes on the hub (usedStorage), file sizes, and model details |
 | `reddit.subreddits` | Subreddit directory (description, subscribers, type, flags); `reddit.subreddit_rules` / `reddit.subreddit_wikis` are its depth |
 | `irs.form990` / `cms.open_payments` / `cfpb.complaints` / `jobs.postings` / `legistar.matters` | Envelope relations (`payload.record` is the upstream record): nonprofit filings, industry-to-provider payments, consumer finance complaints, live ATS job postings, municipal legislative matters |
-| `yc.companies` | Y Combinator company directory: every batch's company cards (name, one-liner, description, batch, status, industries, tags, locations, team size); the newest `fetched_at` per `yc_id` is the current state |
+| `yc.companies` | Y Combinator company directory: every batch's company cards (name, one-liner, description, batch, status, industries, tags, locations, team size); the newest `observed_on` per `yc_id` is the current state |
 | `epstein.artifacts` | Source-native Epstein artifact index across DOJ and other public releases |
 | `agents.skills` | Parsed SKILL.md documents from public agent-skill repositories |
 | `lexicons.entries` | English lexicon envelopes: Wiktionary (kaikki.org) and GCIDE/Webster 1913 |
@@ -654,7 +654,14 @@ curl -s https://api.scry.io/v1/scry/query \
   query lane (x402 or key), a program through the program lane (every
   statement metered; a key is required, programs are not on the x402
   lane), a semantic join through its own lane (key required). Values that
-  are not supplied use the declared defaults.
+  are not supplied use the declared defaults; a declared name sent without
+  its `param_` prefix is a 400, never a silent default.
+- To change a share: `PATCH /v1/scry/shares/{slug}` with any of `title`,
+  `summary`, `payload`, `is_public` (absent fields stay as they are). There
+  is no DELETE: `is_public: false` withdraws it from the index, and the edge
+  cache can serve the old page and markdown twin for a few minutes after.
+  `https://scry.io/s/{slug}` is the page whatever format flag it carries;
+  the JSON is `GET https://api.scry.io/v1/scry/shares/{slug}`.
 - A standing research question is a share too: `kind: "question"` with
   `payload: {prompt, brief?, asked_in?}` — `prompt` is the person's research
   desire in their own words, verbatim (never paraphrased), `brief` is

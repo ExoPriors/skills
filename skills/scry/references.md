@@ -754,9 +754,11 @@ vocabulary, and guided seeding is what fixes them.
    `history` lists versions, `version=N` loads one, `diff=[1,2]` diffs
    two versions of a slug (term text — form changes show jaccard 1.0), and
    catalog-level `?diff=a,b` diffs two recipes.
-8. **Read the envelope**: `coverage.freshness` reads `frozen` where nothing
-   lands (e.g. reddit's Arctic-dump boundary) — check it and `extent` before
-   charting the most recent weeks.
+8. **Read the envelope**: `coverage` carries each relation's `extent` and
+   `freshness_lag_seconds` (the freshness class itself is on
+   `/v1/scry/schema?relation=`) — check `extent.max` before charting the
+   most recent weeks (reddit past its newest Arctic dump is the thin live
+   tail).
 
 The `recipes` tool is the live catalog; this
 table is the shelf as measured on lesswrong 2026-01-01.. (2026-08-24).
@@ -1149,11 +1151,11 @@ count, sort the page yourself.
 | `stackexchange.posts` | `lower(concat(ifNull(title, ''), ' ', ifNull(payload, ''), ' ', ifNull(tags, '')))` | 0.7s |
 | `quora.answers` | `lower(concat(question_title, ' ', content))` | 0.4s |
 | `courts.china_judgments` | `full_text` (no lower) | 0.4s |
+| `crawl.pages` | `lower(ifNull(text, ''))` | 0.16s (one host, 7 days) |
 
 No door: `internet.text` and `social.posts` (union views never reach the
 branch indexes, >150s — anchor with hasToken/hasAllTokens there, 4.2s
-measured), `crawl.pages` (words-validator refuses substring LIKE on the
-served column), `commoncrawl.distillate` (words index only).
+measured), `commoncrawl.distillate` (words index only).
 
 ### Vocabulary expansion from the corpus
 
