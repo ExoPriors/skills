@@ -443,7 +443,7 @@ programmable instrument; the searches worth running are the ones only you
 would think to compose. Shapes that reward that creativity:
 
 - Earliest attestation: `hasToken(search_text_lc, 'term')` on
-  `internet.text` ordered by `original_timestamp ASC` — when and where a
+  `internet.text` ordered by `ts ASC` — when and where a
   phrase first appeared.
 - An author's written history: one handle across reddit, HN, and mailing
   lists over two decades (`author` on `internet.text`, unindexed — anchor it with a token or source filter), drift
