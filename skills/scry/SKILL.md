@@ -702,8 +702,13 @@ curl -s https://api.scry.io/v1/scry/query \
   metering defect. Daily totals
   come from `GET /v1/scry/account` (`spend_today_usd`, `queries_today`).
 - Every query response carries a `coverage` block: one entry per referenced
-  relation with its measured `extent`, declared `known_holes`, and
-  `freshness_lag_seconds`. Read it before you interpret an empty result.
+  relation with its measured `extent`, declared `known_holes`,
+  `freshness_lag_seconds`, and — when one row is an observation rather than
+  the entity — `grain` (`logical_key`, `version_column`): on such a relation
+  a plain `SELECT` returns revisions, a key can recur, `count()` counts
+  revisions; count entities with `uniqExact(<logical_key>)` and keep one
+  row per entity with `ORDER BY <version_column> DESC LIMIT 1 BY
+  <logical_key>`. Read the block before you interpret an empty result.
   Zero rows inside a measured extent with no known hole is meaningful
   absence; zero rows outside it means the range is not landed. An empty
   result also carries `empty_result_note` stating this rule. Parse it
