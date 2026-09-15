@@ -695,7 +695,7 @@ curl -s https://api.scry.io/v1/scry/query \
 - Per-query charges arrive in the query response body: `burden_nanodollars`
   (the metered burden of your query) beside
   `spend_nanodollars` (what you actually paid under the fairness charge
-  law — can exceed the raw meter for heavy identities), plus `duration_ms`, `read_rows`,
+  law), plus `duration_ms`, `read_rows`,
   `read_bytes`, and `record_id`. `billing_mode` names the regime:
   `free_slack` means authenticated queries settle at $0 while the system
   has slack — spend=0 with a large burden is that policy working, not a
@@ -725,8 +725,13 @@ curl -s https://api.scry.io/v1/scry/query \
   follows the extent column: second precision on scan-basis relations;
   Date columns (and parts-basis date metadata) resolve to midnight, so
   check `extent.basis` before reading the clock part as exact.
-- Pricing is fair, not capped: charges engage only under measured
-  congestion, weighted by your own rolling-week usage. The full law —
+- Pricing is fair, not capped: charges engage only past half occupancy
+  (`load_pressure` > 0.5), by `machine_engagement`; identity fairness is
+  telemetry only (`identity_fairness_model` on `GET /v1/scry/pricing`).
+  `GET /v1/scry/price` posts `total_multiplier` beside `billing_regime`:
+  `free_slack` means a query admitted now settles at spend 0 whatever the
+  multiplier says, `congested` means the wallet rails engage;
+  `congestion_pricing_active` is the same bit as a boolean. The full law —
   rates, bands, and the operator's current price multiplier — is
   published as `charge_law` on `GET /v1/scry/pricing`. Off-peak
   research costs least (slack is free).
