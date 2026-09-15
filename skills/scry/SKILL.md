@@ -10,7 +10,7 @@ description: >-
 
 # Scry Skill
 
-Scry is read-only SQL (ClickHouse dialect) over registered public corpora
+Scry is read-only SQL (the Scry SQL dialect) over registered public corpora
 — Hacker News, Reddit, the Twitter archive, books, papers, forums, SEC
 filings, the crawl — one call from a question to cited rows. Queries are
 free while the system has slack: every query response reports `billing_mode`
@@ -210,7 +210,7 @@ MCP `sql` with `q` requires one registered `relation`, never `"*"`.
 It returns ordinary SQL rows and the executed `compiled_sql`; it does not
 silently weaken a zero-result query. Inspect that SQL before interpreting
 membership. With `explain: true`, the statement is validated and its
-ClickHouse index analysis is returned without executing the corpus query,
+the engine's index analysis is returned without executing the corpus query,
 beside a `forecast` — `rows_est`, `bytes_est_uncompressed` and `seconds_est`
 from the measured rows and bytes per granule and the measured scan rate,
 `fits_max_seconds` against the deadline the call would run under, and
@@ -628,7 +628,7 @@ curl -s https://api.scry.io/v1/scry/query \
   `... WHERE original_author = {author:String} ... LIMIT 50`. Approved
   types: `String`, `UInt8..UInt64`, `Int8..Int64`, `Float32`, `Float64`,
   `Date`, `DateTime`. Keep `LIMIT` literal.
-- Backslashes in `String` parameter values: ClickHouse parses the value
+- Backslashes in `String` parameter values: the engine parses the value
   in its escaped format, so a raw `\b` becomes a backspace byte and a
   regex such as `\bRust\b` matches nothing. Double each backslash
   (`\\bRust\\b`) or write the regex without backslashes

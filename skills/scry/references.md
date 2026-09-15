@@ -1017,7 +1017,7 @@ License-gated families (NRC, LIWC, SentiStrength data, SenticNet, MFD
 2.0 unverified) are deliberately absent — tracked in
 `future-ideal-obligations.toml`.
 
-## Scry query patterns (ClickHouse SQL dialect)
+## Scry query patterns (Scry SQL dialect)
 
 Call `GET /v1/scry/schema`, choose an enabled registered relation, then send one
 bounded SQL statement to `POST /v1/scry/query`.
@@ -1588,7 +1588,7 @@ Composition costs no embedding tokens.
 
 | Status | First move |
 | --- | --- |
-| `400` | Re-read `/v1/scry/schema`; fix ClickHouse syntax, relation, columns, or missing `LIMIT`. |
+| `400` | Re-read `/v1/scry/schema`; fix the SQL syntax, relation, columns, or missing `LIMIT`. |
 | `401` | Reload `SCRY_API_KEY` and remove whitespace. |
 | `402` | Inspect account, pricing, and funding state. |
 | `403` | Use a key with Scry scope; do not probe engine catalogs. |
@@ -1609,7 +1609,7 @@ query to a fallback database.
   aggregates nor sorts: without `x-scry-max-staleness` its rows are served in
   place of the error), `elapsed_ms`, and `burden_nanodollars` when metered.
 - The parser accepts the standard `WITH <name> AS (SELECT ...)` CTE form.
-  ClickHouse scalar `WITH <expr> AS <name>` fails as a parse error. Inline the
+  The scalar `WITH <expr> AS <name>` form fails as a parse error. Inline the
   expression or use the standard CTE form.
 - `query_exposure_exhausted`: raise the per-query ceiling with an
   `x-scry-budget: <nanodollars>` header (e.g. `1000000000` = $1). HTTP 400
