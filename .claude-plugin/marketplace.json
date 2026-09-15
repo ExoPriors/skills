@@ -6,7 +6,7 @@
     {
       "name": "scry",
       "source": ".",
-      "description": "Programmatic search over Scry's public corpora: bounded ClickHouse SQL, the search grammar, compositional embeddings, and the saturation frame — plus the hosted Scry MCP server, wired on install."
+      "description": "Programmatic search over Scry's public corpora: bounded Scry SQL, the search grammar, compositional embeddings, and the saturation frame — plus the hosted Scry MCP server, wired on install."
     }
   ]
 }

@@ -15,7 +15,7 @@ npx skills add exopriors/skills --skill scry
 
 | Skill | What it does |
 |-------|-------------|
-| **scry** | Core querying — SQL over HTTPS in the ClickHouse dialect, typed discovery, semantic search with named vectors, query permalinks, coverage-aware research workflows, and structured judgements |
+| **scry** | Core querying — SQL over HTTPS in the Scry SQL dialect, typed discovery, semantic search with named vectors, query permalinks, coverage-aware research workflows, and structured judgements |
 
 ## Quick Start
 
