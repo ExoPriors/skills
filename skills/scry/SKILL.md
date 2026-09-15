@@ -574,6 +574,7 @@ the complete document. The doors:
 | `orkut.topics` / `orkut.replies` | Orkut community forums 2004–2014 from the Wayback Machine: 120.6M topics, 897.3M replies (`body` full-text indexed), mostly Brazilian Portuguese |
 | `community_notes.notes` / `community_notes.ratings` | X Community Notes public export (2025-02-22): every note with its `tweet_id`, every rating; `community_notes.status_history` / `community_notes.enrollment` are depth |
 | `twitter.recsys_follow_graph` | Twitter's RecSys 2022 follow graph, 261M anonymised edges — structure only, never joins `twitter.users` |
+| `onion.hosts` / `onion.host_observations` | The onion web's hosts (latest state per `onion_host` = newest `updated_at`) and the per-attempt availability time series (`state` alive/dead/http_error); flagged hosts are structurally invisible. Page text (`onion.pages`) and the link graph (`onion.links`) are enterprise relations, served to operator-approved accounts only (hello@scry.io) |
 | `streams.vod_chat` / `streams.vods` | Replayed Twitch and Kick VOD chat (offset, user name, message) with the VOD roster; live Twitch IRC with ids is `twitch.messages` |
 
 Schema contracts carry measured `value_spaces` — the live vocabulary of
