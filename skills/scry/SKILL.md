@@ -34,7 +34,7 @@ Who said "vibe coding" before Karpathy:
 
 ```sql
 SELECT tweet_id, original_timestamp, text
-FROM twitter.tweets_latest
+FROM twitter.tweets
 WHERE hasAllTokens(search_text_lc, ['vibe', 'coding'])
   AND positionCaseInsensitive(search_text_lc, 'vibe coding') > 0
   AND original_timestamp < '2025-02-01'
