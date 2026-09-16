@@ -628,7 +628,9 @@ curl -s https://api.scry.io/v1/scry/query \
   `POST /v1/scry/query?param_author=karpathy` with
   `... WHERE original_author = {author:String} ... LIMIT 50`. Approved
   types: `String`, `UInt8..UInt64`, `Int8..Int64`, `Float32`, `Float64`,
-  `Date`, `DateTime`. Keep `LIMIT` literal.
+  `Date`, `DateTime`, `Bool`, and `Array(T)` or `Nullable(T)` over any of
+  them (an array value is a literal `[1,2]` / `['a','b']`; NULL is `\N`;
+  the MCP `sql` tool takes a JSON array or null). Keep `LIMIT` literal.
 - Backslashes in `String` parameter values: the engine parses the value
   in its escaped format, so a raw `\b` becomes a backspace byte and a
   regex such as `\bRust\b` matches nothing. Double each backslash
