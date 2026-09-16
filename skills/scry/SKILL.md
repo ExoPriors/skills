@@ -621,6 +621,16 @@ curl -s https://api.scry.io/v1/scry/query \
   --data "SELECT hn_id, title, original_author, original_timestamp, uri FROM hackernews.items WHERE hn_id >= (SELECT max(hn_id) AS n FROM hackernews.story_scores WHERE observed_on >= today() - 7) - 100000 AND title != '' ORDER BY hn_id DESC LIMIT 20"
 ```
 
+Every MCP tool is one `tools/call` on the same door by curl (live readback
+of a deploy, 2026-09-16): `POST https://api.scry.io/mcp` with the Bearer key,
+`content-type`/`accept: application/json`, `mcp-protocol-version: 2025-06-18`,
+and the door's match law — `mcp-method` and `mcp-name` headers mirroring the
+JSON-RPC `method` and tool `name`. Arguments are exactly the tool's
+`inputSchema` from `tools/list`: `datalog` takes the program under `program`
+(its `resident` is `"on"`/`"off"`), `coverage_estimate` requires `model` and
+`max_chunks`, `embed` composes with `expression` + `name`. An undeclared key
+is refused by name before the tool runs.
+
 ## Query permalinks
 
 - Typed placeholders make a query repeatable. Put `{name:Type}` in the SQL
