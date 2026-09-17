@@ -65,7 +65,7 @@ tighter WHERE or LIMIT, or a smaller sibling relation
 (`reddit.comments_popular` beside `reddit.comments`, `x_open.tweets`
 beside `twitter.tweets`); the `x-scry-explain: 1` header (MCP `explain:
 true`) pre-flights a wide statement for free — the index analysis returns
-and nothing runs. Unasked, a read past a second, a cut, an empty result
+and nothing runs but an ANN statement's lane search. Unasked, a read past a second, a cut, an empty result
 or a kill carries a `scan` warning (the rarest token's sampled df, the
 rows read against the relation's rows, every token's df when nothing
 matched) and `faster` when a sibling relation answers the same rows;
@@ -84,7 +84,7 @@ the space covered, not just the hits.
 The live schema is the contract; static relation lists are only
 orientation.
 
-**Skill generation**: `2026082203`
+**Skill generation**: `2026091700`
 
 ## Workflow
 
@@ -97,7 +97,7 @@ orientation.
    below serves raw HTTP. If neither an MCP connection nor a key is
    available, stop before going further and direct the user to
    `https://scry.io/#console`.
-2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026082203`.
+2. Call `GET /v1/scry/context?mode=agent&skill_generation=2026091700`.
    For worked, measured query shapes, `GET /v1/scry/examples?mode=index`
    (free, no key) lists the query-complexity tree one row per entry —
    every entry introduces exactly one construct atop its parent's, from
@@ -145,7 +145,7 @@ orientation.
    `embeddings.hackernews_items`, WHERE predicates on `hn_id` (`=`, `IN`,
    `>=`, `<=`, `BETWEEN`) scope the search before ranking. `hn_id` is
    monotone with item time: a date window is an id window, with boundaries
-   from `SELECT min(hn_id), max(hn_id) FROM hackernews.items WHERE original_timestamp BETWEEN ...`.
+   from `SELECT min(hn_id) AS lo, max(hn_id) AS hi FROM hackernews.items WHERE original_timestamp BETWEEN ...`.
    On `embeddings.crawl_pages`, `host` (`=`, `IN`) scopes the search before
    ranking. Other WHERE predicates post-filter the candidate window. On
    chunked relations `ORDER BY distance ASC LIMIT 1 BY <key> LIMIT n`
@@ -159,7 +159,10 @@ orientation.
    sets scan a large share of the table and run 30-60s. `hasToken` is
    case-sensitive, and `hasTokenCaseInsensitive` skips the text index: for
    either case use `hasAnyTokens(col, ['Term', 'term'])` or a lowercased
-   column such as `search_text_lc`. A slow query's
+   column such as `search_text_lc`. Tokens are whole words: a `hasAllTokens`
+   prefilter beside a substring phrase test (`positionCaseInsensitive`)
+   names only the tokens every spelling shares — `superconductor` as a
+   token drops `superconductors`. A slow query's
    response carries a `performance_note` naming the fix. For broad
    topical questions with only common words, use the embeddings helpers
    instead.
@@ -275,16 +278,14 @@ scry_recipe('a & b'))` beside each count says how much they overlap on
 the relation you quantify over, and a stance pair that overlaps heavily
 is one recipe with a missing stance.
 
-Guiding knobs beyond the query text: `snippet_chars` (64-1200, default
-240) widens each result's served context window; `max_per_source` (>=1)
-caps any one source's share of the page; `limit`, `sources`, `kinds`,
-`from`/`to` bound the pool. In-query, `NEAR/50` sets the proximity window
-in characters, `"phrase"~3` the slop window in words, and `word~1` the
-edit-distance window for typo tolerance.
+The guiding knobs ride in the line: `NEAR/50` sets the proximity window
+in characters, `"phrase"~3` the slop window in words, `word~1` the
+edit-distance window for typo tolerance (a `q` line resolves it;
+`scry_lex` refuses it), and `source:`, `after:`, `before:` bound the pool.
 
 Any community- or venue-scoped question starts from an enumerated source
 set: run the inexpensive partition-enumeration query on the candidate relations
-(e.g. `SELECT source, count() FROM forums.posts GROUP BY source`; subreddit
+(e.g. `SELECT source, count() AS n FROM forums.posts GROUP BY source LIMIT 100`; subreddit
 and list catalogs likewise) and report which sources were consulted and
 which excluded. Missing a source that was one GROUP BY away is the
 corpus's most common research failure.
@@ -536,7 +537,7 @@ the complete document. The doors:
 
 | Door | Purpose |
 | --- | --- |
-| `internet.text` | The unified lexical surface: one row per text document across every text relation (reddit, twitter, hackernews, stackexchange, mastodon, crawl, internet documents, academic, forums, mailing lists, bluesky, commoncrawl) with token-indexed `search_text_lc` — start corpus-wide lexical questions here; `relation` names the underlying surface for hydration |
+| `internet.text` | The unified lexical surface: one row per text document across every text relation (reddit, hackernews, stackexchange, mastodon, crawl, internet documents, academic, forums, mailing lists, bluesky, commoncrawl, books, github, sec; X rows are reached only through `twitter.*`) with token-indexed `search_text_lc` — start corpus-wide lexical questions here; `relation` names the underlying surface for hydration |
 | `academic.catalog` | One merged bibliographic row per paper across the whole academic estate; joins full text (`academic.papers`), assessments, and embeddings via `paper_key` |
 | `openalex.works` | Scholarly work metadata, authorships, topics, citation graph |
 | `books.catalog` | Unified bibliographic catalog (file-backed book index, DOI journal index, library metadata records); `idx` names the record family — see its value space |
@@ -594,10 +595,11 @@ name.
 Each relation's contract carries `freshness` as a class beside the measured
 lag: `live` (new rows land within 15 minutes), `hourly` (within an hour),
 `daily` (within a day), `periodic` (a longer scheduled cadence), or `frozen`
-(nothing lands). `freshness_lag_seconds` is the
+(no scheduled cadence: the lane is stopped, lands on demand, or waits on an
+upstream export). `freshness_lag_seconds` is the
 age of the newest landed row at the last probe, `null` before the first. Read
 the lag against the class, not against the clock: a `frozen` relation's lag is
-its age, not a fault. The document names relations by `relation` only —
+the time since its last demand-driven or export landing, not a fault. The document names relations by `relation` only —
 probe SQL, loader identity, and cadence numbers are not served. An `explain`
 forecast names the physical table each read touches beside its `relation`;
 only the relation name is queryable.
@@ -752,11 +754,8 @@ is refused by name before the tool runs.
   <n>` (MCP `max_seconds`) is a hard execution deadline — the runtime kills
   the query at n seconds with a typed timeout error, you pay only for what
   ran, and a query that states none is killed at 15 s. Predict the runtime
-  and send ~1.5× it — but the accepted ceiling floats with box load (3 s at
-  pressure 0.74, 2026-09-13): a declared value above it is refused outright
-  with HTTP 429 `query_capacity_exhausted` naming the current ceiling, so an
-  unattended rail declares none and retries a 429 once after ~15 s rather
-  than pinning a large number. `X-Scry-Budget:
+  and send ~1.5× it (maximum 2000; a larger value is clamped, never
+  refused, and no other account's load shortens it). `X-Scry-Budget:
   <nanodollars>` is a runaway kill-switch, not a spend statement: while
   the system has slack a query bills nothing, and the budget still binds the
   raw machine meter — a small cap kills large scans that would have
@@ -785,20 +784,10 @@ is refused by name before the tool runs.
   envelope's `rerank` block carries `{applied, model, column, scores}`
   (scores aligned to returned row order) — or the exact reason rows
   stayed in SQL order; a rerank failure never fails the billed query.
-- MCP `sql` with `q` takes the same `rerank` directive and re-orders the
-  retrieved candidate pool (~40-60 rows — the candidates,
-  never the corpus) on the local lanes, $0, typically +0.3-0.8 s, ≤ ~4 s.
-  Companions `rerank_tier: fast|quality` and `rerank_depth` (default =
-  the whole pool, max 64; narrows scoring, never widens retrieval —
-  `limit` stays the returned count). Scored rows carry
-  `score_kind: rerank` with request-local scores; a reranked page is
-  single-page (no cursor). Every response's `rerank` block reports
-  `{requested, applied, mode, tier, model, scope: candidate_set,
-  candidate_count, depth_scored, rerank_ms, degraded_reason}` — including
-  the default relevance pass, so the served order is never unexplained. If
-  the documents you want may not match the query's words, widen the
-  query: no reranker retrieves what retrieval did not admit. Deeper than
-  the pool, use `rerank` on rows you hold.
+  MCP `sql` with `q` takes the same directive over the compiled
+  statement's page. If the documents you want may not match the query's
+  words, widen the query: no reranker retrieves what retrieval did not
+  admit.
 - To re-order documents you already hold (or to use the hosted
   long-document tier), `POST
   /v1/scry/rerank` (MCP `rerank`) with `query`, `documents: [{id,text}]`
@@ -809,10 +798,10 @@ is refused by name before the tool runs.
   `GET /v1/scry/context`. Scores are monotonic ranking signals, not
   calibrated probabilities, and are not comparable across models. A
   degraded tier returns identity order plus a `degraded_reason` — never
-  a silent reorder. Local lanes score only the leading 3,500 characters;
-  `usage.local_prefix_char_limit` and `usage.locally_truncated_documents`
-  disclose that window when local scoring applies. Missing metadata is not
-  full-document coverage. For longer sources, retain original provenance
+  a silent reorder. Local lanes score every 3,500-character window of a
+  document (stride 3,000) and keep the best: each result carries
+  `document_chars` and `best_window`, and `usage.windows_scored` counts
+  the inputs. For longer sources, retain original provenance
   and submit evidence-focused passages with stable ids. For judgement-grade
   pairwise comparisons, the offering points at `/v1/judgements/runs`.
 - For "what does the fresh web say about X since my cutoff", freshness

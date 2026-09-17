@@ -384,7 +384,7 @@ Climb it; most questions resolve before the top.
    decide on positions.
 3. **Pattern** — `scry_lex('/GPT-[0-9]+(\.[0-9]+)?/')`: a regex over the
    whole estate, prefiltered by its required literals so the index still
-   prunes; `scry_compile` with `explain: true` prices it before you spend.
+   prunes; `explain: true` prices it before you spend.
 4. **Recipe** — `scry_recipe('mech_interp')`: every surface form someone
    already derived and measured, as one operand; `scry_recipe_score
    ('vader_polarity')` as a per-row token-weighted signal, or
@@ -404,7 +404,7 @@ Climb it; most questions resolve before the top.
 6. **Time series** — the same predicate under `GROUP BY
    toStartOfMonth(...)`: a term's birth date, its peak, its decay. Every
    concept has one; `mechinterp` did not exist in 2019.
-7. **Estate sweep** — `scry_compile` with `relation: "*"` and `counts:
+7. **Estate sweep** — `POST /v1/scry/compile` with `relation: "*"` and `counts:
    true`: where a vocabulary lives across every corpus, with per-relation
    denominators, in one call. This is the "which community talks like
    this" question answered without reading anything.
@@ -1607,7 +1607,8 @@ query to a fallback database.
   (the deadline that applied; at 2000 shard by an indexed time window instead),
   `partial_possible` (true only for a deadline kill of a statement that neither
   aggregates nor sorts: without `x-scry-max-staleness` its rows are served in
-  place of the error), `elapsed_ms`, and `burden_nanodollars` when metered.
+  place of the error), `elapsed_ms`, `burden_nanodollars` when metered, and
+  `spend_nanodollars` (what the failed run settled at) once it settled.
 - The parser accepts the standard `WITH <name> AS (SELECT ...)` CTE form.
   The scalar `WITH <expr> AS <name>` form fails as a parse error. Inline the
   expression or use the standard CTE form.
