@@ -7,15 +7,22 @@ Works with Claude Code, Cursor, Codex, Gemini CLI, and [40+ other agents](https:
 ## Install
 
 ```bash
-# Scry skill
+# every skill
+npx skills add exopriors/skills
+
+# one skill
 npx skills add exopriors/skills --skill scry
 ```
 
-## Skill
+## Skills
 
-| Skill | What it does |
-|-------|-------------|
-| **scry** | Core querying — SQL over HTTPS in the Scry SQL dialect, typed discovery, semantic search with named vectors, query permalinks, coverage-aware research workflows, and structured judgements |
+`scry` is the core: authentication, the query door, response fields, discovery, and research conduct. Every other skill is a specialization — one family of sources or one method — installed beside it.
+
+<!-- skills:begin -->
+| Skill | Use when |
+|-------|----------|
+| **scry** | Use Scry's read-only SQL research surface (/v1/scry/schema, /v1/scry/query) for bounded SQL over the public internet, provenance, and vector helpers. Also use when a research ask wants diverse, orthogonal sources, angles, hypotheses, or probe phrasings — includes the enumeration discipline and the /v1/creativity/outsized fan-out. |
+<!-- skills:end -->
 
 ## Quick Start
 
@@ -34,7 +41,7 @@ Or just ask your agent: *"Search Scry for recent papers on mechanistic interpret
 
 ## What's in the corpus?
 
-The live schema is the coverage authority: `GET /v1/scry/schema` (with your API key) lists every enabled relation with its columns, counts, and freshness, and a relation omitted there is unavailable. Registered families include Hacker News, full-retention Reddit, a multi-community forum corpus (LessWrong, EA Forum, and more), Bluesky, Mastodon, OpenAlex works and authors, full-text academic papers, Stack Exchange, mailing-list and Usenet archives, parsed public agent skills, and Voyage embedding relations over several of these.
+The live schema is the coverage authority: `GET /v1/scry/schema` (with your API key) lists every enabled relation with its columns, counts, and freshness, and a relation omitted there is unavailable. Registered families include Hacker News, full-retention Reddit, a multi-community forum corpus (LessWrong, EA Forum, and more), Bluesky, Mastodon, OpenAlex works and authors, full-text academic papers, books, the historical Twitter archive, prediction markets, mailing lists, SEC filings, GitHub, and archived web pages.
 
 ## Capabilities
 
@@ -48,7 +55,7 @@ The live schema is the coverage authority: `GET /v1/scry/schema` (with your API 
 
 ## Contributing
 
-This repository is a publish target: the `skills/` tree is projected from ExoPriors' internal canonical repository, and direct edits here are overwritten on the next sync. Found a defect or a stale claim? Open an issue — see [CONTRIBUTING.md](CONTRIBUTING.md).
+This repository is a publish target: the `skills/` tree and the skills table above are projected from ExoPriors' internal canonical repository, and direct edits here are overwritten on the next sync. Found a defect or a stale claim? Open an issue — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
