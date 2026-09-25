@@ -2,15 +2,15 @@
 name: scry
 description: >-
   Use Scry's read-only SQL research surface (/v1/scry/schema, /v1/scry/query)
-  for bounded SQL over registered public-corpus relations, provenance, and
+  for bounded SQL over the public internet, provenance, and
   vector helpers. Also use when a research ask wants diverse, orthogonal
-  sources, angles, hypotheses, or probe phrasings — carries the enumeration
+  sources, angles, hypotheses, or probe phrasings — includes the enumeration
   discipline and the /v1/creativity/outsized fan-out.
 ---
 
 # Scry Skill
 
-Scry is read-only SQL (the Scry SQL dialect) over registered public corpora
+Scry is read-only SQL (the Scry SQL dialect) over the public internet
 — Hacker News, Reddit, the Twitter archive, books, papers, forums, SEC
 filings, the crawl — one call from a question to cited rows. Queries are
 free while the system has slack: every query response reports `billing_mode`
@@ -57,7 +57,7 @@ ORDER BY n DESC
 LIMIT 10
 ```
 
-Every response carries `rows`, `read_rows`, `coverage`,
+Every response includes `rows`, `read_rows`, `coverage`,
 `deadline_partial`, `truncated`, and the meter (`burden_nanodollars` is
 what the machine did, `spend_nanodollars` what you paid). A cut scan
 (`deadline_partial: true`, or a deadline error) wants a rarer token, a
@@ -66,7 +66,7 @@ tighter WHERE or LIMIT, or a smaller sibling relation
 beside `twitter.tweets`); the `x-scry-explain: 1` header (MCP `explain:
 true`) pre-flights a wide statement for free — the index analysis returns
 and nothing runs but an ANN statement's lane search. Unasked, a read past a second, a cut, an empty result
-or a kill carries a `scan` warning (the rarest token's sampled df, the
+or a kill has a `scan` warning (the rarest token's sampled df, the
 rows read against the relation's rows, every token's df when nothing
 matched) and `faster` when a sibling relation answers the same rows;
 `x-scry-context` (MCP `context`) is `auto`, `always`, or `none`.
@@ -107,20 +107,20 @@ orientation.
    `?mode=chains` lists root-to-leaf ladder walks; the bare route returns
    every entry in full (144 KB).
 3. Discover from the doors. The default `GET /v1/scry/schema` document
-   already carries full contracts for the primary-tier doors plus a compact
+   already includes full contracts for the primary-tier doors plus a compact
    `depth_relations` index of every supporting table; fetch further full
    contracts with `GET /v1/scry/schema?relation=<name>[,<name>]`, or
    `?mode=index` for the whole catalog as one `relation | tier | extent |
    lag | purpose` line per relation (both also exposed as the MCP `schema`
    tool's `mode` and `relation` arguments; the MCP default is the index and
-   `mode="contract"` carries the product contract, census, and live
+   `mode="contract"` returns the product contract, census, and live
    statistics). Schema discovery is also one SQL call: `scry.relations`
    and `scry.columns` are the same catalog served as relations you can
    filter and join, e.g. SELECT relation FROM scry.columns WHERE name =
    'author_id' LIMIT 100. Use only
    relations and helper functions returned there, and read each relation's
    `query_guidance` block — `filter_columns_first`, `indexed_predicates`,
-   `coverage_note` — before writing the first predicate: it names the
+   `coverage_note` — before writing the first predicate: it lists the
    indexed access paths. Never guess column names from memory of similar
    sources — a wrong column returns the relation's real column roster in
    the error, so one failed query self-corrects in one step; an unknown
@@ -138,7 +138,7 @@ orientation.
    centroids, debiasing) into a new saved handle with diagnostics —
    see `references.md` § Composing embeddings into saved handles and
    the schema's `vector_recipes`. The ANN set is dynamic — a relation
-   leaves it while its vector index re-materializes — and the schema names
+   leaves it while its vector index re-materializes — and the schema lists
    the live set: only surfaces with `serves_ann: true` accept ANN ranking
    (the rest still serve plain SQL). ANN queries must be standalone (no
    JOIN); hydrate companion text in a second query. On
@@ -163,7 +163,7 @@ orientation.
    prefilter beside a substring phrase test (`positionCaseInsensitive`)
    names only the tokens every spelling shares — `superconductor` as a
    token drops `superconductors`. A slow query's
-   response carries a `performance_note` naming the fix. For broad
+   response includes a `performance_note` that states the fix. For broad
    topical questions with only common words, use the embeddings helpers
    instead.
 7. Parse results from `rows`, not a `data` key: each row is a plain JSON
@@ -182,7 +182,7 @@ patterns, vector handles — back into it under a `## Scry usage` heading.
 Writes are whole-document compare-and-swap on `if_version`; a 409 returns
 the current head — merge into it and retry. Keep it compressed: the cap is
 the decay function. If the document is empty and the user's local agent
-memory holds durable preferences, you may offer — once, and only with the
+memory contains durable preferences, you may offer — once, and only with the
 user's explicit approval — to consolidate them into Scry memory so they
 travel across platforms. Encrypted at rest server-side.
 
@@ -247,11 +247,11 @@ score. Use `scry_recipe_density('<slug>'[, text])` for weighted term
 occurrences per 1,000 characters across token, phrase, and regex members.
 Discover them with MCP `recipes`; publish a complete measured
 version with `recipe_write` and the returned head version as
-`if_version`. Derive candidates read-only with `recipe_derive`, then curate noise, measure the instrument, and publish through `recipe_write`. Write a recipe when you derived at least five surface forms,
+`if_version`; a slug belongs to the account that wrote its first version, so publish yours under a new slug. Derive candidates read-only with `recipe_derive`, then curate noise, measure the instrument, and publish through `recipe_write`. Write a recipe when you derived at least five surface forms,
 or when a polarity instrument survives reading 20 matches per cohort.
 Read those matches before publishing, keep provenance and measurements
 with the terms, and treat the stance as part of the recipe's identity.
-The seeded shelf and choosing guidance live in `references.md` § The
+The seeded shelf and choosing guidance are in `references.md` § The
 recipe shelf; the author/thread/time/graph quantifier shapes that
 recipes plug into are `references.md` § The quantifier chain; the full
 plane-by-plane operator map — quorum and frequency gates, named
@@ -264,13 +264,13 @@ exclusive-or — whitespace around the operator, one operator kind per
 call (chains like `a - b - c` fine, mixing refused), `^` takes exactly
 two operands, and score/density each measure one slug at a time. The
 expansion keeps a positive index-engaging leaf in front by
-construction, so the `NOT` inside `-`/`^` rides the residual. The same
+construction, so the `NOT` inside `-`/`^` is evaluated in the residual. The same
 booleans remain writable by hand (`scry_recipe('hedging') AND NOT
 scry_recipe('certainty')`), and the contrast ratio
 `countIf(scry_recipe('a')) / countIf(scry_recipe('b'))` per cohort
 cancels base rates. A composition worth reusing gets published as its
-own recipe (`derived_from` naming the algebra) — that also makes it
-scoreable. Terms may carry `form: "regex"` (RE2, compiled to
+own recipe (`derived_from` gives the algebra) — that also makes it
+scoreable. Terms may have `form: "regex"` (RE2, compiled to
 `match()`): give a regex-bearing recipe token or phrase recall leaves
 beside the patterns or it evaluates as a scan. Disjointness of two
 instruments is a property to measure, not assume: `countIf(
@@ -278,7 +278,7 @@ scry_recipe('a & b'))` beside each count says how much they overlap on
 the relation you quantify over, and a stance pair that overlaps heavily
 is one recipe with a missing stance.
 
-The guiding knobs ride in the line: `NEAR/50` sets the proximity window
+The guiding knobs are written in the line: `NEAR/50` sets the proximity window
 in characters, `"phrase"~3` the slop window in words, `word~1` the
 edit-distance window for typo tolerance (a `q` line resolves it;
 `scry_lex` refuses it), and `source:`, `after:`, `before:` bound the pool.
@@ -367,7 +367,7 @@ that change what a node is: `openalex.authors`/`institutions`/`works_of`,
 `twitter.by`/`following`/`followers`/`tweets_of`, `hackernews.by`/`items_of`,
 `forums.by`/`posts_of`, `github.repos_of`, `bluesky.by`/`posts_of`,
 `youtube.uploader`/`commenters`, `tiktok.videos_of`, `instagram.posts_of`,
-`crawl.urls_of`; rows carry `kind`; an unknown edge name returns the
+`crawl.urls_of`; rows have `kind`; an unknown edge name returns the
 catalog with measured costs), `filter`
 (in-walk attribute prune — changes what gets expanded and billed), `in`
 (intersection), `not_in` (stratified negation; on a recursive body it
@@ -379,11 +379,11 @@ largest components first — plus an optional per-relation `"rank":
 {handle, k}` (bare handle name) ordering final rows by exact distance to a handle
 (OpenAlex only); a relation left out of `out` ships only its per-depth
 counts, zero egress (`out: []` is the census). Every evaluation step
-is one ordinary metered statement under your own key; `depth` (default 3,
-at most 64) and 50k-row caps bound the walk; the envelope returns `{id, kind, parent,
-depth}` provenance rows (a sql atom's other columns ride in `attrs`), `counts` for every relation (an empty seed set
+is one ordinary metered statement under your own key; `depth` (a hop cap;
+absent walks to the fixpoint) and 50k-row caps bound the walk; the envelope returns `{id, kind, parent,
+depth}` provenance rows (a sql atom's other columns are returned in `attrs`), `counts` for every relation (an empty seed set
 shows `counts.seed.rows = 0`), a `meter` with `per_statement`, and
-`truncations[]` (empty = fixpoint over the graph the index holds; `edge_window`: a `cited_by` hop walks the newest 50 citers per work, so its count is a lower bound — census with `openalex.cited_by`). Prefer `rank` over intersecting a walk with a global ANN
+`truncations[]` (empty = fixpoint over the indexed graph; `edge_window`: a `cited_by` hop walks the newest 50 citers per work, so its count is a lower bound — census with `openalex.cited_by`). Prefer `rank` over intersecting a walk with a global ANN
 top-k — measured near-empty overlap at corpus scale. Rank is terminal: it orders a relation's final rows
 after the walk, so put it on the last relation (the hydrating one), not on a set another relation reads.
 
@@ -408,35 +408,8 @@ one or two edges when intermediate sets are large. Coauthors in one step:
  "out": ["co"]}
 ```
 
-The MCP tool contract carries ten worked templates, including a seed-keyed
+The MCP tool contract includes ten worked templates, including a seed-keyed
 citation closure and an anti-join.
-
-## First-contact audit rail (datalog)
-
-The datalog door improves by rotation: outside models meet it docs-only,
-attempt real research tasks, and report frictions; the lead folds the real
-ones (executor fix over wording), builds on colo2, lands, deploy-applies, and
-live-verifies. Rotations 1–13 (2026-09-09..11) ran this way.
-
-- Brief template `bin/datalog-audit-brief.md` (fill the numbered tasks; keep
-  the docs-only rule, the colo2 `/tmp/hunt-client/mcp.py` mechanics, the
-  ≤25-call cap, and "the report file is the deliverable — final chat text is
-  not seen"). Launcher `bin/datalog-audit.sh <model> <brief.md> <log>` runs
-  headless OMP from `/tmp/xp-dl-probes`; launch as
-  `(nohup bin/datalog-audit.sh <model> brief.md log >/dev/null 2>&1 &)`.
-  Models that have worked: `gemini-3.8-flash` (fast, fabricates quotes and
-  misreads figures), `openrouter/x-ai/grok-4.6` (careful, best cost tables),
-  `openrouter/deepseek/deepseek-v4-flash-0731` (slow, hours). Liveness
-  `pgrep -f "auditN-"`; progress `ls auditN-*.py | wc -l`.
-- An auditor's figure or quote is a lead, never a measurement: re-measure
-  before it lands (a quoted guide passage did not exist; an "11.5M rows"
-  figure was a LIMIT-10 early exit of a 510M-row read; a "16M rows" was the
-  hit range). Two auditors agreeing is still a lead.
-- An identical statement re-run within the shared-result window (300 s)
-  is served from the shared result — read_rows reads 1 and the burden is
-  the door's own time — so a second run never re-measures the first: change
-  a literal or wait out the window. Guide prose carries read-row magnitudes
-  as the pre-pay lesson, never dated nanodollar or seconds figures.
 
 ## Lexical range
 
@@ -447,11 +420,11 @@ and window functions turn retrieval into measurement. The corpus is a
 programmable instrument; the searches worth running are the ones only you
 would think to compose. Shapes that reward that creativity:
 
-- Earliest attestation: `hasToken(search_text_lc, 'term')` on
-  `internet.text` ordered by `ts ASC` — when and where a
-  phrase first appeared.
+- Earliest attestation: `hasToken(search_text_lc, 'term')` with
+  `min()` of the source clock, one statement per native text relation,
+  stacked — when and where a phrase first appeared.
 - An author's written history: one handle across reddit, HN, and mailing
-  lists over two decades (`author` on `internet.text`, unindexed — anchor it with a token or source filter), drift
+  lists over two decades (each relation's own author column, unindexed — anchor it with a token or a time window), drift
   measured with `countIf` per year.
 - Co-occurrence archaeology: `hasAllTokens` with two rare tokens and a
   date bound — who put two ideas together first.
@@ -468,15 +441,15 @@ creative* — is a coverage problem, not a writing problem. A list written
 in one breath anchors on its own first items, and a tuned model's first
 items are the mode; temperature does not repair that, and neither does
 asking yourself to be creative. Change the ask instead (`references.md`
-§ Orthogonal enumeration carries the procedure and the SQL):
+§ Orthogonal enumeration gives the procedure and the SQL):
 
 - **Roster before imagination.** Where the space is a measured value
-  space — forum `source`, subreddits, stackexchange `site`, `relation` on
-  `internet.text`, package `ecosystem` — the diverse set is the roster
+  space — forum `source`, subreddits, stackexchange `site`, the text
+  relations in the schema catalog, package `ecosystem` — the diverse set is the roster
   *covered*, not recalled: one GROUP BY enumerates it, choose across it,
   and report what was left out.
 - **Field before list.** Where the space is open — angles, registers,
-  hypotheses, communities no column names — write 3–6 axes that change
+  hypotheses, communities no column lists — write 3–6 axes that change
   the *mechanism* of a candidate (venue family, era, stance, register,
   scale, inversion), 2–6 values each, and cover the cells. One candidate
   per cell, written from that cell's conjunction alone, before looking at
@@ -520,14 +493,14 @@ above becomes its instrument.
 - Stop at saturation, not satisfaction: the tenth probe is where a field
   opens, and done is when new probes return only known rows. Report the
   grid itself — probed, found, unprobed — not only the hits. The MCP
-  `exhaustive_search` prompt carries this frame for any MCP client.
+  `exhaustive_search` prompt includes this frame for any MCP client.
 
 ## Registered surfaces
 
 The live schema is the coverage authority: relation inventory, row counts,
 per-source composition, freshness, and coverage extents come from
 `GET /v1/scry/schema` and each query response's `coverage` block, never from
-static text. Every relation carries a discovery `tier`: the default schema
+static text. Every relation has a discovery `tier`: the default schema
 document serves full contracts for the ~two dozen **primary-tier doors** (one
 start-here relation per corpus family) plus a compact `depth_relations` index
 of every supporting table — users, edges, comment variants, per-corpus
@@ -537,23 +510,22 @@ the complete document. The doors:
 
 | Door | Purpose |
 | --- | --- |
-| `internet.text` | The unified lexical surface: one row per text document across every text relation (reddit, hackernews, stackexchange, mastodon, crawl, internet documents, academic, forums, mailing lists, bluesky, commoncrawl, books, github, sec; X rows are reached only through `twitter.*`) with token-indexed `search_text_lc` — start corpus-wide lexical questions here; `relation` names the underlying surface for hydration |
 | `academic.catalog` | One merged bibliographic row per paper across the whole academic estate; joins full text (`academic.papers`), assessments, and embeddings via `paper_key` |
 | `openalex.works` | Scholarly work metadata, authorships, topics, citation graph |
-| `books.catalog` | Unified bibliographic catalog (file-backed book index, DOI journal index, library metadata records); `idx` names the record family — see its value space |
+| `books.catalog` | Unified bibliographic catalog (file-backed book index, DOI journal index, library metadata records); `idx` gives the record family — see its value space |
 | `embeddings.chunks` | The unified ANN vector surface over every embedded corpus |
 | `twitter.tweets` | The historical Twitter archive |
 | `reddit.posts` | Full-retention Reddit submissions; comments (`reddit.comments`, depth) join via `link_id = concat('t3_', id)` |
 | `hackernews.items` | Hacker News items with source identity and timestamps |
-| `stackexchange.posts` | Stack Exchange Q&A across landed sites (`site` value space is the roster) |
+| `stackexchange.posts` | Stack Exchange Q&A across indexed sites (`site` value space is the roster) |
 | `crawl.pages` | Promoted text extractions of observed web pages — the live web-page corpus |
 | `commoncrawl.distillate` | Clean genre-classified Common Crawl reading layer; CDX census and raw WET recall are its depth companions |
 | `social.posts` | Six frozen fringe-platform archives (voat, parler, gab, telegram, discord, truth_social) as one relation — always filter `platform`; profiles/edges/community directories are its depth companions (`social.users`/`edges`/`communities`) |
-| `github.repos` | The public GitHub repository universe (408M origins, Software Heritage export) keyed by owner; repo READMEs/docs/source live in `github.documents` (depth) |
+| `github.repos` | The public GitHub repository universe (408M origins as of 2026-06-04) keyed by owner; repo READMEs/docs/source are in `github.documents` (depth) |
 | `packages.catalog` | One merged row per software package across ~36 registries (`ecosystem` value space is the roster) |
 | `markets.catalog` | One folded row per prediction market across Kalshi, Polymarket, Manifold (`source`/`status` value spaces) |
 | `judgements.scores_current` | Latest cardinal judgement score per lens, axis, and entity |
-| `persons.links` | Cross-platform person resolution: public accounts clustered into persons by shared strong identity keys — enterprise relation, served to operator-approved accounts only (hello@scry.io); the `persons.link_coverage`/`content_coverage` aggregates stay open |
+| `persons.links` | Cross-platform person resolution: public accounts clustered into persons by shared strong identity keys — enterprise relation, served to operator-approved accounts only (hi@scry.io); the `persons.link_coverage`/`content_coverage` aggregates stay open |
 | `events.records` | In-person-event corpus (conferences), JSON records keyed by `event_slug` |
 | `courts.china_judgments` | China Judgments Online archive: ~85M published judgments 1985–2021, Chinese full text + structured metadata |
 | `cn_enterprise.companies` | China enterprise registry (GSXT), one best row per company keyed by USCC |
@@ -562,23 +534,25 @@ the complete document. The doors:
 | `threads.posts` | Threads (Meta) public posts, 2023-05 onward; `threads.profiles` is the author directory |
 | `vk.posts` / `vk.comments` | VK community wall posts and comments, 2007 onward, full-text indexed on `lower(text)`; `vk.communities` is the roster |
 | `nostr.events` | Nostr relay events (signed event JSON; `kind` 1 notes, 0 profiles) |
-| `youtube.videos_live` | YouTube metadata as currently observed (1B+ videos since 2026-08) — `youtube.videos` is the frozen 2021 census |
+| `youtube.videos_live` | YouTube metadata as observed from 2026-08 onward — `youtube.videos` is the frozen 2021 census |
 | `wikipedia.articles` | English Wikipedia article text, full page set kept current by recentchanges; `wikimedia.events` is the recent-change event stream |
-| `huggingface.repositories` | Hugging Face hub models/datasets/spaces with counters; `huggingface.snapshots_daily` is the daily history; `huggingface.repo_details` carries per-repo bytes on the hub (usedStorage), file sizes, and model details |
+| `huggingface.repositories` | Hugging Face hub models/datasets/spaces with counters; `huggingface.snapshots_daily` is the daily history; `huggingface.repo_details` has per-repo bytes on the hub (usedStorage), file sizes, and model details |
 | `reddit.subreddits` | Subreddit directory (description, subscribers, type, flags); `reddit.subreddit_rules` / `reddit.subreddit_wikis` are its depth |
 | `irs.form990` / `cms.open_payments` / `cfpb.complaints` / `jobs.postings` / `legistar.matters` | Envelope relations (`payload.record` is the upstream record): nonprofit filings, industry-to-provider payments, consumer finance complaints, live ATS job postings, municipal legislative matters |
 | `yc.companies` | Y Combinator company directory: every batch's company cards (name, one-liner, description, batch, status, industries, tags, locations, team size); the newest `observed_on` per `yc_id` is the current state |
 | `epstein.artifacts` | Source-native Epstein artifact index across DOJ and other public releases |
 | `agents.skills` | Parsed SKILL.md documents from public agent-skill repositories |
 | `lexicons.entries` | English lexicon envelopes: Wiktionary (kaikki.org) and GCIDE/Webster 1913 |
-| `amazon.reviews` / `amazon.items` | Amazon Reviews 2023 (McAuley Lab): 571.5M product reviews 1996–2023 with full-text `text`, and the item catalog (41.3M of its 48.2M items landed, 2026-09-10); join on `parent_asin` |
+| `amazon.reviews` / `amazon.items` | Amazon Reviews 2023 (McAuley Lab): 571.5M product reviews 1996–2023 with full-text `text`, and the item catalog (41.3M of its 48.2M items indexed, 2026-09-10); join on `parent_asin` |
 | `orkut.topics` / `orkut.replies` | Orkut community forums 2004–2014 from the Wayback Machine: 120.6M topics, 897.3M replies (`body` full-text indexed), mostly Brazilian Portuguese |
+| `zapytaj.questions` / `zapytaj.answers` | zapytaj.onet.pl, the Polish Q&A site: questions asked 2006 through mid-2016 and their answers through 2026 (`title` and `body` full-text indexed); `zapytaj.options` and `zapytaj.comments` are depth; join on `question_id` |
+| `tiktok.comments` | TikTok comments under public videos, by month of creation (`text` full-text indexed; `video_id` joins `tiktok.videos`, whose `source = 'tiago'` branch holds every commented video); `tiktok.reposts` / `tiktok.reposters` are the repost feeds, accounts as hashes |
 | `community_notes.notes` / `community_notes.ratings` | X Community Notes public export (2025-02-22): every note with its `tweet_id`, every rating; `community_notes.status_history` / `community_notes.enrollment` are depth |
 | `twitter.recsys_follow_graph` | Twitter's RecSys 2022 follow graph, 261M anonymised edges — structure only, never joins `twitter.users` |
-| `onion.hosts` / `onion.host_observations` | The onion web's hosts (latest state per `onion_host` = newest `updated_at`) and the per-attempt availability time series (`state` alive/dead/http_error); flagged hosts are structurally invisible. Page text (`onion.pages`) and the link graph (`onion.links`) are enterprise relations, served to operator-approved accounts only (hello@scry.io) |
+| `onion.hosts` / `onion.host_observations` | The onion web's hosts (latest state per `onion_host` = newest `updated_at`) and the per-attempt availability time series (`state` alive/dead/http_error); flagged hosts are structurally invisible. Page text (`onion.pages`) and the link graph (`onion.links`) are enterprise relations, served to operator-approved accounts only (hi@scry.io) |
 | `streams.vod_chat` / `streams.vods` | Replayed Twitch and Kick VOD chat (offset, user name, message) with the VOD roster; live Twitch IRC with ids is `twitch.messages` |
 
-Schema contracts carry measured `value_spaces` — the live vocabulary of
+Schema contracts include measured `value_spaces` — the live vocabulary of
 categorical spine columns (forum `source`, stackexchange `site`, market
 `source`/`status`, package `ecosystem`, book `idx`/`content_type`, tweet
 `lang`, subreddits) with row counts. Read them before writing a WHERE on a
@@ -587,21 +561,21 @@ categorical column; never guess an enum value —
 silent zero.
 
 Confirm enablement and columns with `/v1/scry/schema`. A relation omitted from
-that response is unavailable, even if this skill names its family. A relation
+that response is unavailable, even if this skill lists its family. A relation
 the schema lists can still refuse at admission for your key; treat a refusal
 as unavailable and use other relations. Never infer a table from a source
 name.
 
-Each relation's contract carries `freshness` as a class beside the measured
-lag: `live` (new rows land within 15 minutes), `hourly` (within an hour),
+Each relation's contract gives `freshness` as a class beside the measured
+lag: `live` (new rows arrive within 15 minutes), `hourly` (within an hour),
 `daily` (within a day), `periodic` (a longer scheduled cadence), or `frozen`
-(no scheduled cadence: the lane is stopped, lands on demand, or waits on an
-upstream export). `freshness_lag_seconds` is the
-age of the newest landed row at the last probe, `null` before the first. Read
+(no scheduled cadence: the lane is stopped, loads on demand, or waits on an
+upstream release). `freshness_lag_seconds` is the
+age of the newest indexed row at the last probe, `null` before the first. Read
 the lag against the class, not against the clock: a `frozen` relation's lag is
-the time since its last demand-driven or export landing, not a fault. The document names relations by `relation` only —
+the time since its last on-demand or upstream-release landing, not a fault. The document identifies relations by `relation` only —
 probe SQL, loader identity, and cadence numbers are not served. An `explain`
-forecast names the physical table each read touches beside its `relation`;
+forecast gives the physical table each read touches beside its `relation`;
 only the relation name is queryable.
 
 ## Starter
@@ -656,7 +630,7 @@ is refused by name before the tool runs.
   (use `{}` when there is nothing to freeze), and each declared parameter
   must have a default. The response's `permalink` field is the share's
   page URL — cite it as served; `share_slug` is its tail. A query share
-  carries exactly one of the query door's three envelopes: `sql` as above,
+  has exactly one of the query door's three envelopes: `sql` as above,
   `program` (the datalog program JSON exactly as `program` takes it,
   validated to shape at creation, `params: []` — a program's `{name}`
   splices are the same braces a `{p:String}` bind uses), or
@@ -685,7 +659,7 @@ is refused by name before the tool runs.
   `summary`, `payload`, `is_public` (absent fields stay as they are). There
   is no DELETE: `is_public: false` withdraws it from the index, and the edge
   cache can serve the old page and markdown twin for a few minutes after.
-  `https://scry.io/s/{slug}` is the page whatever format flag it carries;
+  `https://scry.io/s/{slug}` is the page whatever format flag it has;
   the JSON is `GET https://api.scry.io/v1/scry/shares/{slug}`.
 - A standing research question is a share too: `kind: "question"` with
   `payload: {prompt, brief?, asked_in?}` — `prompt` is the person's research
@@ -693,14 +667,33 @@ is refused by name before the tool runs.
   markdown on how to attack it (relations, angles, what a good answer looks
   like), `asked_in` the public URL where it was said. Any share of any kind
   contributes to a question by setting top-level `answers` to the
-  question's slug at creation (immutable after); the question's page and
+  question's slug at creation (immutable after; the question's owner can unhook one with `share_update` `detach`); the question's page and
   JSON (`contributions`) list every public contribution, and its markdown
-  twin (`https://scry.io/s/{slug}?format=md`; the API route ignores the flag) carries the literal contribute call. The open index is
+  twin (`https://scry.io/s/{slug}?format=md`; the API route ignores the flag) includes the literal contribute call. The open index is
   `https://scry.io/s` (`GET /v1/scry/shares?kind=question`, no credential).
   When someone voices a research want, post it as a question and hand them
   the permalink; when you finish a piece of work on one, publish the finding
   as a contribution — a hinted query share is the best kind, because the
-  question's page then carries a live playground.
+  question's page then has a live playground.
+- An inquiry can enter the board: a sql query share with `board: true`,
+  `payload.question` (the ask in the asker's words, verbatim, at most 300
+  characters) and `payload.approach` (the technical question it became —
+  what is measured, over which relations, with what denominators and
+  cutoffs — at most 4,000). The statement runs once under your key and its
+  first 200 rows freeze as the entry's evidence (`payload.snapshot`,
+  `measured_by: "server"`); an error or an empty result is refused by name
+  and nothing is stored. A public entry queues one judging round on your
+  wallet — the response's `judge` field says so — in which a model compares
+  every entry pairwise on four public criteria; the ranking at
+  `https://scry.io/board` (`GET /v1/scry/board`, no credential: the
+  criteria, their weights, the tiers, each entry's score ± σ) moves when the
+  round finishes, minutes later, and the entry's own `/s/{slug}` page then
+  states its tier and per-criterion ranks. The evidence is public:
+  `https://openpriors.com/l/query-board/<criterion>` lists every
+  comparison, and `judgements.scores_current` (a registered relation;
+  filter `lens = 'query-board'` and `axis_key`) is the same ledger as rows.
+  When a query answered a question worth keeping, offer the person the
+  entry.
 
 ## Adjacent runtime surfaces
 
@@ -711,12 +704,12 @@ is refused by name before the tool runs.
   (the metered burden of your query) beside
   `spend_nanodollars` (what you actually paid under the fairness charge
   law), plus `duration_ms`, `read_rows`,
-  `read_bytes`, and `record_id`. `billing_mode` names the regime:
+  `read_bytes`, and `record_id`. `billing_mode` gives the regime:
   `free_slack` means authenticated queries settle at $0 while the system
   has slack — spend=0 with a large burden is that policy working, not a
   metering defect. Daily totals
   come from `GET /v1/scry/account` (`spend_today_usd`, `queries_today`).
-- Every query response carries a `coverage` block: one entry per referenced
+- Every query response includes a `coverage` block: one entry per referenced
   relation with its measured `extent`, declared `known_holes`,
   `freshness_lag_seconds`, and — when one row is an observation rather than
   the entity — `grain` (`logical_key`, `version_column`): on such a relation
@@ -725,31 +718,36 @@ is refused by name before the tool runs.
   row per entity with `ORDER BY <version_column> DESC LIMIT 1 BY
   <logical_key>`. Read the block before you interpret an empty result.
   Zero rows inside a measured extent with no known hole is meaningful
-  absence; zero rows outside it means the range is not landed. An empty
-  result also carries `empty_result_note` stating this rule. Parse it
+  absence; zero rows outside it means the range is not indexed. An empty
+  result also includes `empty_result_note` stating this rule, and its typed
+  form `zero_rows` (`cause`: why this reply is empty; `establishes`:
+  `nothing`, `absent_in_landed` or `absent_in_source_as_landed`) — branch on
+  the codes, read the note for the reason. Parse it
   precisely: `known_holes: null` means the hole registry was unreadable
   (coverage-hole information is UNAVAILABLE — not "no holes"; that is
   `known_holes: []`). If `extent_error` is present, the extent shown is
   the last good measurement, not a live one — check `extent.computed_at`
   and treat the extent as advisory until the error clears (the
   `empty_result_note` text itself weakens in this state). Polling for
-  data that has not landed yet? `extent.max` tells you the corpus right
+  data that is not indexed yet? `extent.max` tells you the corpus right
   edge — poll the schema's lightweight coverage, not your full query.
-  `extent.newest_event_at` carries that same edge as a full UTC
-  timestamp — the newest landed entry's own event time. Precision
+  `extent.newest_event_at` gives that same edge as a full UTC
+  timestamp — the newest indexed entry's own event time. Precision
   follows the extent column: second precision on scan-basis relations;
   Date columns (and parts-basis date metadata) resolve to midnight, so
   check `extent.basis` before reading the clock part as exact.
-- Pricing is fair, not capped: charges engage only past half occupancy
-  (`load_pressure` > 0.5), by `machine_engagement`; identity fairness is
-  telemetry only (`identity_fairness_model` on `GET /v1/scry/pricing`).
-  `GET /v1/scry/price` posts `total_multiplier` beside `billing_regime`:
-  `free_slack` means a query admitted now settles at spend 0 whatever the
-  multiplier says, `congested` means the wallet rails engage;
+- Pricing is a market, not a cap: the posted `congestion_multiplier` c is
+  the lower of the lowest `max_multiplier` running and the dearest one
+  parked, while someone is parked at the full door, and 0 while nobody
+  waits. A running query
+  pays c on the larger of its slot-seconds and its work, never above its
+  own `max_multiplier`. `GET /v1/scry/price` posts c beside
+  `billing_regime`: `free_slack` means the price is 0 and a query admitted
+  now settles at spend 0, `congested` means the wallet rails engage;
   `congestion_pricing_active` is the same bit as a boolean. The full law —
   rates, bands, and the operator's current price multiplier — is
-  published as `charge_law` on `GET /v1/scry/pricing`. Off-peak
-  research costs least (slack is free).
+  published as `charge_law` on `GET /v1/scry/pricing`. An empty line is
+  free.
 - State how long you are willing to wait on every query: `X-Scry-Max-Seconds:
   <n>` (MCP `max_seconds`) is a hard execution deadline — the runtime kills
   the query at n seconds with a typed timeout error, you pay only for what
@@ -775,20 +773,20 @@ is refused by name before the tool runs.
   `x-scry-rerank: <ranking directive>` on `POST /v1/scry/query` — one
   call, rows come back re-ordered by the directive ("most
   methodologically rigorous first"), local lanes, $0. Companions:
-  `x-scry-rerank-column` names the text column (auto when exactly one
+  `x-scry-rerank-column` gives the text column (auto when exactly one
   scalar String column is in the result), `x-scry-rerank-tier:
   fast|quality` (default fast), `x-scry-rerank-top: N` keeps the head.
-  Non-ASCII directives ride the same header as
+  Non-ASCII directives are sent in the same header as
   `b64u:<base64url(utf-8)>`; the MCP `sql` tool takes the same
   controls as direct arguments. The
-  envelope's `rerank` block carries `{applied, model, column, scores}`
+  envelope's `rerank` block gives `{applied, model, column, scores}`
   (scores aligned to returned row order) — or the exact reason rows
   stayed in SQL order; a rerank failure never fails the billed query.
   MCP `sql` with `q` takes the same directive over the compiled
   statement's page. If the documents you want may not match the query's
   words, widen the query: no reranker retrieves what retrieval did not
   admit.
-- To re-order documents you already hold (or to use the hosted
+- To re-order documents you already have (or to use the hosted
   long-document tier), `POST
   /v1/scry/rerank` (MCP `rerank`) with `query`, `documents: [{id,text}]`
   (2..=1000) and optionally an `instruction` — the instruction is the point: "rank by methodological
@@ -799,17 +797,17 @@ is refused by name before the tool runs.
   calibrated probabilities, and are not comparable across models. A
   degraded tier returns identity order plus a `degraded_reason` — never
   a silent reorder. Local lanes score every 3,500-character window of a
-  document (stride 3,000) and keep the best: each result carries
-  `document_chars` and `best_window`, and `usage.windows_scored` counts
+  document (stride 3,000) and keep the best: each result has
+  `document_chars`, and `usage.documents` counts
   the inputs. For longer sources, retain original provenance
   and submit evidence-focused passages with stable ids. For judgement-grade
   pairwise comparisons, the offering points at `/v1/judgements/runs`.
 - For "what does the fresh web say about X since my cutoff", freshness
-  is a SQL predicate: `embeddings.crawl_pages` holds a rolling fresh
+  is a SQL predicate: `embeddings.crawl_pages` contains a rolling fresh
   crawl of allowlisted high-information hosts (major news, AI-lab and
   government announcement pages, primary technical sources), and its
   `observed_on` is the day the page was observed — an upper bound on
-  when a fact became public (rows without a clock sit at 1970-01-01). Mint an @handle
+  when a fact became public (NULL where the day is unknown; those rows pass no bound). Mint an @handle
   with `embed`, rank with the vector helper, and bound eligibility with
   `WHERE observed_on > toDate('<your training cutoff>')` — the
   predicate states when a page was first observed, not what you know.
@@ -823,18 +821,18 @@ is refused by name before the tool runs.
   `reasoning_effort`). Routing is restricted to zero-data-retention
   endpoints — every preset lane has one; a full model id without one
   is refused by the provider, never served with retention.
-  `model` is a preset naming a current lane — kimi, deepseek, gemini,
+  `model` is a preset that identifies a current lane — kimi, deepseek, gemini,
   gemini-flash, glm, grok, gpt, claude, gemma — or any full OpenRouter
   model id. Funding is the account's Scry-minted OpenRouter key (minted on
   first use, limit bound to the wallet's cash + promo credit — free
   signup credit funds Scry queries, never third-party inference — and
   settled at provider cost through the key's usage counter, no
   markup), or a caller-supplied `x-provider-key` header, never stored;
-  a 402 `insufficient_credits` names both ways forward. The reply's
-  `usage` carries the provider's own meter per call
+  a 402 `insufficient_credits` lists both ways forward. The reply's
+  `usage` gives the provider's own meter per call
   (`cost_nanodollars`, beside input/output/reasoning tokens) — total a
   multi-call job as it runs; an optional `purpose` (≤64 chars of
-  `[A-Za-z0-9._:-]`, e.g. `extension.sort`) lands in the operator's
+  `[A-Za-z0-9._:-]`, e.g. `extension.sort`) is recorded in the operator's
   `provider_calls.script_name` so a feature's spend is one SUM. Even
   under `reasoning_effort: "none"` some lanes spend hidden reasoning
   tokens against `max_tokens` (gemini-flash: 58 of a 64 cap, 2026-09-11)
@@ -851,8 +849,8 @@ is refused by name before the tool runs.
   `tools.allow` / `tools.deny` gate every MCP tool name at `tools/call`
   (validated against the live contract at write time; `whoami` is
   never gated), and a denied or altered call
-  names the setting that bound it (`enforced` array,
-  `disallowed_by_settings` status, `tool_denied`). `whoami` is the
+  identifies the setting that bound it (`enforced` array,
+  `model_disallowed_by_settings` status, `tool_denied`). `whoami` is the
   one session-open read (account + enforced settings + memory head);
   `batch` runs 1-16 tool calls in one round trip under the same
   billing and gate. Read once per session.

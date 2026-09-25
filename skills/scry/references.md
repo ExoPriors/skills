@@ -10,7 +10,7 @@ study design; covering open possibility spaces: § Orthogonal enumeration.
 ### Operating loop
 
 1. **Frame** labeled rival hypotheses; per hypothesis, name confirming and
-   refuting evidence and the source families that could hold it.
+   refuting evidence and the source families that could contain it.
 2. **Plan surfaces manually.** Read the schema, then enumerate partition values
    of candidate relations (`SELECT site_key, count() AS n FROM forums.posts
    GROUP BY site_key ORDER BY n DESC LIMIT 100`) and account for truncated rosters.
@@ -96,7 +96,7 @@ cells; unless a tool is named as doing the work, everything below is client-side
 
 - **Source-disjoint discovery** - lanes over separately traced source origins,
   provenance retained through the union. Check: syndication and cross-posts collapse lanes silently.
-- **Asymmetric information join** - two contexts hold different evidence halves
+- **Asymmetric information join** - two contexts have different evidence halves
   (methods vs results), joined afterward. Check: quotes smuggle the withheld half.
 - **Blinded re-derivation** - a fresh context re-derives conclusions from the
   evidence table alone, never the narrative. Check: verdict words must not leak in.
@@ -258,12 +258,12 @@ recall it: the schema's `value_spaces` are the roster for most spines,
 and a GROUP BY is the roster for the rest.
 
 ```sql
-SELECT source, count() AS n FROM forums.posts GROUP BY source ORDER BY n DESC
-SELECT relation, count() AS n FROM internet.text WHERE hasToken(search_text_lc, 'ipfs') GROUP BY relation ORDER BY n DESC
+SELECT source, count() AS n FROM forums.posts GROUP BY source ORDER BY n DESC LIMIT 100
+SELECT site, count() AS n FROM stackexchange.posts WHERE hasToken(search_text_lc, 'ipfs') GROUP BY site ORDER BY n DESC LIMIT 1000
 ```
 
 Diverse across a roster means spread, not top-N: one member per family
-or per size band (the long tail is where the unexpected lives), and let
+or per size band (the unexpected is in the long tail), and let
 the corpus draw the order where you would otherwise pick favourites:
 
 ```sql
@@ -276,7 +276,7 @@ forums" is not.
 
 ### 3. Field
 
-When no column names the space, name the axes yourself. An axis changes
+When no column lists the space, write the axes yourself. An axis changes
 the mechanism of a candidate, not its adjective — if you cannot say what
 an axis changes about the output, cut it. For "diverse sources or angles
 on X" these usually earn their place:
@@ -340,7 +340,7 @@ the axis bank and the candidate law (an inquiry cell delivers a research directi
 inversion) for research direction, `artifact` (the default: lever,
 scale, time, inversion, audience, form, stance) for deliverables. The
 response
-carries `field: [{id, text}]` — one independent candidate per surviving
+includes `field: [{id, text}]` — one independent candidate per surviving
 shot, each written from its own server-drawn cell on its own small model
 — a consolidated `nugget` (`consolidated: false` when the consolidation
 pass failed; the field still stands), `shots: {requested, returned,
@@ -368,7 +368,7 @@ wide net behind them.
 Read this when a question looks like it needs a model and might not. The
 text indexes (`hasToken`/`hasAnyTokens` posting lists, trigram n-grams for
 substrings and regex prefilters) answer over hundreds of millions of rows
-in seconds, and every answer carries a denominator. That combination —
+in seconds, and every answer has a denominator. That combination —
 speed plus a count you can defend — is what makes the shapes below
 possible at all. Each one is a plain SQL statement; nothing here needs an
 embedding until the last rung.
@@ -389,9 +389,9 @@ Climb it; most questions resolve before the top.
    already derived and measured, as one operand; `scry_recipe_score
    ('vader_polarity')` as a per-row token-weighted signal, or
    `scry_recipe_density('hedging')` as weighted occurrences per 1,000
-   characters across every member form (recipes of at most 128 terms), or
+   characters across every member form (recipes of at most 256 terms), or
    `scry_recipe_near('a','b',k)`
-   — true when a token member of `a` sits within k tokens of one of `b`
+   — true when a token member of `a` is within k tokens of one of `b`
    (k ≤ 64; token forms only; a token-less operand is a named error).
    Recipe algebra is membership-only: `scry_recipe('hedging - certainty')`;
    the three operators `&`, `-`, and `^` must be whitespace-separated and
@@ -405,7 +405,7 @@ Climb it; most questions resolve before the top.
    toStartOfMonth(...)`: a term's birth date, its peak, its decay. Every
    concept has one; `mechinterp` did not exist in 2019.
 7. **Estate sweep** — `POST /v1/scry/compile` with `relation: "*"` and `counts:
-   true`: where a vocabulary lives across every corpus, with per-relation
+   true`: where a vocabulary appears across every corpus, with per-relation
    denominators, in one call. This is the "which community talks like
    this" question answered without reading anything.
 8. **Semantic escalation** — only now: `scry_embed` neighbors to find the
@@ -413,7 +413,7 @@ Climb it; most questions resolve before the top.
 
 ### The ladder of proof
 
-Each rung above can be asserted at several strengths; name the one you
+Each rung above can be asserted at several strengths; state the one you
 are at.
 
 - **Existence** — one row with a source id. Enough for "this was said".
@@ -485,9 +485,9 @@ WHERE subreddit = 'MachineLearning' AND created_utc >= '2025-01-01'
   AND author IN (SELECT original_author FROM hackernews.items
                  WHERE hasToken(search_text_lc, 'interpretability'))
 ```
-38 posts by 9 authors, 1.0 s. Recipes ride multi-relation statements
+38 posts by 9 authors, 1.0 s. Recipes work in multi-relation statements
 with the text column explicit: `scry_recipe('slug', search_text_lc)`.
-On metadata relations, name what that column contains: `openalex.works`
+On metadata relations, state what that column contains: `openalex.works`
 binds it to title/display name only, `openalex.authors` to display-name
 variants, and `books.catalog` to title + author + publisher. Recipe rates
 there measure metadata fields, not abstracts or prose; cross-relation rate
@@ -558,8 +558,8 @@ posters, 0.2 s.
 
 Rungs stack: *comments (4) by habitual (2) HN-interpretability people (1)
 who hedge more than they did last year (3, recipe)* is four subqueries
-and one afternoon. Two disciplines hold across the chain: every
-quantifier over authors carries its denominator, and every recipe in a
+and one afternoon. Two disciplines apply across the chain: every
+quantifier over authors gives its denominator, and every recipe in a
 multi-relation statement names its text column.
 
 ## The operator space
@@ -576,7 +576,7 @@ Allen intervals, temporal logic, relational division, Kleene algebra),
 stance linguistics (Hyland, Appraisal, factuality, modality,
 evidentiality), and the LLM-era retrieval literature. The planes below are
 the deduplicated result, each with its idiom on this surface. Everything
-here rides plain SQL. The served validator bounds functions whose
+here runs in plain SQL. The served validator bounds functions whose
 aggregate state grows with attacker-controlled input — the
 `groupArray`/`groupUniqArray` families and `topK` take a literal state
 bound, `groupArray(N)(x)` with N from 1 to 1000 (`uniqExact` and
@@ -593,7 +593,7 @@ phrase or a narrower recipe rather than fighting the expansion.
 **2. Windows and spans.** `NEAR/k` (unordered, characters) and
 `"phrase"~n` slop exist; ordered/directional proximity, sentence scope,
 and span algebra (containing/before/overlaps — ES `intervals` is the
-model) are not yet operators. Short ordered windows can ride re2:
+model) are not yet operators. Short ordered windows can use re2:
 `match(text, '(?i)trigger(\\W+\\w+){0,5}\\W+response')`. The
 recipe-proximity operator is `scry_recipe_near('a','b',k)` (`hedge
 within k tokens of a prediction`) — token forms only, k ≤ 64,
@@ -616,13 +616,13 @@ here: WHERE gates, ORDER BY scores, and the two never need to agree
 soft — demote by subtracting: `scry_recipe_score('a') -
 0.5*scry_recipe_score('b')` (ES `boosting`). Compare register across
 different document lengths with `scry_recipe_density`, not document
-membership; density accepts recipes of at most 128 terms. Soft-AND over m
+membership; density accepts recipes of at most 256 terms. Soft-AND over m
 weak signals = sum of indicators with a threshold, the continuous cousin
 of quorum.
 
 **5. Quantifier plane.** The whole monadic zoo — every / some / no /
 at-least-k / at-most / exactly / most / fewer-than-p% / more-X-than-Y —
-is tests on `(countIf, count)` pairs from one `GROUP BY author`; name the
+is tests on `(countIf, count)` pairs from one `GROUP BY author`; state the
 quantifier you mean and its denominator. Three named idioms kill standing
 error classes:
 - **division** ("in ALL of these"): `count(DISTINCT if(cond, community, NULL)) = N`
@@ -687,12 +687,12 @@ dogmatism-vs-dialogism dial); evidential source-type (perception,
 inference, assumption, reportative, quotative); attribution-verb
 factuality (*shows/proves* co-signs, *claims/alleges* distances); modal
 flavor (epistemic "must have" vs deontic "must do" — the word alone
-carries only force); counterfactual constructions (*would have* + *had X
+expresses only force); counterfactual constructions (*would have* + *had X
 not* — a small closed set of tense/modal forms); speech-act denominators
 (hedging rate per **assertion**, not per post). Two distinction
 disciplines: *never affirmed* ≠ *denied* — keep silence and
 counter-assertion separately queryable; and *exposed* (replied to/quoted
-the correction) ≠ *knew* — name the proxy. The common-ground detector is
+the correction) ≠ *knew* — state the proxy. The common-ground detector is
 allusion-without-link: the date after which posts use the event as an
 unexplained premise.
 
@@ -702,7 +702,7 @@ surface and, per the 2023–2026 literature, nowhere in LLM-era research
 either. Recipes are already stored queries; a percolation lane over fresh
 ingest is the natural future operator (execplan).
 
-The LLM-operator failure literature says where discipline must live, and
+The LLM-operator failure literature says where discipline is needed, and
 this surface already encodes most of it: negation and set logic stay
 symbolic (dense retrieval scores below random on negation — NevIR);
 compositional intent must not collapse to a token bag ("X for Y" is a
@@ -717,7 +717,7 @@ vocabulary, and guided seeding is what fixes them.
 
 ### Recipes in five minutes
 
-1. **Find your instrument**: the `recipes` tool — each entry carries
+1. **Find your instrument**: the `recipes` tool — each entry has
    `kind`, a one-line `stance`, and `n_terms`; with a `slug` it
    returns terms, `options.blind_to`, and `measurements`.
 2. **Read `measurements.doc_precision` before trusting matches.** Graded
@@ -733,9 +733,9 @@ vocabulary, and guided seeding is what fixes them.
    0.10 / 0.00; gratitude inverts the other way, 0.05 / 1.00): read both
    stamped numbers, not one.
 3. **Four planes**: `scry_recipe('slug')` membership (WHERE/countIf);
-   `scry_recipe_score('slug')` weighted token mean (token members only);
+   `scry_recipe_score('slug')` weighted mean over every member;
    `scry_recipe_density('slug'[, text])` weighted occurrences per 1k chars
-   (≤128 terms — the honest per-document lens); `scry_recipe_near('a','b',k[,
+   (≤256 terms — the honest per-document lens); `scry_recipe_near('a','b',k[,
    text])` token proximity (k ≤ 64; token members only — phrase-heavy
    operands silently thin its view, check the term forms first).
 4. **Algebra** (membership only): `scry_recipe('a - b')`, `'a & b'`,
@@ -748,17 +748,17 @@ vocabulary, and guided seeding is what fixes them.
 6. **Density trend in one call**:
    `SELECT toStartOfQuarter(created_utc) AS q, sum(scry_recipe_density('slug')*length(body))/sum(length(body)) AS d FROM reddit.comments WHERE subreddit='X' AND created_utc >= '2024-01-01' GROUP BY q ORDER BY q LIMIT 20`
    — char-weighted, kills the length confound that raw membership share
-   carries.
+   has.
 7. **Lifecycle**: `recipe_derive` (seeds are whole
    tokens; candidates ranked salience-desc) expands vocabulary from the
    corpus; `recipe_write` (CAS via `if_version`) writes;
    `history` lists versions, `version=N` loads one, `diff=[1,2]` diffs
    two versions of a slug (term text — form changes show jaccard 1.0), and
    catalog-level `?diff=a,b` diffs two recipes.
-8. **Read the envelope**: `coverage` carries each relation's `extent` and
+8. **Read the envelope**: `coverage` gives each relation's `extent` and
    `freshness_lag_seconds` (the freshness class itself is on
    `/v1/scry/schema?relation=`) — check `extent.max` before charting the
-   most recent weeks (reddit past its newest Arctic dump is the thin live
+   most recent weeks (reddit past its newest archive month is the thin live
    tail).
 
 The `recipes` tool is the live catalog; this
@@ -782,7 +782,7 @@ Choosing:
 - **Selector vs scorer.** match near 0 (`mech_interp`) is a selector —
   put it in WHERE. match near 1 (`labmt_happiness`, whose vocabulary is
   the common tongue) is a scorer — it meters every document; apply the
-  hedonometer lens (drop |w|<1 terms) on read. The polarity lexicons sit
+  hedonometer lens (drop |w|<1 terms) on read. The polarity lexicons are in
   between: WHERE-able on small corpora, scorers on large ones.
 - **Polarity on general prose**: `vader_polarity` first (widest coverage,
   slang included), `afinn_polarity` when you want small and legible.
@@ -799,11 +799,10 @@ Choosing:
   annual program is a reopening prior, not noise. Membership plane,
   phrase-dominant by design (bare tokens like `accelerator` and
   `residency program` were measured polluters); per-anchor precision
-  samples live in each recipe's `measurements`.
+  samples are in each recipe's `measurements`.
 - **`emoji_polarity` is corpus-diagnostic**: 0.9% on lesswrong; expect
   real rates on social corpora. It is membership-only for now: its 751
-  phrase members exceed density's 128-term limit, while score ignores
-  phrase and regex members. For large weighted lexicons with token members,
+  phrase members exceed the 256-member occurrence cap of density and score. For large weighted lexicons with token members,
   use `scry_recipe_score`.
 - **All the seeds are overt-band**: blind to negation, sarcasm, and
   domain reversal by construction, and each recipe's `options.blind_to`
@@ -813,7 +812,7 @@ Choosing:
   always bound it with a sampled subquery (`... WHERE
   scry_recipe('slug') LIMIT 200`), never a bare full-relation aggregate.
 - **`scry_recipe_density` counts every member pattern over every row it
-  touches and accepts recipes of at most 128 terms — bound its input cohort
+  touches and accepts recipes of at most 256 terms — bound its input cohort
   or window; it does not add a hidden membership predicate or engage the
   text index.
 - **`scry_recipe_near` is a per-row position scan** — bound it to a
@@ -831,11 +830,11 @@ Choosing:
 - **Derive before you hand-write**: call the `recipe_derive` tool;
   derivation is not a SQL function. Seeds
   must occur as whole lowercase tokens to build the cohort; put stems in
-  `prefixes` for prefix expansion. The result carries prefix-lexicon and
+  `prefixes` for prefix expansion. The result includes prefix-lexicon and
   co-occurrence candidates with relation-wide denominators. On huge
   relations, set a tight `window_days` and require `salience` before using
   candidates. Sort co-occurrence candidates by
-  `salience`, not `df_matched` — df ranking surfaces stopwords. Derive a
+  `salience`, not `df_matched` — df ranking returns stopwords. Derive a
   stance *pair* with `contrast` (slug or seeds: candidates rank against
   the contrast cohort, contrast-exclusive terms first) and `exclude`
   (slug whose stored terms are dropped), then check disjointness with
@@ -943,7 +942,7 @@ does:
   0.0. Caveat: the relationship-sub rates are interpersonal repair
   ("you're right, I'll talk to her"), not belief revision — read a
   sample before naming the construct.
-- **contamination curve** = `llm_fingerprint` (or its index-riding token
+- **contamination curve** = `llm_fingerprint` (or its index-engaging token
   subset `delve`/`delves`/`delving`/`multifaceted`/`underscores`/`tapestry`) per
   100k reddit posts by year: 22.9 (2018) declining to 12.6 (2022), then
   42.5 (2023), 56.0 (2024), 43.0 (2025) — a 3.4x discontinuity dating
@@ -952,7 +951,7 @@ does:
   shedding the tics.
 
 Ethics: the sensitive instruments (`catastrophizing`, `loneliness`,
-`foreclosed_future`, `dehumanization`, …) carry
+`foreclosed_future`, `dehumanization`, …) have
 `options.ethics = "population-level research instrument; never a
 screening or targeting tool for individuals"` in the catalog. Honor it:
 aggregate, trend, and compare cohorts; do not rank or flag people.
@@ -983,7 +982,7 @@ gap is 2.8–4x, not the ~20x the aggregates suggest (reddit's
 aggregate is dominated by 79M sub-500-char posts), and common recipes
 saturate on long documents (`hedging` hits 0.996 of 8k+ LW posts,
 destroying discrimination there). Compare with
-`scry_recipe_density('<slug>')` for recipes of at most 128 terms, or keep
+`scry_recipe_density('<slug>')` for recipes of at most 256 terms, or keep
 membership cohorts within length buckets or as within-source ratios. Density (measured on the
 same windows, occurrences per 1k chars, avg by length bucket S/M/L/XL):
 conditional_reasoning LW 0.053/0.069/0.063/0.037 vs reddit
@@ -993,7 +992,7 @@ saturates at 0.996), and the honest cross-source gap reads ~2.5–4x
 bucket-matched (short-post reddit lower still).
 
 `credence_numeric` is the first regex-form recipe (form: "regex"
-compiles to `match()`; its token leaves credence/brier carry the
+compiles to `match()`; its token leaves credence/brier provide the
 recall). Composites these license: **evidential mix** =
 reportative : inferential : sensory per source ranks a community by how
 it knows what it claims (lesswrong is inference-heavy at 2.6:1 over
@@ -1105,7 +1104,7 @@ for top-K; `uniqExact` and `quantileExact` are served.
 
 ### Multi-token search on text-indexed columns
 
-Schema `query_guidance.indexed_predicates` names each relation's indexed
+Schema `query_guidance.indexed_predicates` gives each relation's indexed
 text column. Three entry points engage the text index:
 
 - `hasToken(col, 'token')` — one token.
@@ -1136,7 +1135,7 @@ LIMIT 20
 Substring probes have a fast door on the big single relations, but only
 through the relation's exact indexed expression (surveyed through the API
 2026-09-04, same rare unanchored needle); `text ILIKE`,
-`positionCaseInsensitive`, and `match` never ride it (p50 122s scans),
+`positionCaseInsensitive`, and `match` never use it (p50 122s scans),
 and match volume still governs — `'%tacit knowledge%'` 17s/36s on
 tweets/comments, stop-word phrases doomed on any road. The cliff: counts
 and streamed `LIMIT`s stop at the trigram posting lists; a global `ORDER
@@ -1155,13 +1154,13 @@ count, sort the page yourself.
 | `courts.china_judgments` | `full_text` (no lower) | 0.4s |
 | `crawl.pages` | `lower(ifNull(text, ''))` | 0.16s (one host, 7 days) |
 
-No door: `internet.text` and `social.posts` (union views never reach the
+No door: `social.posts` (a union view never reaches the
 branch indexes, >150s — anchor with hasToken/hasAllTokens there, 4.2s
 measured), `commoncrawl.distillate` (words index only).
 
 ### Vocabulary expansion from the corpus
 
-The corpus itself is the best thesaurus: rows matching a seed term carry the
+The corpus itself is the best thesaurus: rows matching a seed term contain the
 community's own jargon, spellings, and adjacent handles. Use one bounded
 probe — the exact query is served at
 `GET /v1/scry/examples?slug=vocabulary-expansion` (0.38s measured): a
@@ -1249,7 +1248,8 @@ curl -s https://api.scry.io/v1/scry/embed \
 The metered provider call uses `voyage-4-lite` when provider cash covers
 it; when the wallet cannot (accounts without a funded wallet hold Scry credit,
 which funds queries, not provider spend), the mint runs on the local `voyage-4-nano` lane
-at no charge and the response says so in `note`. Pass `"model":
+and the response says so in `note`: 20 nanodollars a token from account
+credit (`insufficient_credits` only when the account holds none). Pass `"model":
 "voyage-4-nano"` to take the local lane outright. Either way it stores a
 2,048-dimension vector under `my_query`; Voyage-4 models share one ranking
 space, so the handle works against every embeddings relation. Trust the
@@ -1266,12 +1266,12 @@ Use the stored name as the unquoted handle `@my_query` in SQL.
 
 Embedding search rewards the opposite instinct from keyword search:
 spend words. The model places your text in the same space as the
-corpus's own paragraphs, so a thin stub names a direction while a rich
-passage names a location. Most weak semantic recall traces to thin
+corpus's own paragraphs, so a thin stub gives a direction while a rich
+passage gives a location. Most weak semantic recall traces to thin
 query text, not to the index. Slow down, get creative, and be
 maximalist about phrasings — probes are quick and composition is free.
 
-- **Write the passage you hope to find, not the question you hold.**
+- **Write the passage you hope to find, not the question you have.**
   The nearest neighbors of a question are other questions. "why did
   Usenet decline?" retrieves people asking; "the September that never
   ended: AOL's 1993 gateway flooded Usenet with newcomers faster than
@@ -1283,10 +1283,10 @@ maximalist about phrasings — probes are quick and composition is free.
   vector. "distributed systems debugging" is a genre; "the replica
   went split-brain at 3am and the on-call engineer traced it to a
   fencing token nobody renewed" is a place in that genre.
-- **Fan out registers, one handle per phrasing.** The same idea lives
+- **Fan out registers, one handle per phrasing.** The same idea appears
   in many dialects — academic abstract, forum vernacular, journalist's
   lede, practitioner war story, a primary source's own period diction —
-  and each phrasing lands in a different neighborhood of the corpus.
+  and each phrasing reaches a different neighborhood of the corpus.
   Mint `@x_academic`, `@x_forum`, `@x_news`, run each, union the
   retrievals.
 - **Centroid the phrasings into one anchor.** `POST /v1/scry/embed`
@@ -1303,7 +1303,7 @@ maximalist about phrasings — probes are quick and composition is free.
   than a dictionary definition: hunting for burnout narratives, embed
   an unmistakable one, not "employee burnout".
 - **Steal the corpus's vocabulary back.** The best rows of a first
-  probe carry the words the community actually uses — re-embed with
+  probe contain the words the community actually uses — re-embed with
   the corpus's own diction and probe again.
 
 The stopping rule is the lexical one (§ Lexical fanout): keep minting
@@ -1443,8 +1443,8 @@ the result of this audit, never as an assertion.
 
 ### Academic metadata joins
 
-`openalex.works` carries title, year, authorships, topics, citations,
-and `doi_norm` (lowercase bare DOI, bloom-indexed). Full text lives in
+`openalex.works` has title, year, authorships, topics, citations,
+and `doi_norm` (lowercase bare DOI, bloom-indexed). Full text is in
 `academic.papers`, keyed by percent-encoded DOI. The bridge:
 
 ```sql
@@ -1485,7 +1485,7 @@ from one ANN relation, optional `WHERE` predicates, `ORDER BY distance ASC`,
 and `LIMIT 1` through `100`. The vector column is `embedding_voyage4` on the
 per-corpus `embeddings.*` relations and `embedding` on `embeddings.chunks`
 and `embeddings.academic_paper_chunks`. On the per-corpus relations that
-name is valid only inside this projection: the vectors live in the vector
+name is valid only inside this projection: the vectors are in the vector
 index, `scry_cosine_similarity(embedding_voyage4, …)` is refused, and only
 `embeddings.chunks` (and `academic_paper_chunks`) keep a readable vector
 for row-level math. One row per item on a chunked relation is served as
@@ -1493,13 +1493,13 @@ for row-level math. One row per item on a chunked relation is served as
 `LIMIT 1 BY hn_id LIMIT 10` on `embeddings.hackernews_items`, 10 rows,
 0.5 s); other `LIMIT BY` shapes are refused as `ann_topk_limit_by`. The
 set of relations serving ANN moves (a relation leaves while its index
-re-materializes); a refused ranking names the live set. The helper is
+re-materializes); a refused ranking lists the live set. The helper is
 ranking-only. Other vector helpers retain their algebra semantics.
 
 `POST /v1/scry/query` with `{"sql": "...", "explain": true}` returns the
 plan envelope (`explain`, `ann`, `forecast`, `relations`, `summary`)
-without executing; `?explain=true` on the URL is ignored and the query
-runs.
+without executing it, except that an ANN statement runs its lane search
+(`ann.lane_ms`); `?explain=true` on the URL is ignored and the query runs.
 
 Confirm the live signature and columns before use. Do not use
 database-specific vector operators or assume that an unregistered embedding
@@ -1515,7 +1515,7 @@ semantic conclusion.
 `{text, name}`: the expression is the same scry_* vector algebra over your
 stored `@handles`, evaluated server-side through the query validator, and the
 result is saved as a reusable handle. The expression becomes the handle's
-`source_text`, so saved compositions carry their own provenance. The response
+`source_text`, so saved compositions have their own provenance. The response
 returns diagnostics by default — norm, cosine similarity to every input
 handle, and warnings — and refuses degenerate results (NULL from the noise
 floor, norm ≤ 0.01, near-duplicate of an input) with the reason instead of
@@ -1602,7 +1602,7 @@ query to a fallback database.
 #### Known failure modes
 
 - A 408 (`runtime_deadline_exceeded`; `request_timeout` on embed) and every other
-  kill carries `error.details` — branch on it, never the prose: `kill_source`
+  kill includes `error.details` — branch on it, never the prose: `kill_source`
   (`deadline` | `memory` | `exposure` | `wallet` | `watchdog`), `authorized_seconds`
   (the deadline that applied; at 2000 shard by an indexed time window instead),
   `partial_possible` (true only for a deadline kill of a statement that neither
@@ -1617,12 +1617,12 @@ query to a fallback database.
   when your own ceiling stopped the run; 402 only for an exhausted x402
   prepaid allowance.
 - An admission denial (`invalid_request`, message `query denied (<tag>): …`)
-  carries the same `<tag>` as `error.details.tag`; branch on the field.
+  has the same `<tag>` as `error.details.tag`; branch on the field.
 - A relation can appear in the schema `surfaces` list yet be denied as
   unregistered at query time; trust the relation list inside the denial error.
 - Parallel queries on one key can return `429` above the per-account
   concurrency gate (24). Obey `Retry-After` on retry.
-- `hasToken` retrieval cost lives in row reads + ORDER BY, not in matching:
+- `hasToken` retrieval cost is in row reads + ORDER BY, not in matching:
   a common token over a broad window can run for minutes under any `ORDER BY`,
   while the same predicate is suitable for a count-only shape probe. Count
   first; read a retrieval timeout as "match set too wide", then narrow the
@@ -1646,7 +1646,7 @@ Confirm every relation and column against `/v1/scry/schema` before use.
 Row counts, coverage, and freshness come from `GET /v1/scry/schema` and each
 query's coverage block — read them there before stating any denominator.
 
-| Relation | What it holds |
+| Relation | What it contains |
 | --- | --- |
 | `openalex.works` | Title, venue, year, DOI, authorships (author id, name, ORCID, institutions), topics, concepts, funders, OA locations, `cited_by_count`, `referenced_works` citation graph. Physical rows can outnumber unique works while background merges run — count works with `uniq(id)`, never `count()`. |
 | `openalex.authors` | Names + alternatives, ORCID, `works_count`, `cited_by_count`, h-index (`summary_stats`), affiliation history, per-topic counts and shares, yearly output. |
@@ -1729,8 +1729,8 @@ denominators, keep a ledger, and stop only when new lanes stop yielding.
    - *Venue cohort:* frequent authors in the same journals or
      proceedings (`primary_location` source ids).
 3. **Union into a candidate ledger.** One row per (author_id, lane,
-   evidence work ids). An author surfaced by three independent lanes is
-   a different object than one surfaced by one.
+   evidence work ids). An author returned by three independent lanes is
+   a different object than one returned by one.
 4. **Screen independence.** Drop recent coauthors (shared works within
    ~5y), same-institution candidates (`last_known_institutions` vs the
    paper's authorship institutions), and the paper's own authors.
