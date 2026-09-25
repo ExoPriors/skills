@@ -37,8 +37,8 @@ SELECT tweet_id, original_timestamp, text
 FROM twitter.tweets
 WHERE hasAllTokens(search_text_lc, ['vibe', 'coding'])
   AND positionCaseInsensitive(search_text_lc, 'vibe coding') > 0
-  AND original_timestamp < '2025-02-01'
-ORDER BY original_timestamp ASC
+  AND bucket_date < '2025-02-01'
+ORDER BY tweet_id ASC
 LIMIT 1 BY tweet_id
 LIMIT 5
 ```
@@ -147,10 +147,14 @@ orientation.
    monotone with item time: a date window is an id window, with boundaries
    from `SELECT min(hn_id) AS lo, max(hn_id) AS hi FROM hackernews.items WHERE original_timestamp BETWEEN ...`.
    On `embeddings.crawl_pages`, `host` (`=`, `IN`) scopes the search before
-   ranking. Other WHERE predicates post-filter the candidate window. On
+   ranking; so do `arxiv_id` on `embeddings.arxiv_papers` and `tweet_id`
+   on `embeddings.x_open` — each contract's `filter_columns_first` names
+   its scoping column. Other WHERE predicates post-filter the candidate window. On
    chunked relations `ORDER BY distance ASC LIMIT 1 BY <key> LIMIT n`
    collapses the window to each item's nearest chunk (`LIMIT 1 BY hn_id
-   LIMIT 10`); other LIMIT BY shapes are refused.
+   LIMIT 10`); other LIMIT BY shapes are refused. With a wide handle
+   (2048 dimensions) that form can exceed the 131072-byte compiled-statement
+   ceiling: rank without LIMIT BY, then collapse in an outer SELECT.
 6. Keep every query bounded with `LIMIT`. Start at 20 and widen only after
    inspecting row shape, provenance, and source coverage.
    Token search speed is governed by the rarest token: in
@@ -285,7 +289,7 @@ edit-distance window for typo tolerance (a `q` line resolves it;
 
 Any community- or venue-scoped question starts from an enumerated source
 set: run the inexpensive partition-enumeration query on the candidate relations
-(e.g. `SELECT source, count() AS n FROM forums.posts GROUP BY source LIMIT 100`; subreddit
+(e.g. `SELECT site_key, count() AS n FROM forums.posts GROUP BY site_key LIMIT 100`; subreddit
 and list catalogs likewise) and report which sources were consulted and
 which excluded. Missing a source that was one GROUP BY away is the
 corpus's most common research failure.
@@ -370,7 +374,7 @@ that change what a node is: `openalex.authors`/`institutions`/`works_of`,
 `crawl.urls_of`; rows have `kind`; an unknown edge name returns the
 catalog with measured costs), `filter`
 (in-walk attribute prune — changes what gets expanded and billed), `in`
-(intersection), `not_in` (stratified negation; on a recursive body it
+(intersection), `not` (stratified negation, `not_in` its older spelling; on a recursive body it
 prunes the walk itself), and three in-process graph algorithms over a
 completed relation of exactly two vars — `{"pagerank": "pairs"}`,
 `{"components": "pairs"}`, `{"scc": "pairs"}`, each the sole atom of its
@@ -408,7 +412,7 @@ one or two edges when intermediate sets are large. Coauthors in one step:
  "out": ["co"]}
 ```
 
-The MCP tool contract includes ten worked templates, including a seed-keyed
+The MCP tool contract includes worked templates (the guide's TEMPLATES section lists them), including a seed-keyed
 citation closure and an anti-join.
 
 ## Lexical range
@@ -501,32 +505,33 @@ The live schema is the coverage authority: relation inventory, row counts,
 per-source composition, freshness, and coverage extents come from
 `GET /v1/scry/schema` and each query response's `coverage` block, never from
 static text. Every relation has a discovery `tier`: the default schema
-document serves full contracts for the ~two dozen **primary-tier doors** (one
+document serves full contracts for the **primary-tier doors** (one
 start-here relation per corpus family) plus a compact `depth_relations` index
 of every supporting table — users, edges, comment variants, per-corpus
 embeddings — all equally queryable. `?relation=<names>` fetches any full
 contract, `?mode=index` the whole catalog one line per relation, `?mode=full`
-the complete document. The doors:
+the complete document. Start-here relations by family (tier per `?mode=index`):
 
 | Door | Purpose |
 | --- | --- |
-| `academic.catalog` | One merged bibliographic row per paper across the whole academic estate; joins full text (`academic.papers`), assessments, and embeddings via `paper_key` |
+| `academic.catalog` | One merged bibliographic row per paper across the whole academic estate; joins full text (`academic.papers`), assessments, and `embeddings.academic_paper_chunks` via `paper_key` (the per-catalog embedding relations key by `arxiv_id`, `pmid`, `work_id`) |
 | `openalex.works` | Scholarly work metadata, authorships, topics, citation graph |
-| `books.catalog` | Unified bibliographic catalog (file-backed book index, DOI journal index, library metadata records); `idx` gives the record family — see its value space |
-| `embeddings.chunks` | The unified ANN vector surface over every embedded corpus |
+| `books.catalog` | Unified bibliographic catalog (file-backed book index, DOI journal index, library metadata records); `family` (`files`, `journals`, `metadata`) gives the record family |
+| `embeddings.chunks` | The ANN vector surface over the smaller embedded corpora (`embeddings.sources` lists them); the large text corpora rank through their own `embeddings.*` relations |
 | `twitter.tweets` | The historical Twitter archive |
-| `reddit.posts` | Full-retention Reddit submissions; comments (`reddit.comments`, depth) join via `link_id = concat('t3_', id)` |
+| `reddit.posts` | Reddit submission archive, 2005 to present (rows removed before capture are absent); comments (`reddit.comments`, depth) join via `link_id = concat('t3_', id)` |
 | `hackernews.items` | Hacker News items with source identity and timestamps |
 | `stackexchange.posts` | Stack Exchange Q&A across indexed sites (`site` value space is the roster) |
+| `quora.answers` | Quora expert answers, full text from topic-ranked writers; `quora.writers` (depth) scores the writers |
 | `crawl.pages` | Promoted text extractions of observed web pages — the live web-page corpus |
 | `commoncrawl.distillate` | Clean genre-classified Common Crawl reading layer; CDX census and raw WET recall are its depth companions |
 | `social.posts` | Six frozen fringe-platform archives (voat, parler, gab, telegram, discord, truth_social) as one relation — always filter `platform`; profiles/edges/community directories are its depth companions (`social.users`/`edges`/`communities`) |
 | `github.repos` | The public GitHub repository universe (408M origins as of 2026-06-04) keyed by owner; repo READMEs/docs/source are in `github.documents` (depth) |
 | `packages.catalog` | One merged row per software package across ~36 registries (`ecosystem` value space is the roster) |
 | `markets.catalog` | One folded row per prediction market across Kalshi, Polymarket, Manifold (`source`/`status` value spaces) |
-| `judgements.scores_current` | Latest cardinal judgement score per lens, axis, and entity |
+| `judgements.scores_current` | Latest public cardinal score per lens, axis, entity, and entity content hash (changed text is a new row) |
 | `persons.links` | Cross-platform person resolution: public accounts clustered into persons by shared strong identity keys — enterprise relation, served to operator-approved accounts only (hi@scry.io); the `persons.link_coverage`/`content_coverage` aggregates stay open |
-| `events.records` | In-person-event corpus (conferences), JSON records keyed by `event_slug` |
+| `events.records` | In-person-event corpus (conferences): envelope rows whose `payload.record` carries the event (`event_slug` inside it), keyed by source and record id |
 | `courts.china_judgments` | China Judgments Online archive: ~85M published judgments 1985–2021, Chinese full text + structured metadata |
 | `cn_enterprise.companies` | China enterprise registry (GSXT), one best row per company keyed by USCC |
 | `mailing_lists.messages` | Mailing-list and Usenet archive messages; the per-list roster is `mailing_lists.catalog` (depth) |
@@ -535,18 +540,19 @@ the complete document. The doors:
 | `vk.posts` / `vk.comments` | VK community wall posts and comments, 2007 onward, full-text indexed on `lower(text)`; `vk.communities` is the roster |
 | `nostr.events` | Nostr relay events (signed event JSON; `kind` 1 notes, 0 profiles) |
 | `youtube.videos_live` | YouTube metadata as observed from 2026-08 onward — `youtube.videos` is the frozen 2021 census |
-| `wikipedia.articles` | English Wikipedia article text, full page set kept current by recentchanges; `wikimedia.events` is the recent-change event stream |
+| `wikipedia.articles` | English Wikipedia article text, the full page set plus new articles from the recent-change feed (revisions of existing pages are not re-indexed); `wikimedia.events` is the recent-change event stream |
 | `huggingface.repositories` | Hugging Face hub models/datasets/spaces with counters; `huggingface.snapshots_daily` is the daily history; `huggingface.repo_details` has per-repo bytes on the hub (usedStorage), file sizes, and model details |
 | `reddit.subreddits` | Subreddit directory (description, subscribers, type, flags); `reddit.subreddit_rules` / `reddit.subreddit_wikis` are its depth |
-| `irs.form990` / `cms.open_payments` / `cfpb.complaints` / `jobs.postings` / `legistar.matters` | Envelope relations (`payload.record` is the upstream record): nonprofit filings, industry-to-provider payments, consumer finance complaints, live ATS job postings, municipal legislative matters |
+| `irs.form990` / `cms.open_payments` / `cfpb.complaints` / `jobs.postings` / `legistar.matters` | Envelope relations (`payload.record` is the upstream record): nonprofit filings, industry-to-provider payments, consumer finance complaints, daily ATS job-posting snapshots from 2026-09-02, municipal legislative matters |
+| `government.positions` / `government.election_results` / `government.officeholder_records` | Typed public-office relations (one person, office and term per source roster; one candidate's votes per contest cell and `vote_mode`) over the `officeholder_records` envelope, entered from `positions` |
 | `yc.companies` | Y Combinator company directory: every batch's company cards (name, one-liner, description, batch, status, industries, tags, locations, team size); the newest `observed_on` per `yc_id` is the current state |
 | `epstein.artifacts` | Source-native Epstein artifact index across DOJ and other public releases |
 | `agents.skills` | Parsed SKILL.md documents from public agent-skill repositories |
 | `lexicons.entries` | English lexicon envelopes: Wiktionary (kaikki.org) and GCIDE/Webster 1913 |
-| `amazon.reviews` / `amazon.items` | Amazon Reviews 2023 (McAuley Lab): 571.5M product reviews 1996–2023 with full-text `text`, and the item catalog (41.3M of its 48.2M items indexed, 2026-09-10); join on `parent_asin` |
-| `orkut.topics` / `orkut.replies` | Orkut community forums 2004–2014 from the Wayback Machine: 120.6M topics, 897.3M replies (`body` full-text indexed), mostly Brazilian Portuguese |
+| `amazon.reviews` / `amazon.items` | Amazon Reviews 2023 (McAuley Lab): product reviews 1996 to 2023-09 with full-text `text`, and the item catalog (its contract states the loaded fraction); join on `parent_asin` |
+| `orkut.topics` / `orkut.replies` | Orkut community forums 2004–2014 from the Wayback Machine (`body` full-text indexed), mostly Brazilian Portuguese |
 | `zapytaj.questions` / `zapytaj.answers` | zapytaj.onet.pl, the Polish Q&A site: questions asked 2006 through mid-2016 and their answers through 2026 (`title` and `body` full-text indexed); `zapytaj.options` and `zapytaj.comments` are depth; join on `question_id` |
-| `tiktok.comments` | TikTok comments under public videos, by month of creation (`text` full-text indexed; `video_id` joins `tiktok.videos`, whose `source = 'tiago'` branch holds every commented video); `tiktok.reposts` / `tiktok.reposters` are the repost feeds, accounts as hashes |
+| `tiktok.comments` | TikTok comments under public videos, by month of creation (`text` full-text indexed; `video_id` joins `tiktok.videos`); `tiktok.reposts` / `tiktok.reposters` are the repost feeds, accounts as hashes |
 | `community_notes.notes` / `community_notes.ratings` | X Community Notes public export (2025-02-22): every note with its `tweet_id`, every rating; `community_notes.status_history` / `community_notes.enrollment` are depth |
 | `twitter.recsys_follow_graph` | Twitter's RecSys 2022 follow graph, 261M anonymised edges — structure only, never joins `twitter.users` |
 | `onion.hosts` / `onion.host_observations` | The onion web's hosts (latest state per `onion_host` = newest `updated_at`) and the per-attempt availability time series (`state` alive/dead/http_error); flagged hosts are structurally invisible. Page text (`onion.pages`) and the link graph (`onion.links`) are enterprise relations, served to operator-approved accounts only (hi@scry.io) |
@@ -554,7 +560,7 @@ the complete document. The doors:
 
 Schema contracts include measured `value_spaces` — the live vocabulary of
 categorical spine columns (forum `source`, stackexchange `site`, market
-`source`/`status`, package `ecosystem`, book `idx`/`content_type`, tweet
+`source`/`status`, package `ecosystem`, book `family`/`content_type`, tweet
 `lang`, subreddits) with row counts. Read them before writing a WHERE on a
 categorical column; never guess an enum value —
 `subreddit = 'MachineLearning'` vs `'machinelearning'` is the classic
@@ -626,9 +632,9 @@ is refused by name before the tool runs.
 - To keep a query, create a share: `POST /v1/scry/shares` (MCP
   `share`) with
   `{title, kind: "query", payload: {sql, params: [{name, type, default}],
-  snapshot: {...}}}`. `title` is required, `snapshot` must be an object
-  (use `{}` when there is nothing to freeze), and each declared parameter
-  must have a default. The response's `permalink` field is the share's
+  snapshot: {...}}}`. `title` is required, `snapshot` is optional (omit
+  it when there is nothing to freeze), and each declared parameter must
+  have a default. The response's `permalink` field is the share's
   page URL — cite it as served; `share_slug` is its tail. A query share
   has exactly one of the query door's three envelopes: `sql` as above,
   `program` (the datalog program JSON exactly as `program` takes it,
@@ -659,7 +665,7 @@ is refused by name before the tool runs.
   `summary`, `payload`, `is_public` (absent fields stay as they are). There
   is no DELETE: `is_public: false` withdraws it from the index, and the edge
   cache can serve the old page and markdown twin for a few minutes after.
-  `https://scry.io/s/{slug}` is the page whatever format flag it has;
+  `https://scry.io/s/{slug}` is the page (`?format=md` its markdown twin);
   the JSON is `GET https://api.scry.io/v1/scry/shares/{slug}`.
 - A standing research question is a share too: `kind: "question"` with
   `payload: {prompt, brief?, asked_in?}` — `prompt` is the person's research
@@ -803,16 +809,16 @@ is refused by name before the tool runs.
   and submit evidence-focused passages with stable ids. For judgement-grade
   pairwise comparisons, the offering points at `/v1/judgements/runs`.
 - For "what does the fresh web say about X since my cutoff", freshness
-  is a SQL predicate: `embeddings.crawl_pages` contains a rolling fresh
-  crawl of allowlisted high-information hosts (major news, AI-lab and
-  government announcement pages, primary technical sources), and its
-  `observed_on` is the day the page was observed — an upper bound on
+  is a SQL predicate: `embeddings.crawl_pages` holds embedded pages from
+  hosts admitted one by one (its contract's coverage note names them), and
+  its `observed_on` is the day the page was observed — an upper bound on
   when a fact became public (NULL where the day is unknown; those rows pass no bound). Mint an @handle
   with `embed`, rank with the vector helper, and bound eligibility with
   `WHERE observed_on > toDate('<your training cutoff>')` — the
   predicate states when a page was first observed, not what you know.
-  Hydrate verbatim text from `crawl.pages` by url (ANN statements admit
-  one relation; the second query is the hydration). Dedup and per-host
+  Hydrate verbatim text from `crawl.pages` by url with `host = '<host>'`
+  beside it, the sort-key prefix (ANN statements admit one relation; the
+  second query is the hydration). Dedup and per-host
   caps are yours in SQL (`LIMIT n BY host`).
 - To consult another model, the OpenRouter passthrough: MCP tool
   `chat`, or `POST /v1/scry/openrouter` with

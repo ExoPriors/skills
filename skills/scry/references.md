@@ -807,8 +807,9 @@ Choosing:
 - **All the seeds are overt-band**: blind to negation, sarcasm, and
   domain reversal by construction, and each recipe's `options.blind_to`
   says so. Scope absence claims to the band.
-- **`scry_recipe_score` uses token-form members only** — phrase and regex
-  members do not contribute. It re-tokenizes every row it touches, so
+- **`scry_recipe_score` counts token members by token frequency and
+  phrase/regex members by occurrence** (at most 256 phrase/regex members
+  score). It re-tokenizes every row it touches, so
   always bound it with a sampled subquery (`... WHERE
   scry_recipe('slug') LIMIT 200`), never a bare full-relation aggregate.
 - **`scry_recipe_density` counts every member pattern over every row it
@@ -1021,9 +1022,10 @@ License-gated families (NRC, LIWC, SentiStrength data, SenticNet, MFD
 Call `GET /v1/scry/schema`, choose an enabled registered relation, then send one
 bounded SQL statement to `POST /v1/scry/query`.
 
-> **Historical Twitter archive access:** `twitter.tweets`, `twitter.token_search`, and
-> `twitter.vector_search` are not available to public keys — a query naming
-> them is refused at admission.
+> **Historical Twitter archive access:** whether your key reaches
+> `twitter.tweets`, `twitter.token_search`, and `twitter.vector_search` is
+> what their served contracts' `access` says for that key — a query naming a
+> relation the key cannot reach is refused at admission.
 > The patterns transfer unchanged to other text-indexed relations (e.g.
 > `reddit.comments`, `forums.posts`).
 
@@ -1333,9 +1335,11 @@ ANN-enabled list in the error). Its vector column is a readable
 '<paper-key>' ORDER BY sim DESC LIMIT 5` (measured 2026-09-13: 5 rows,
 0.6 s). Unscoped `count()` over it is expensive.
 
-**WHERE under ANN post-filters.** Only `hn_id` on
-`embeddings.hackernews_items` and `host` on `embeddings.crawl_pages` scope
-the search before ranking. Every other predicate (`post_key LIKE`,
+**WHERE under ANN post-filters.** Only the keyed predicates a relation's
+contract names scope the search before ranking (`hn_id` on
+`embeddings.hackernews_items`, `host` on `embeddings.crawl_pages`,
+`arxiv_id` on `embeddings.arxiv_papers`, `tweet_id` on
+`embeddings.x_open`). Every other predicate (`post_key LIKE`,
 `subreddit =`, `model_name =`, `kind =`) filters a ~400-candidate
 nearest-neighbour window after ranking, so a selective filter returns
 fewer than k rows, often zero. Put the selectivity into the query text,
@@ -1764,11 +1768,11 @@ LIMIT 100
 ```
 
 Citation neighborhood (who the paper builds on). Outbound references are
-inexpensive (one id lookup then a bounded id set). Inbound citers — works whose
-`referenced_works` contain the paper — have no inverse index yet and scan
-the full array column; always bound that direction with a
-`hasToken(search_text_lc, ...)` or `publication_year` pre-filter and state
-the cost:
+inexpensive (one id lookup then a bounded id set). Inbound citers come keyed
+from `openalex.cited_by` (`cited_work_id` → `citing_work_id`, with the citing
+work's `publication_date`) in milliseconds; a scan of `referenced_works` for
+the same answer is the slow path and wants a `publication_year` pre-filter.
+The references a paper builds on, by author:
 
 ```sql
 SELECT
