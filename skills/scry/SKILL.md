@@ -809,6 +809,9 @@ is refused by name before the tool runs.
   the inputs. For longer sources, retain original provenance
   and submit evidence-focused passages with stable ids. For judgement-grade
   pairwise comparisons, the offering points at `/v1/judgements/runs`.
+  `POST /v1/judgements/resolve` (`{"text": …}`, no key) returns the
+  ledger's identity for a span — `unit_id` and its sentence atoms — so
+  two readings of one passage meet at one id.
 - For "what does the fresh web say about X since my cutoff", freshness
   is a SQL predicate: `embeddings.crawl_pages` holds embedded pages from
   hosts admitted one by one (its contract's coverage note names them), and
