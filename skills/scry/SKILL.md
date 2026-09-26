@@ -530,6 +530,7 @@ the complete document. Start-here relations by family (tier per `?mode=index`):
 | `packages.catalog` | One merged row per software package across ~36 registries (`ecosystem` value space is the roster) |
 | `markets.catalog` | One folded row per prediction market across Kalshi, Polymarket, Manifold (`source`/`status` value spaces) |
 | `judgements.scores_current` | Latest public cardinal score per lens, axis, entity, and entity content hash (changed text is a new row) |
+| `judgements.readings` | Unary typed readings, one row per (entity, question, rater) with raw logits: `kind` (noul / choice / score) fixes `value` (p(yes) / dist[answer_index] / expected level); filter by `lens` and `axis_key` — first lens `vc-writing`, ten stance axes over 26k VC essays, X posts, and newsletters |
 | `persons.links` | Cross-platform person resolution: public accounts clustered into persons by shared strong identity keys — enterprise relation, served to operator-approved accounts only (hi@scry.io); the `persons.link_coverage`/`content_coverage` aggregates stay open |
 | `events.records` | In-person-event corpus (conferences): envelope rows whose `payload.record` carries the event (`event_slug` inside it), keyed by source and record id |
 | `courts.china_judgments` | China Judgments Online archive: ~85M published judgments 1985–2021, Chinese full text + structured metadata |
