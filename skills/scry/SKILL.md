@@ -243,6 +243,14 @@ the text expression (`scry_lex('rust', title)`); an operator the
 relation cannot express is a hard error, never a silent drop. At most 8
 calls per statement; one registered relation per statement.
 
+Big cells, small context: `scry_snap(<text>, 300)` is the cell whole
+when it fits, else its first 300 characters; `scry_snap(<text>, 300,
+200, 300)` is its head, a 200-character window from its centre, and its
+tail — every cut marked `…[+N chars cut]`, the marker `max_chars` uses.
+Sizes are integer literals in characters (about four a token); alias it
+(`scry_snap(text, 400) AS text`). Read a package's shape first, then
+hydrate the rows that earn it whole.
+
 ## Lexical recipes
 
 Reuse shared term instruments with `scry_recipe('<slug>'[, text])` for
@@ -813,10 +821,13 @@ is refused by name before the tool runs.
   cost_nanodollars}` (scores aligned to returned row order) — or the
   exact reason rows stayed in SQL order, an empty Jev bucket included;
   a rerank failure never fails the billed query.
-  MCP `sql` with `q` takes the same directive over the compiled
-  statement's page. If the documents you want may not match the query's
-  words, widen the query: no reranker retrieves what retrieval did not
-  admit.
+  MCP `sql` with `q` ranks by default: the compiled statement reads a
+  pool of at least 100 matches and hosted Jev keeps the best `limit` of
+  them against the q line (or the `rerank` directive you send);
+  `rerank_tier: "off"` is the unranked page, and the block's
+  `directive` names what it ranked by. If the documents you want may
+  not match the query's words, widen the query: no reranker retrieves
+  what retrieval did not admit.
 - To re-order documents you already have (or to use the hosted
   long-document tier), `POST
   /v1/scry/rerank` (MCP `rerank`) with `query`, `documents: [{id,text}]`
