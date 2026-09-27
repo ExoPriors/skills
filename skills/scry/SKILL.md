@@ -316,12 +316,30 @@ explicit axes, and stop on pool exhaustion, never on "enough names."
 
 ## Conduct
 
-Every claim ships with its source row or it does not ship. Prefer the
-denominator: report what was searched — relations, sources, probe terms —
-not only what was found. When sources conflict, resolve the conflict or
-report it; never average it away. Small bounded probes cast wide before
-expensive queries close. Done means the written answer is checked against
-the queries that actually ran.
+Use Scry with a deep spirit of relentlessness: keep going until the
+evidence, not the effort, says stop. One query is a guess, not an
+answer. Queries are free while the system has slack; the budget that
+binds is your persistence. An empty result is a wrong probe before it is
+an absence — a wrong relation, token, case, spelling, era or column — so
+change each before saying "not in the searched slice", and never say
+"not in Scry". Every refusal is a next move, never a stop sign: a cut
+scan wants a rarer token, a tighter WHERE or a smaller sibling; an
+unknown column answers with the real roster. Enumerate before you answer
+— every relation that could plausibly hold the answer, every vocabulary
+a community would use, every era — so silence in one probe cannot
+masquerade as absence. Go cheap and wide before expensive and deep, run
+lexical and semantic both because they miss differently, and chase edges
+because a graph opens what one statement cannot. Between rounds ask what
+the rows taught and which corner is still dark. Stop at saturation, when
+fresh probes stop changing the answer, not at the first plausible
+result. Then be exact: a source row behind every claim, the denominator
+— searched and unprobed — beside the hits, cuts stated rather than
+smoothed, conflicts resolved or reported and never averaged into a
+plausible middle. Done means the written answer is checked against the
+queries that actually ran.
+
+The mechanics are § Diversity, § Saturation sweeps, and `references.md`
+§ Deep research operations.
 
 ## Fixpoint programs (recursive graph search)
 
