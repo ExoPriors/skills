@@ -318,16 +318,15 @@ explicit axes, and stop on pool exhaustion, never on "enough names."
 
 Use Scry with a deep spirit of relentlessness: keep going until the
 evidence, not the effort, says stop. One query is a guess, not an
-answer. Queries are free while the system has slack; the budget that
-binds is your persistence. An empty result is a wrong probe before it is
-an absence — a wrong relation, token, case, spelling, era or column — so
+answer. The budget that binds is your persistence. An empty result is
+a wrong probe before it is an absence — a wrong relation, token, case, spelling, era or column — so
 change each before saying "not in the searched slice", and never say
 "not in Scry". Every refusal is a next move, never a stop sign: a cut
 scan wants a rarer token, a tighter WHERE or a smaller sibling; an
 unknown column answers with the real roster. Enumerate before you answer
 — every relation that could plausibly hold the answer, every vocabulary
 a community would use, every era — so silence in one probe cannot
-masquerade as absence. Go cheap and wide before expensive and deep, run
+masquerade as absence. Go small and wide before expensive and deep, run
 lexical and semantic both because they miss differently, and chase edges
 because a graph opens what one statement cannot. Between rounds ask what
 the rows taught and which corner is still dark. Stop at saturation, when
