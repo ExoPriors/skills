@@ -57,6 +57,16 @@ shapes: sources no row contains, statistics more exact or favorable than the
 rows, untested "first"/"only" claims, content described from titles, references
 no probe returned. Calibrate strength to evidence and take positions: a
 neutral catalog of findings is the default failure mode.
+Engagement is not relevance: a like-, score-, or view-sorted head of a
+lexical cohort is a popularity sample, not the evidence (measured 2026-09-27
+on a 2,848-tweet Postgres-versus-competitor cohort: 1 of the top 40 by likes
+made a substantive comparison, 6% of the cohort did, and 140 of those 157 sat
+under 50 likes). Pull the cohort once - one scan with a LIMIT that holds it
+all, its cost read with `explain: true` first - instead of re-scanning the
+window per table; then rank it by a question (`rerank` on the same `sql` call;
+in-house, jev `judge` reads 2,848 rows x 4 typed questions in about a minute),
+hydrate the judged head, and let a generating read decide the shortlist. The
+judge's yes/no is an ORDER BY axis, never the verdict.
 
 ### Continuation and budget
 
