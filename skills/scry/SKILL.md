@@ -796,16 +796,23 @@ is refused by name before the tool runs.
 - To sort a query's rows by an attribute you can describe, send
   `x-scry-rerank: <ranking directive>` on `POST /v1/scry/query` — one
   call, rows come back re-ordered by the directive ("most
-  methodologically rigorous first"), local lanes, $0. Companions:
+  methodologically rigorous first") by hosted Jev, paid from the
+  account's Jev credit (every account opens with $2; `GET
+  /v1/credits/balance` → `wallet.jev_credit_balance_nanodollars`) at the
+  provider's rate — $0.042 per million input tokens, about $0.02 for
+  1,000 tweets, ~650 tokens an abstract; 1,000 tweets rank in ~1.2 s.
+  Judge whole cohorts, not heads: the credit is there to be spent on
+  reading every candidate. Companions:
   `x-scry-rerank-column` gives the text column (auto when exactly one
   scalar String column is in the result), `x-scry-rerank-tier:
   fast|quality` (default fast), `x-scry-rerank-top: N` keeps the head.
   Non-ASCII directives are sent in the same header as
   `b64u:<base64url(utf-8)>`; the MCP `sql` tool takes the same
   controls as direct arguments. The
-  envelope's `rerank` block gives `{applied, model, column, scores}`
-  (scores aligned to returned row order) — or the exact reason rows
-  stayed in SQL order; a rerank failure never fails the billed query.
+  envelope's `rerank` block gives `{applied, model, column, scores,
+  cost_nanodollars}` (scores aligned to returned row order) — or the
+  exact reason rows stayed in SQL order, an empty Jev bucket included;
+  a rerank failure never fails the billed query.
   MCP `sql` with `q` takes the same directive over the compiled
   statement's page. If the documents you want may not match the query's
   words, widen the query: no reranker retrieves what retrieval did not
@@ -813,10 +820,12 @@ is refused by name before the tool runs.
 - To re-order documents you already have (or to use the hosted
   long-document tier), `POST
   /v1/scry/rerank` (MCP `rerank`) with `query`, `documents: [{id,text}]`
-  (2..=1000) and optionally an `instruction` — the instruction is the point: "rank by methodological
+  (2..=4000) and optionally an `instruction` — the instruction is the point: "rank by methodological
   rigor" re-sorts by that attribute, not generic relevance. Tiers `fast`
-  (default, $0) / `quality` ($0) / `hosted` (long documents, per-token
-  cost); the live tier contract is `offerings.rerank` on
+  (default) and `quality` name the same hosted Jev lane, paid from Jev
+  credit as above (an empty bucket is a 402, `insufficient_credits`);
+  `hosted` is the long-document Voyage lane at its own per-token
+  cost; the live tier contract is `offerings.rerank` on
   `GET /v1/scry/context`. Scores are monotonic ranking signals, not
   calibrated probabilities, and are not comparable across models. A
   degraded tier returns identity order plus a `degraded_reason` — never
