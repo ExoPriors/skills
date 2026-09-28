@@ -289,7 +289,7 @@ ORDER BY and a second run over the same texts costs nothing. Explain
 prices the judgments before any are bought: `judgment_cost_est_nanodollars`
 beside `judgment_count`. The reply's `jev` block — judged, remembered,
 tokens, cost_nanodollars, seconds — is the stage's own ledger;
-`spend_nanodollars` prices the scan alone.
+`spend_nanodollars` is the statement's own price — scan and response egress — never the judgments.
 
 ## Lexical recipes
 
