@@ -285,9 +285,11 @@ judgment: keep `scry_snap` outside it (snap the output column) and give a
 `LIMIT n BY` inside it the derived-table wrap, `SELECT * FROM (... LIMIT 1
 BY key) LIMIT n`. Every distinct text is
 judged once and remembered under its question, so pin the source with an
-ORDER BY and a second run over the same texts costs nothing. The reply's
-`jev` block — judged, remembered, cost_nanodollars, seconds — is the
-stage's own ledger; `spend_nanodollars` prices the scan alone.
+ORDER BY and a second run over the same texts costs nothing. Explain
+prices the judgments before any are bought: `judgment_cost_est_nanodollars`
+beside `judgment_count`. The reply's `jev` block — judged, remembered,
+tokens, cost_nanodollars, seconds — is the stage's own ledger;
+`spend_nanodollars` prices the scan alone.
 
 ## Lexical recipes
 
