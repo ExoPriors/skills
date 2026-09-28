@@ -43,7 +43,9 @@ LIMIT 1 BY tweet_id
 LIMIT 5
 ```
 
-(`LIMIT 1 BY tweet_id`: the archive keeps a tweet's revisions as rows.)
+(`LIMIT 1 BY tweet_id`: the archive keeps a tweet's revisions as rows;
+`twitter.tweets_latest` is the literal-key entity read, not the broad-search
+path.)
 
 Where Reddit talked bitcoin in 2013:
 
