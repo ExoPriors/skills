@@ -274,7 +274,18 @@ plus `p Nullable(Float64)` as P(yes), or add a literal array of choices
 for `p Map(String, Float64)` over those choices and the hosted Jev
 none-of-these choice. NULL and empty text carry absence rather than a
 judgment. The result is an ordinary derived table: filter, order, group,
-or join it in the same statement.
+or join it in the same statement — nest it, join its key back, `WHERE p >
+0.5`. `p` is calibrated, not clipped (a clear no reads about 0.01), so
+count rows past a threshold rather than summing `p`; with choices, `ORDER
+BY p['refund'] DESC` ranks by one and `arrayMax(mapValues(p))` names the
+winner's confidence. The source runs as its own statement before the
+judgment: keep `scry_snap` outside it (snap the output column) and give a
+`LIMIT n BY` inside it the derived-table wrap, `SELECT * FROM (... LIMIT 1
+BY key) LIMIT n`. Every distinct text is
+judged once and remembered under its question, so pin the source with an
+ORDER BY and a second run over the same texts costs nothing. The reply's
+`jev` block — judged, remembered, cost_nanodollars, seconds — is the
+stage's own ledger; `spend_nanodollars` prices the scan alone.
 
 ## Lexical recipes
 
