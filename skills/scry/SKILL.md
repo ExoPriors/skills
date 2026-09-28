@@ -286,10 +286,16 @@ judgment: `scry_snap(payload, 600) AS s` inside it judges the snapshot
 estimate), `scry_snap` outside it snaps what you read of the whole judged
 text, and a `LIMIT n BY` inside it takes the derived-table wrap, `SELECT *
 FROM (... LIMIT 1 BY key) LIMIT n`. Every distinct text is
-judged once and remembered under its question, so pin the source with an
-ORDER BY and a second run over the same texts costs nothing. Explain
-prices the judgments before any are bought: `judgment_cost_est_nanodollars`
-beside `judgment_count`. The reply's `jev` block — judged, remembered,
+judged once and remembered under its question, so pin the source (an
+ORDER BY, or a hash slice — `cityHash64(key) % 100 = 7` — that pins a fair
+sample of a large match set without sorting it) and a second run over the
+same texts costs nothing. A source LIMIT is at most 10000: judge a larger
+population in hash slices, `% 2 = 0` then `= 1`, one statement each, and
+add the counts. Explain prices the judgments before any are bought:
+`judgment_count` (the source LIMIT, a ceiling — count() the source WHERE
+for the true number), `judgment_tokens_est`, `judgment_cost_est_nanodollars`.
+A refusal that names values still unjudged has kept every judgment made;
+the same statement retried pays only for the remainder. The reply's `jev` block — judged, remembered,
 tokens, cost_nanodollars, seconds — is the stage's own ledger;
 `spend_nanodollars` is the statement's own price — scan and response egress — never the judgments.
 
