@@ -251,6 +251,14 @@ Sizes are integer literals in characters (about four a token); alias it
 (`scry_snap(text, 400) AS text`). Read a package's shape first, then
 hydrate the rows that earn it whole.
 
+Hosted Jev derives a judgment inside the statement. Use
+`jev((SELECT ... LIMIT n), text_column, 'question')` for source columns
+plus `p Nullable(Float64)` as P(yes), or add a literal array of choices
+for `p Map(String, Float64)` over those choices and the hosted Jev
+none-of-these choice. NULL and empty text carry absence rather than a
+judgment. The result is an ordinary derived table: filter, order, group,
+or join it in the same statement.
+
 ## Lexical recipes
 
 Reuse shared term instruments with `scry_recipe('<slug>'[, text])` for
