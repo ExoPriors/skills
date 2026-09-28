@@ -57,6 +57,23 @@ ORDER BY n DESC
 LIMIT 10
 ```
 
+A question can be a column. Which tweets predict a recession:
+
+```sql
+SELECT p, text
+FROM jev(
+  (SELECT text FROM twitter.tweets
+   WHERE hasToken(search_text_lc, 'recession') LIMIT 200),
+  text,
+  'Does this tweet predict a recession?')
+ORDER BY p DESC
+LIMIT 10
+```
+
+(`p` is hosted Jev's P(yes) for each row's text. The tokens find the
+candidates, the question ranks them; each distinct text is judged once
+and remembered, paid from the account's jev credit.)
+
 Every response includes `rows`, `read_rows`, `coverage`,
 `deadline_partial`, `truncated`, and the meter (`burden_nanodollars` is
 what the machine did, `spend_nanodollars` what you paid). A cut scan
