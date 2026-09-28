@@ -294,8 +294,11 @@ population in hash slices, `% 2 = 0` then `= 1`, one statement each, and
 add the counts. Explain prices the judgments before any are bought:
 `judgment_count` (the source LIMIT, a ceiling — count() the source WHERE
 for the true number), `judgment_tokens_est`, `judgment_cost_est_nanodollars`.
-A refusal that names values still unjudged has kept every judgment made;
-the same statement retried pays only for the remainder. The reply's `jev` block — judged, remembered,
+jev nests: a second jev over the rows the first placed past a threshold
+(`jev((SELECT key, text FROM jev(...) WHERE p > 0.9 ORDER BY key LIMIT n),
+text, 'a sharper question')`) judges only those and breaks the ties a
+saturated top leaves. A refusal that names values still unjudged has kept
+every judgment made; the same statement retried pays only for the remainder. The reply's `jev` block — judged, remembered,
 tokens, cost_nanodollars, seconds — is the stage's own ledger;
 `spend_nanodollars` is the statement's own price — scan and response egress — never the judgments.
 
