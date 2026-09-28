@@ -281,9 +281,11 @@ or join it in the same statement — nest it, join its key back, `WHERE p >
 count rows past a threshold rather than summing `p`; with choices, `ORDER
 BY p['refund'] DESC` ranks by one and `arrayMax(mapValues(p))` names the
 winner's confidence. The source runs as its own statement before the
-judgment: keep `scry_snap` outside it (snap the output column) and give a
-`LIMIT n BY` inside it the derived-table wrap, `SELECT * FROM (... LIMIT 1
-BY key) LIMIT n`. Every distinct text is
+judgment: `scry_snap(payload, 600) AS s` inside it judges the snapshot
+(a long text at a few hundred tokens; explain then gives no cost
+estimate), `scry_snap` outside it snaps what you read of the whole judged
+text, and a `LIMIT n BY` inside it takes the derived-table wrap, `SELECT *
+FROM (... LIMIT 1 BY key) LIMIT n`. Every distinct text is
 judged once and remembered under its question, so pin the source with an
 ORDER BY and a second run over the same texts costs nothing. Explain
 prices the judgments before any are bought: `judgment_cost_est_nanodollars`
