@@ -598,6 +598,9 @@ the complete document. Start-here relations by family (tier per `?mode=index`):
 | `reddit.posts` | Reddit submission archive, 2005 to present (rows removed before capture are absent); comments (`reddit.comments`, depth) join via `link_id = concat('t3_', id)` |
 | `hackernews.items` | Hacker News items with source identity and timestamps |
 | `stackexchange.posts` | Stack Exchange Q&A across indexed sites (`site` value space is the roster) |
+| `substack.posts` | Substack posts, one row per (publication_host, post_id): title, byline, body text as read, visibility |
+| `substack.comments` | Substack comments under those posts, threaded by parent_comment_id |
+| `substack.publications` | Substack publication roster, one row per host |
 | `quora.answers` | Quora expert answers, full text from topic-ranked writers; `quora.writers` (depth) scores the writers |
 | `crawl.pages` | Promoted text extractions of observed web pages — the live web-page corpus |
 | `commoncrawl.distillate` | Clean genre-classified Common Crawl reading layer; CDX census and raw WET recall are its depth companions |
