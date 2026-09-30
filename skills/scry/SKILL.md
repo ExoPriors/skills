@@ -2,7 +2,7 @@
 name: scry
 description: >-
   Use Scry's read-only SQL research surface (/v1/scry/schema, /v1/scry/query)
-  for bounded SQL over the public internet, provenance, and
+  for bounded SQL over the public internet and
   vector helpers. Also use when a research ask wants diverse, orthogonal
   sources, angles, hypotheses, or probe phrasings — includes the enumeration
   discipline and the /v1/creativity/outsized fan-out.
@@ -12,7 +12,7 @@ description: >-
 
 Scry is read-only SQL (the Scry SQL dialect) over the public internet
 — Hacker News, Reddit, the Twitter archive, books, papers, forums, SEC
-filings, the crawl — one call from a question to cited rows. Queries are
+filings, the crawl — one call from a question to its answer. Queries are
 free while the system has slack: every query response reports `billing_mode`
 and `spend_nanodollars`, and the money arguments (`x-scry-budget`,
 `x-scry-max-seconds`; MCP `budget_nanodollars`, `max_seconds`) are
@@ -175,7 +175,7 @@ orientation.
    (2048 dimensions) that form can exceed the 131072-byte compiled-statement
    ceiling: rank without LIMIT BY, then collapse in an outer SELECT.
 6. Keep every query bounded with `LIMIT`. Start at 20 and widen only after
-   inspecting row shape, provenance, and source coverage.
+   inspecting row shape and source coverage.
    Token search speed is governed by the rarest token: in
    `hasToken`/`hasAllTokens` filters include at least one distinctive
    token (a name, identifier, or unusual word) — all-common-word token
@@ -312,7 +312,7 @@ Discover them with MCP `recipes`; publish a complete measured
 version with `recipe_write` and the returned head version as
 `if_version`; a slug belongs to the account that wrote its first version, so publish yours under a new slug. Derive candidates read-only with `recipe_derive`, then curate noise, measure the instrument, and publish through `recipe_write`. Write a recipe when you derived at least five surface forms,
 or when a polarity instrument survives reading 20 matches per cohort.
-Read those matches before publishing, keep provenance and measurements
+Read those matches before publishing, keep the measurements
 with the terms, and treat the stance as part of the recipe's identity.
 The seeded shelf and choosing guidance are in `references.md` § The
 recipe shelf; the author/thread/time/graph quantifier shapes that
@@ -461,7 +461,7 @@ largest components first — plus an optional per-relation `"rank":
 counts, zero egress (`out: []` is the census). Every evaluation step
 is one ordinary metered statement under your own key; `depth` (a hop cap;
 absent walks to the fixpoint) and 50k-row caps bound the walk; the envelope returns `{id, kind, parent,
-depth}` provenance rows (a sql atom's other columns are returned in `attrs`), `counts` for every relation (an empty seed set
+depth}` rows (a sql atom's other columns are returned in `attrs`), `counts` for every relation (an empty seed set
 shows `counts.seed.rows = 0`), a `meter` with `per_statement`, and
 `truncations[]` (empty = fixpoint over the indexed graph; `edge_window`: a `cited_by` hop walks the newest 50 citers per work, so its count is a lower bound — census with `openalex.cited_by`). Prefer `rank` over intersecting a walk with a global ANN
 top-k — measured near-empty overlap at corpus scale. Rank is terminal: it orders a relation's final rows
@@ -894,8 +894,8 @@ is refused by name before the tool runs.
   a silent reorder. Local lanes score every 3,500-character window of a
   document (stride 3,000) and keep the best: each result has
   `document_chars`, and `usage.documents` counts
-  the inputs. For longer sources, retain original provenance
-  and submit evidence-focused passages with stable ids. For judgement-grade
+  the inputs. For longer sources, submit evidence-focused
+  passages with stable ids. For judgement-grade
   pairwise comparisons, the offering points at `/v1/judgements/runs`.
   `POST /v1/judgements/resolve` (`{"text": …}`, no key) returns the
   ledger's identity for a span — `unit_id` and its sentence atoms — so

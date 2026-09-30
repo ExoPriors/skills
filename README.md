@@ -21,7 +21,7 @@ npx skills add exopriors/skills --skill scry
 <!-- skills:begin -->
 | Skill | Use when |
 |-------|----------|
-| **scry** | Use Scry's read-only SQL research surface (/v1/scry/schema, /v1/scry/query) for bounded SQL over the public internet, provenance, and vector helpers. Also use when a research ask wants diverse, orthogonal sources, angles, hypotheses, or probe phrasings — includes the enumeration discipline and the /v1/creativity/outsized fan-out. |
+| **scry** | Use Scry's read-only SQL research surface (/v1/scry/schema, /v1/scry/query) for bounded SQL over the public internet and vector helpers. Also use when a research ask wants diverse, orthogonal sources, angles, hypotheses, or probe phrasings — includes the enumeration discipline and the /v1/creativity/outsized fan-out. |
 <!-- skills:end -->
 
 ## Quick Start

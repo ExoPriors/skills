@@ -45,7 +45,7 @@ never invent ids; keep the id-to-source map with any frozen pool.
 
 ### Adjudication and report integrity
 
-Relevance, coverage, freshness, and provenance are different assertions - keep
+Relevance, coverage, and freshness are different assertions - keep
 them separate. State the denominator - relations, sources, windows searched,
 against what exists (schema, coverage blocks). Absent rows prove absence from
 the searched slice, not the world; a recent load time is not a recent source
@@ -104,8 +104,8 @@ cells; unless a tool is named as doing the work, everything below is client-side
 
 ### Operator catalog
 
-- **Source-disjoint discovery** - lanes over separately traced source origins,
-  provenance retained through the union. Check: syndication and cross-posts collapse lanes silently.
+- **Source-disjoint discovery** - lanes over separate source origins.
+  Check: syndication and cross-posts collapse lanes silently.
 - **Asymmetric information join** - two contexts have different evidence halves
   (methods vs results), joined afterward. Check: quotes smuggle the withheld half.
 - **Blinded re-derivation** - a fresh context re-derives conclusions from the
@@ -134,7 +134,7 @@ cells; unless a tool is named as doing the work, everything below is client-side
   explain=true); execute only accepted plans. Check: diff executed SQL vs plan.
 - **Independent synthesis audit** - a fresh context holding only ledger and report
   re-checks each claim against rows. Check: per-claim verdicts, no overall pass.
-- **Provenance-preserving fold** - fan-in keeps every claim's record_refs and lane;
+- **Ref-keeping fold** - fan-in keeps every claim's record_refs and lane;
   conflicts stay typed. Check: a merged claim without refs was made by the fold.
 - **Blackboard claim conflicts** - a shared claim store (`memory_write` CAS) where
   contexts attach support or counter refs. Check: conflict state reaches the report.
@@ -560,7 +560,7 @@ rooms; this rung says which room.
 person on another platform (`persons.links`; enterprise access) — the cross-source person
 contrast in § What lexical search makes possible.
 
-**Rung 7 — provenance.** Documents whose *links* match P — `outbound_url`
+**Rung 7 — links.** Documents whose *links* match P — `outbound_url`
 / domain predicates on reddit and HN, tweets pointing at papers whose
 text matches Q — joined through the URL, not the prose. HN items
 linking arxiv whose text says "interpretability": 32 items by 28
@@ -1520,7 +1520,7 @@ database-specific vector operators or assume that an unregistered embedding
 table is queryable.
 
 Vectors are ranking hypotheses. Check nearest rows against lexical evidence,
-provenance, source coverage, and the intended concept before reporting a
+source coverage, and the intended concept before reporting a
 semantic conclusion.
 
 ### Composing embeddings into saved handles
@@ -1529,7 +1529,7 @@ semantic conclusion.
 `{text, name}`: the expression is the same scry_* vector algebra over your
 stored `@handles`, evaluated server-side through the query validator, and the
 result is saved as a reusable handle. The expression becomes the handle's
-`source_text`, so saved compositions have their own provenance. The response
+`source_text`. The response
 returns diagnostics by default — norm, cosine similarity to every input
 handle, and warnings — and refuses degenerate results (NULL from the noise
 floor, norm ≤ 0.01, near-duplicate of an input) with the reason instead of
