@@ -14,7 +14,9 @@ declare -a USERS=(
   "2b643878-5136-45d7-bb88-4a1f6b74578f acct2 SCRY_TEST2_API_KEY"
   "d4ab6bc7-40cd-4462-818e-d833f7f6d7cf mcp-walk MCP_TEST_API_KEY"
 )
-stamp=$(python3 -c 'import time;print(time.strftime("%Y%m%d%H%M%S",time.gmtime()))')
+stamp=$(date -u +%Y%m%d%H%M%S)
+# On colo2 itself (test-wallet-topup.timer, daily) the SQL runs locally; from a Mac it rides ssh.
+if [ "$(hostname)" = colo2 ]; then keep_db() { bash -c "$1"; }; else keep_db() { ssh colo2 "$1"; }; fi
 for entry in "${USERS[@]}"; do
   set -- $entry; uid=$1; name=$2
   sql="BEGIN;
@@ -37,5 +39,5 @@ SELECT ev.id, '$uid', '$bucket', $target - bal.b FROM ev, bal;"
   sql="$sql
 COMMIT;
 SELECT '$name ' || string_agg(bucket || '=' || balance_nanodollars, ' ' ORDER BY bucket) FROM wallet_balances WHERE user_id='$uid' AND bucket IN ('scry_credit','promo_credit');"
-  ssh colo2 "sudo -n -u postgres psql -p 25432 -h /var/run/postgresql -At -q -v ON_ERROR_STOP=1 -d keep_db" <<< "$sql"
+  keep_db "sudo -n -u postgres psql -p 25432 -h /var/run/postgresql -At -q -v ON_ERROR_STOP=1 -d keep_db" <<< "$sql"
 done

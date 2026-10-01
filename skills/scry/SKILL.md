@@ -977,6 +977,7 @@ things" — provider inference arms from promo_credit + cash only, so the
 MCP chat and creativity doors need it) by `bin/topup-test-wallets.sh` —
 the same grant pair the signup path writes (wallet_events +
 wallet_entries, under the wallet's advisory lock; balances are
-trigger-maintained), never above those targets, never on a customer. Every storm/kill drill script
+trigger-maintained), never above those targets, never on a customer; a
+daily timer runs it unattended. Every storm/kill drill script
 calls it first; run it yourself before any drill that spends test credit,
 and never report test-wallet balances as something she must handle.
