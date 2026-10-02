@@ -488,6 +488,34 @@ one or two edges when intermediate sets are large. Coauthors in one step:
  "out": ["co"]}
 ```
 
+Rules are the short spelling of the same programs: send `{"program":
+"<rules>"}` with the program as one string. You write relations, not edge
+directions; the query's constants are pushed into every rule they reach,
+so nothing is derived that the answer cannot use, and a refusal names the
+source line. Everyone who replied anywhere under an HN story:
+
+```text
+Below(root, item) :- hackernews.reply(root, item).
+Below(root, item) :- Below(root, parent), hackernews.reply(parent, item).
+Voice(root, user) :- Below(root, item), hackernews.authored(user, item).
+?- Voice(47875597, user).
+```
+
+The logical relations are `openalex.cites(citing, cited)`,
+`openalex.authored(author, work)`, `hackernews.reply(parent, child)`,
+`hackernews.authored(user, item)`, `hackernews.story(story, item)`,
+`twitter.reply(parent, reply)`, `twitter.quote(quoted, quoting)`,
+`twitter.authored(account, tweet)`, `twitter.follows(follower, followee)`,
+`forums.reply(parent, child)`, `forums.thread(root, post)`,
+`forums.authored(author, post)`, `crawl.links(source, target)`,
+`crawl.host_links(source, target)`, `commoncrawl.host_links(source,
+target)` and `bluesky.authored(account, post)`. A body also takes `not
+P(x)`, `x != y`, `x = "const"` and `v.col >= 2020` on a column of the
+relation that produced `v`; facts are unary (`Seed(1).`), `_` is an
+anonymous variable, and `.depth N`, `.analyze`, `.resident off` and `.out
+A, B` are the directives. `rank`, `beam`, `emit: paths`, `sql` and `ann`
+ride the JSON form only.
+
 The MCP tool contract includes worked templates (the guide's TEMPLATES section lists them), including a seed-keyed
 citation closure and an anti-join.
 
