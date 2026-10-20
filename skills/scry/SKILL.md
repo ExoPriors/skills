@@ -974,7 +974,7 @@ is refused by name before the tool runs.
   to follow, plus enforced fields that bind server-side —
   `consult.require_zdr` refuses web providers that cannot route
   zero-data-retention (the OpenRouter consult already is),
-  `consult.models` and `web.providers` are allowlists,
+  `consult.models` is an allowlist,
   `tools.allow` / `tools.deny` gate every MCP tool name at `tools/call`
   (validated against the live contract at write time; `whoami` is
   never gated), and a denied or altered call
