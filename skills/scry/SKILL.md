@@ -888,7 +888,7 @@ is refused by name before the tool runs.
   call, rows come back re-ordered by the directive ("most
   methodologically rigorous first") by hosted Jev, paid from the
   account's Jev credit (every account opens with $2; `GET
-  /v1/credits/balance` → `wallet.jev_credit_balance_nanodollars`) at the
+  /v1/scry/account` → `wallet.jev_credit_balance_nanodollars`) at the
   provider's rate — $0.042 per million input tokens, about $0.02 for
   1,000 tweets, ~650 tokens an abstract; 1,000 tweets rank in ~1.2 s.
   Judge whole cohorts, not heads: the credit is there to be spent on
