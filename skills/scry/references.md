@@ -1168,7 +1168,7 @@ count, sort the page yourself.
 
 No door: `social.posts` (a union view never reaches the
 branch indexes, >150s — anchor with hasToken/hasAllTokens there, 4.2s
-measured), `commoncrawl.distillate` (words index only).
+measured).
 
 ### Vocabulary expansion from the corpus
 

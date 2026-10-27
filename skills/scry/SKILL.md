@@ -508,8 +508,7 @@ The logical relations are `openalex.cites(citing, cited)`,
 `twitter.authored(account, tweet)`, `twitter.follows(follower, followee)`,
 `forums.reply(parent, child)`, `forums.thread(root, post)`,
 `forums.authored(author, post)`, `crawl.links(source, target)`,
-`crawl.host_links(source, target)`, `commoncrawl.host_links(source,
-target)` and `bluesky.authored(account, post)`. A body also takes `not
+`crawl.host_links(source, target)` and `bluesky.authored(account, post)`. A body also takes `not
 P(x)`, `x != y`, `x = "const"` and `v.col >= 2020` on a column of the
 relation that produced `v`; facts are unary (`Seed(1).`), `_` is an
 anonymous variable, and `.depth N`, `.analyze`, `.resident off` and `.out
@@ -631,7 +630,6 @@ the complete document. Start-here relations by family (tier per `?mode=index`):
 | `substack.publications` | Substack publication roster, one row per host |
 | `quora.answers` | Quora expert answers, full text from topic-ranked writers; `quora.writers` (depth) scores the writers |
 | `crawl.pages` | Promoted text extractions of observed web pages — the live web-page corpus |
-| `commoncrawl.distillate` | Clean genre-classified Common Crawl reading layer; CDX census and raw WET recall are its depth companions |
 | `social.posts` | Six frozen fringe-platform archives (voat, parler, gab, telegram, discord, truth_social) as one relation — always filter `platform`; profiles/edges/community directories are its depth companions (`social.users`/`edges`/`communities`) |
 | `github.repos` | The public GitHub repository universe (408M origins as of 2026-06-04) keyed by owner; repo READMEs/docs/source are in `github.documents` (depth) |
 | `packages.catalog` | One merged row per software package across ~36 registries (`ecosystem` value space is the roster) |
