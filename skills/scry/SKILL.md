@@ -288,7 +288,9 @@ text, and a `LIMIT n BY` inside it takes the derived-table wrap, `SELECT *
 FROM (... LIMIT 1 BY key) LIMIT n`. Every distinct text is
 judged once and remembered under its question, so pin the source (an
 ORDER BY, or a hash slice — `cityHash64(key) % 100 = 7` — that pins a fair
-sample of a large match set without sorting it) and a second run over the
+sample of a large match set without sorting it; unpinned, each question
+draws a different page — 2026-10-27, three questions over `LIMIT 400` arms
+left only 1,106 of 2,985 repos with all three scores) and a second run over the
 same texts costs nothing. A source LIMIT is at most 10000: judge a larger
 population in hash slices, `% 2 = 0` then `= 1`, one statement each, and
 add the counts. Explain prices the judgments before any are bought:
